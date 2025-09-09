@@ -1,0 +1,37 @@
+# BaaS主管理菜单
+baas.admin:
+  title: 'BaaS平台管理'
+  description: 'Backend-as-a-Service平台管理'
+  parent: system.admin_structure
+  route_name: baas_tenant.list
+  weight: -10
+
+# 租户管理菜单
+baas_tenant.admin:
+  title: '租户管理'
+  description: '管理多租户配置和设置'
+  parent: baas.admin
+  route_name: baas_tenant.list
+  weight: 10
+
+baas_tenant.admin.add:
+  title: '添加租户'
+  parent: baas_tenant.admin
+  route_name: baas_tenant.add
+  weight: 1
+
+# 资源限制配置子菜单（当查看特定租户时显示）
+baas_tenant.admin.resource_limits:
+  title: '资源限制配置'
+  description: '配置租户和项目的资源使用限制'
+  parent: baas_tenant.admin
+  route_name: baas_tenant.list
+  weight: 5
+
+# 用户账户菜单 - API密钥管理
+baas_tenant.user_api_keys_menu:
+  title: 'API密钥管理'
+  description: '管理我的API访问密钥'
+  menu_name: account
+  route_name: baas_tenant.user_api_keys
+  weight: 15

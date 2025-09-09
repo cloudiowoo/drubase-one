@@ -1,0 +1,196 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * @file
+ * BaaS 项目管理模块主要功能实现.
+ */
+
+/**
+ * Implements hook_menu_links_discovered_alter().
+ */
+function baas_project_menu_links_discovered_alter(&$links)
+{
+  // 确保用户账户菜单中的项目链接只对有权限的用户显示
+  if (isset($links['baas_project.user_menu'])) {
+    $links['baas_project.user_menu']['requirements'] = [
+      '_permission' => 'view baas project',
+    ];
+  }
+}
+
+/**
+ * Implements hook_user_login().
+ */
+function baas_project_user_login(\Drupal\user\UserInterface $user)
+{
+  // 用户登录时清除菜单缓存，确保菜单项正确显示
+  \Drupal::service('cache.menu')->invalidateAll();
+  \Drupal::service('cache_tags.invalidator')->invalidateTags(['user:' . $user->id()]);
+}
+
+/**
+ * Implements hook_theme().
+ */
+function baas_project_theme() {
+  return [
+    'baas_project_entity_schema' => [
+      'variables' => [
+        'entities' => [],
+        'relationships' => [],
+        'project' => NULL,
+        'tenant_id' => NULL,
+        'project_id' => NULL,
+      ],
+    ],
+  ];
+}
+
+/**
+ * Implements hook_entity_type_build().
+ */
+function baas_project_entity_type_build(array &$entity_types)
+{
+  // 注册项目级动态实体类型
+  try {
+    $entity_registry = \Drupal::service('baas_project.entity_registry');
+    $entity_registry->registerProjectEntityTypes($entity_types);
+  } catch (\Exception $e) {
+    // 记录错误但不中断系统运行
+    \Drupal::logger('baas_project')->error('Failed to register project entity types: @error', [
+      '@error' => $e->getMessage(),
+    ]);
+  }
+}
+
+/**
+ * 项目级动态实体类加载器。
+ *
+ * 此函数负责加载项目级动态生成的实体类文件。
+ *
+ * @param string $class_name
+ *   类名。
+ *
+ * @return bool
+ *   成功加载返回TRUE，否则返回FALSE。
+ */
+function baas_project_dynamic_entity_loader(string $class_name): bool
+{
+  // 检查是否为项目级动态实体类
+  if (!preg_match('/^Drupal\\\\baas_project\\\\(Entity|Storage)\\\\Dynamic\\\\(.+)$/', $class_name, $matches)) {
+    return FALSE;
+  }
+
+  $class_type = $matches[1]; // Entity 或 Storage
+  $entity_class_name = $matches[2];
+
+  // 移除Storage后缀以获取基础类名
+  $base_class_name = $entity_class_name;
+  if ($class_type === 'Storage' && str_ends_with($entity_class_name, 'Storage')) {
+    $base_class_name = substr($entity_class_name, 0, -7);
+  }
+
+  // 记录调试信息
+  \Drupal::logger('baas_project')->debug('Attempting to load class: @class_name (type: @type, base: @base)', [
+    '@class_name' => $class_name,
+    '@type' => $class_type,
+    '@base' => $base_class_name,
+  ]);
+
+  // 从baas_entity_class_files表查找文件路径
+  $database = \Drupal::database();
+  
+  if ($database->schema()->tableExists('baas_entity_class_files')) {
+    $file_record = $database->select('baas_entity_class_files', 'f')
+      ->fields('f', ['file_path'])
+      ->condition('class_name', $entity_class_name)
+      ->condition('class_type', $class_type === 'Entity' ? 'ProjectEntity' : 'ProjectStorage')
+      ->execute()
+      ->fetch();
+
+    if ($file_record) {
+      $file_path = \Drupal::service('file_system')->realpath('public://' . $file_record->file_path);
+      if ($file_path && file_exists($file_path)) {
+        require_once $file_path;
+        return TRUE;
+      }
+    }
+  }
+
+  // 备用方案：从项目实体模板推断文件路径
+  try {
+    $templates = $database->select('baas_entity_template', 'et')
+      ->fields('et', ['tenant_id', 'project_id', 'name'])
+      ->condition('project_id', '', '!=')
+      ->condition('project_id', NULL, 'IS NOT NULL')
+      ->condition('status', 1)
+      ->execute()
+      ->fetchAll(\PDO::FETCH_ASSOC);
+
+    foreach ($templates as $template) {
+      $expected_class_name = _baas_project_get_entity_class_name($template);
+      
+      if ($expected_class_name === $base_class_name) {
+        $file_name = $class_type === 'Entity' ? $entity_class_name . '.php' : $entity_class_name . '.php';
+        $file_path = \Drupal::service('file_system')->realpath(
+          'public://dynamic_entities/' . $template['tenant_id'] . '/projects/' . $template['project_id'] . '/' . $class_type . '/' . $file_name
+        );
+        
+        if ($file_path && file_exists($file_path)) {
+          require_once $file_path;
+          return TRUE;
+        }
+      }
+    }
+  } catch (\Exception $e) {
+    // 记录错误但不阻止加载流程
+    \Drupal::logger('baas_project')->error('Error in dynamic entity loader: @error', ['@error' => $e->getMessage()]);
+  }
+
+  return FALSE;
+}
+
+/**
+ * 获取项目实体类名。
+ *
+ * @param array $template
+ *   实体模板数据。
+ *
+ * @return string
+ *   类名。
+ */
+function _baas_project_get_entity_class_name(array $template): string
+{
+  // 验证输入数据
+  $tenant_id = trim($template['tenant_id'] ?? '');
+  $entity_name = trim($template['name'] ?? '');
+  
+  if (empty($tenant_id) || empty($entity_name)) {
+    return 'UnknownProjectEntity';
+  }
+  
+  // 移除特殊字符并转换为驼峰命名
+  $tenant_parts = explode('_', $tenant_id);
+  $tenant_parts = array_map(function($part) {
+    return ucfirst(trim($part));
+  }, $tenant_parts);
+  $tenant_prefix = implode('', array_filter($tenant_parts));
+
+  $entity_parts = explode('_', $entity_name);
+  $entity_parts = array_map(function($part) {
+    return ucfirst(trim($part));
+  }, $entity_parts);
+  $entity_name_formatted = implode('', array_filter($entity_parts));
+
+  if (empty($tenant_prefix) || empty($entity_name_formatted)) {
+    return 'UnknownProjectEntity';
+  }
+
+  return $tenant_prefix . 'Project' . $entity_name_formatted;
+}
+
+// 注册类自动加载器
+if (!in_array('baas_project_dynamic_entity_loader', spl_autoload_functions() ?: [])) {
+  spl_autoload_register('baas_project_dynamic_entity_loader');
+}

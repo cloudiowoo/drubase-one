@@ -1,0 +1,68 @@
+services:
+  baas_auth.jwt_token_manager:
+    class: Drupal\baas_auth\Service\JwtTokenManager
+    arguments: ['@database', '@config.factory', '@logger.factory', '@baas_auth.jwt_blacklist_service']
+
+  baas_auth.jwt_blacklist_service:
+    class: Drupal\baas_auth\Service\JwtBlacklistService
+    arguments: ['@database', '@logger.factory']
+
+  baas_auth.api_key_manager:
+    class: Drupal\baas_auth\Service\ApiKeyManager
+    arguments: ['@database', '@logger.factory']
+
+  baas_auth.authentication_service:
+    class: Drupal\baas_auth\Service\AuthenticationService
+    arguments: ['@database', '@baas_auth.jwt_token_manager', '@baas_auth.password_service', '@logger.factory', '@baas_auth.jwt_blacklist_service', '@entity_type.manager']
+
+  baas_auth.permission_checker:
+    class: Drupal\baas_auth\Service\PermissionChecker
+    arguments: ['@database', '@cache.default', '@logger.factory']
+
+  baas_auth.unified_permission_checker:
+    class: Drupal\baas_auth\Service\UnifiedPermissionChecker
+    arguments: ['@database', '@cache.default', '@logger.factory', '@baas_auth.permission_checker', '@baas_auth.jwt_token_manager']
+
+  baas_auth.password_service:
+    class: Drupal\baas_auth\Service\PasswordService
+    arguments: ['@password', '@logger.factory']
+
+  baas_auth.session_manager:
+    class: Drupal\baas_auth\Service\SessionManager
+    arguments: ['@database', '@datetime.time', '@request_stack', '@logger.factory']
+
+  baas_auth.security_logger:
+    class: Drupal\baas_auth\Service\SecurityLogger
+    arguments: ['@logger.factory', '@database', '@datetime.time']
+
+  baas_auth.login_attempt_service:
+    class: Drupal\baas_auth\Service\LoginAttemptService
+    arguments: ['@database', '@config.factory', '@datetime.time']
+
+  baas_auth.role_manager:
+    class: Drupal\baas_auth\Service\RoleManager
+    arguments: ['@database', '@baas_auth.permission_checker', '@cache.default', '@config.factory', '@logger.factory']
+
+  baas_auth.user_tenant_mapping:
+    class: Drupal\baas_auth\Service\UserTenantMapping
+    arguments: ['@database', '@logger.factory']
+
+  # 认证中间件 - 重新启用以支持API Key认证
+  baas_auth.jwt_authenticator:
+    class: Drupal\baas_auth\Authentication\JwtAuthenticator
+    arguments: ['@baas_auth.jwt_token_manager', '@baas_auth.jwt_blacklist_service', '@baas_auth.unified_permission_checker']
+    tags:
+      - { name: authentication_provider, provider_id: jwt, priority: 100 }
+
+  baas_auth.api_key_authenticator:
+    class: Drupal\baas_auth\Authentication\ApiKeyAuthenticator
+    arguments: ['@baas_auth.api_key_manager', '@baas_auth.unified_permission_checker']
+    tags:
+      - { name: authentication_provider, provider_id: api_key, priority: 90 }
+
+  # 事件订阅器
+  baas_auth.authentication_subscriber:
+    class: Drupal\baas_auth\EventSubscriber\AuthenticationSubscriber
+    arguments: ['@baas_auth.jwt_token_manager', '@logger.factory']
+    tags:
+      - { name: event_subscriber }

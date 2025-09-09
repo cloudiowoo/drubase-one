@@ -1,0 +1,148 @@
+{#
+/**
+ * @file
+ * Template for GraphQL模式文档页面.
+ *
+ * 可用变量:
+ * - schema: GraphQL模式字符串.
+ * - title: 页面标题.
+ */
+#}
+
+<div class="baas-api-graphql-docs">
+	<header class="baas-api-graphql-docs__header">
+		<h1>{{ title }}</h1>
+		<div class="baas-api-graphql-docs__actions">
+			<a href="#" class="button js-baas-api-graphql-docs-copy" data-clipboard-target="#graphql-schema">复制模式</a>
+			<a href="{{ path('baas_api.download_tenant_graphql_schema', {'tenant_id': tenant_id}) }}" class="button">下载模式文件</a>
+		</div>
+	</header>
+
+	<div class="baas-api-graphql-docs__content">
+		<div class="baas-api-graphql-docs__schema">
+			<pre><code id="graphql-schema" class="language-graphql">{{ schema }}</code></pre>
+		</div>
+	</div>
+
+	<div class="baas-api-graphql-docs__info">
+		<h2>使用说明</h2>
+		<p>此GraphQL模式定义了可以通过GraphQL API访问的类型和操作。您可以使用此模式在GraphQL客户端（如Apollo Client或Relay）中构建查询。</p>
+
+		<h3>GraphQL端点</h3>
+		<code>{{ base_url }}/api/graphql/{{ tenant_id }}</code>
+
+		<h3>示例查询</h3>
+		<pre><code class="language-graphql">
+query GetEntityById($id: ID!) {
+  entity(id: $id) {
+    id
+    created
+    updated
+    # 其他字段...
+  }
+}
+    </code></pre>
+
+		<h3>身份验证</h3>
+		<p>所有GraphQL请求需要通过以下方式之一进行身份验证：</p>
+		<ul>
+			<li>Bearer令牌:
+				<code>Authorization: Bearer &lt;token&gt;</code>
+			</li>
+			<li>API密钥:
+				<code>X-API-Key: &lt;api_key&gt;</code>
+			</li>
+		</ul>
+	</div>
+</div>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/graphql.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.11/clipboard.min.js"></script>
+<script>
+	(function () { // 初始化语法高亮
+document.addEventListener('DOMContentLoaded', function () {
+hljs.highlightAll();
+
+// 初始化复制功能
+new ClipboardJS('.js-baas-api-graphql-docs-copy');
+
+// 复制按钮事件
+document.querySelector('.js-baas-api-graphql-docs-copy').addEventListener('click', function (e) {
+e.preventDefault();
+var button = this;
+var originalText = button.textContent;
+button.textContent = '已复制!';
+setTimeout(function () {
+button.textContent = originalText;
+}, 2000);
+});
+});
+})();
+</script>
+
+<style>
+	.baas-api-graphql-docs {
+		max-width: 1200px;
+		margin: 0 auto;
+		padding: 20px;
+		font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+	}
+
+	.baas-api-graphql-docs__header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 20px;
+		padding-bottom: 20px;
+		border-bottom: 1px solid #ddd;
+	}
+
+	.baas-api-graphql-docs__actions {
+		display: flex;
+		gap: 10px;
+	}
+
+	.baas-api-graphql-docs__content {
+		background: #f5f5f5;
+		border: 1px solid #ddd;
+		border-radius: 4px;
+		margin-bottom: 30px;
+	}
+
+	.baas-api-graphql-docs__schema {
+		max-height: 600px;
+		overflow: auto;
+	}
+
+	.baas-api-graphql-docs__schema pre {
+		margin: 0;
+		padding: 15px;
+	}
+
+	.baas-api-graphql-docs__info {
+		background: #f9f9f9;
+		padding: 20px;
+		border: 1px solid #ddd;
+		border-radius: 4px;
+	}
+
+	.button {
+		display: inline-block;
+		padding: 8px 16px;
+		background: #0071b8;
+		color: white;
+		text-decoration: none;
+		border-radius: 4px;
+		font-weight: 500;
+	}
+
+	.button:hover {
+		background: #00598f;
+	}
+
+	code {
+		font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+	}
+</style>

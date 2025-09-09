@@ -1,0 +1,415 @@
+{#
+/**
+ * @file
+ * Simple template for API文档页面 - No external dependencies.
+ */
+#}
+
+<div class="baas-api-docs">
+	<header class="baas-api-docs__header">
+		<h1>{{ title }}</h1>
+		<div class="baas-api-docs__actions">
+			<a href="#" class="button js-expand-all">展开全部</a>
+			<a href="#" class="button js-collapse-all">折叠全部</a>
+			<a href="{{ path('baas_api.download_docs') }}" class="button">下载文档</a>
+		</div>
+	</header>
+
+	<div class="api-info">
+		<h2>{{ docs.info.title }}</h2>
+		<p>{{ docs.info.description }}</p>
+		<p><strong>版本:</strong> {{ docs.info.version }}</p>
+		<p><strong>OpenAPI:</strong> {{ docs.openapi }}</p>
+	</div>
+
+	<div class="api-servers">
+		<h2>服务器</h2>
+		{% for server in docs.servers %}
+			<div class="server">
+				<strong>{{ server.url }}</strong>
+				{% if server.description %}
+					- {{ server.description }}
+				{% endif %}
+			</div>
+		{% endfor %}
+	</div>
+
+	<div class="api-paths">
+		<h2>API端点</h2>
+		{% for path, methods in docs.paths %}
+			<div class="path-group">
+				<h3 class="path-title">{{ path }}</h3>
+				{% for method, operation in methods %}
+					<div class="operation" data-method="{{ method|upper }}">
+						<div class="operation-header">
+							<span class="method method-{{ method|lower }}">{{ method|upper }}</span>
+							<span class="path">{{ path }}</span>
+							<span class="summary">{{ operation.summary ?? '' }}</span>
+							<button class="toggle-button">▼</button>
+						</div>
+						<div class="operation-details">
+							{% if operation.description %}
+								<p class="description">{{ operation.description }}</p>
+							{% endif %}
+							
+							{% if operation.parameters %}
+								<h4>参数</h4>
+								<table class="parameters-table">
+									<thead>
+										<tr>
+											<th>名称</th>
+											<th>位置</th>
+											<th>类型</th>
+											<th>必需</th>
+											<th>描述</th>
+										</tr>
+									</thead>
+									<tbody>
+										{% for param in operation.parameters %}
+											<tr>
+												<td><code>{{ param.name }}</code></td>
+												<td>{{ param.in }}</td>
+												<td>{{ param.schema.type ?? 'string' }}</td>
+												<td>{{ param.required ? '是' : '否' }}</td>
+												<td>{{ param.description ?? '' }}</td>
+											</tr>
+										{% endfor %}
+									</tbody>
+								</table>
+							{% endif %}
+
+							{% if operation.requestBody %}
+								<h4>请求体</h4>
+								<div class="request-body">
+									{% for mediaType, content in operation.requestBody.content %}
+										<div class="media-type">
+											<strong>{{ mediaType }}</strong>
+											{% if content.schema %}
+												<pre class="schema">{{ content.schema|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
+											{% endif %}
+										</div>
+									{% endfor %}
+								</div>
+							{% endif %}
+
+							{% if operation.responses %}
+								<h4>响应</h4>
+								<div class="responses">
+									{% for code, response in operation.responses %}
+										<div class="response">
+											<strong>{{ code }}</strong> - {{ response.description }}
+											{% if response.content %}
+												{% for mediaType, content in response.content %}
+													<div class="response-content">
+														<strong>{{ mediaType }}</strong>
+														{% if content.schema %}
+															<pre class="schema">{{ content.schema|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
+														{% endif %}
+													</div>
+												{% endfor %}
+											{% endif %}
+										</div>
+									{% endfor %}
+								</div>
+							{% endif %}
+
+							{% if operation.security %}
+								<h4>认证</h4>
+								<div class="security">
+									{% for security in operation.security %}
+										<div class="security-requirement">
+											{% for name, scopes in security %}
+												<strong>{{ name }}</strong>
+												{% if scopes %}
+													(范围: {{ scopes|join(', ') }})
+												{% endif %}
+											{% endfor %}
+										</div>
+									{% endfor %}
+								</div>
+							{% endif %}
+						</div>
+					</div>
+				{% endfor %}
+			</div>
+		{% endfor %}
+	</div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+	// 展开/折叠功能
+	document.querySelectorAll('.operation-header').forEach(function(header) {
+		header.addEventListener('click', function() {
+			const operation = this.parentElement;
+			const details = operation.querySelector('.operation-details');
+			const button = this.querySelector('.toggle-button');
+			
+			if (details.style.display === 'none') {
+				details.style.display = 'block';
+				button.textContent = '▼';
+				operation.classList.add('expanded');
+			} else {
+				details.style.display = 'none';
+				button.textContent = '▶';
+				operation.classList.remove('expanded');
+			}
+		});
+	});
+
+	// 默认折叠所有操作
+	document.querySelectorAll('.operation-details').forEach(function(details) {
+		details.style.display = 'none';
+	});
+	
+	document.querySelectorAll('.toggle-button').forEach(function(button) {
+		button.textContent = '▶';
+	});
+
+	// 展开全部按钮
+	document.querySelector('.js-expand-all').addEventListener('click', function(e) {
+		e.preventDefault();
+		document.querySelectorAll('.operation-details').forEach(function(details) {
+			details.style.display = 'block';
+		});
+		document.querySelectorAll('.toggle-button').forEach(function(button) {
+			button.textContent = '▼';
+		});
+		document.querySelectorAll('.operation').forEach(function(op) {
+			op.classList.add('expanded');
+		});
+	});
+
+	// 折叠全部按钮
+	document.querySelector('.js-collapse-all').addEventListener('click', function(e) {
+		e.preventDefault();
+		document.querySelectorAll('.operation-details').forEach(function(details) {
+			details.style.display = 'none';
+		});
+		document.querySelectorAll('.toggle-button').forEach(function(button) {
+			button.textContent = '▶';
+		});
+		document.querySelectorAll('.operation').forEach(function(op) {
+			op.classList.remove('expanded');
+		});
+	});
+});
+</script>
+
+<style>
+.baas-api-docs {
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 20px;
+	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.baas-api-docs__header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 30px;
+	padding-bottom: 20px;
+	border-bottom: 2px solid #e1e5e9;
+}
+
+.baas-api-docs__header h1 {
+	margin: 0;
+	color: #1a202c;
+}
+
+.baas-api-docs__actions {
+	display: flex;
+	gap: 10px;
+}
+
+.button {
+	display: inline-block;
+	padding: 8px 16px;
+	background: #3182ce;
+	color: white;
+	text-decoration: none;
+	border-radius: 4px;
+	font-weight: 500;
+	border: none;
+	cursor: pointer;
+}
+
+.button:hover {
+	background: #2c5282;
+}
+
+.api-info, .api-servers {
+	margin-bottom: 30px;
+	padding: 20px;
+	background: #f7fafc;
+	border-radius: 8px;
+	border-left: 4px solid #3182ce;
+}
+
+.api-info h2, .api-servers h2 {
+	margin-top: 0;
+	color: #2d3748;
+}
+
+.server {
+	margin: 8px 0;
+	font-family: monospace;
+	background: white;
+	padding: 8px;
+	border-radius: 4px;
+}
+
+.api-paths h2 {
+	color: #2d3748;
+	margin-bottom: 20px;
+}
+
+.path-group {
+	margin-bottom: 30px;
+}
+
+.path-title {
+	font-family: monospace;
+	font-size: 1.2em;
+	color: #4a5568;
+	margin-bottom: 10px;
+}
+
+.operation {
+	margin-bottom: 15px;
+	border: 1px solid #e2e8f0;
+	border-radius: 8px;
+	overflow: hidden;
+}
+
+.operation-header {
+	display: flex;
+	align-items: center;
+	padding: 15px;
+	background: #f8f9fa;
+	cursor: pointer;
+	border-bottom: 1px solid #e2e8f0;
+}
+
+.operation-header:hover {
+	background: #e2e8f0;
+}
+
+.method {
+	padding: 4px 8px;
+	border-radius: 4px;
+	font-weight: bold;
+	font-size: 0.8em;
+	margin-right: 10px;
+	min-width: 60px;
+	text-align: center;
+}
+
+.method-get { background: #38a169; color: white; }
+.method-post { background: #3182ce; color: white; }
+.method-put { background: #d69e2e; color: white; }
+.method-delete { background: #e53e3e; color: white; }
+.method-patch { background: #805ad5; color: white; }
+
+.path {
+	font-family: monospace;
+	font-weight: bold;
+	margin-right: 15px;
+	color: #2d3748;
+}
+
+.summary {
+	flex-grow: 1;
+	color: #4a5568;
+}
+
+.toggle-button {
+	background: none;
+	border: none;
+	font-size: 1.2em;
+	cursor: pointer;
+	color: #4a5568;
+}
+
+.operation-details {
+	padding: 20px;
+	background: white;
+}
+
+.description {
+	margin-bottom: 20px;
+	color: #4a5568;
+}
+
+.parameters-table {
+	width: 100%;
+	border-collapse: collapse;
+	margin-bottom: 20px;
+}
+
+.parameters-table th,
+.parameters-table td {
+	padding: 10px;
+	text-align: left;
+	border-bottom: 1px solid #e2e8f0;
+}
+
+.parameters-table th {
+	background: #f7fafc;
+	font-weight: 600;
+	color: #2d3748;
+}
+
+.parameters-table code {
+	background: #edf2f7;
+	padding: 2px 4px;
+	border-radius: 3px;
+	font-family: 'SFMono-Regular', Consolas, monospace;
+}
+
+.request-body, .responses {
+	margin-bottom: 20px;
+}
+
+.media-type, .response {
+	margin-bottom: 15px;
+	padding: 15px;
+	background: #f7fafc;
+	border-radius: 6px;
+	border-left: 3px solid #3182ce;
+}
+
+.response-content {
+	margin-top: 10px;
+}
+
+.schema {
+	background: #1a202c;
+	color: #e2e8f0;
+	padding: 15px;
+	border-radius: 6px;
+	overflow-x: auto;
+	font-family: 'SFMono-Regular', Consolas, monospace;
+	font-size: 0.9em;
+	line-height: 1.4;
+}
+
+.security {
+	padding: 15px;
+	background: #fef5e7;
+	border-radius: 6px;
+	border-left: 3px solid #d69e2e;
+}
+
+.security-requirement {
+	margin-bottom: 8px;
+}
+
+h4 {
+	margin-top: 25px;
+	margin-bottom: 15px;
+	color: #2d3748;
+	font-size: 1.1em;
+}
+</style>

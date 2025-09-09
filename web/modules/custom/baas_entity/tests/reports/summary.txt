@@ -1,0 +1,15 @@
+=== BaaS Entity 模块测试摘要 ===
+生成时间: Sun Jun  1 15:32:45 UTC 2025
+PHP版本: 8.4.2
+PHPUnit版本: PHPUnit 10.5.46 by Sebastian Bergmann and contributors.
+
+=== 测试统计 ===
+总测试数: 20
+
+=== 按测试类分组 ===
+  DrupalTestsbaas_entityUnitFieldTypeManagerUnitTest: 10 个测试
+  DrupalTestsbaas_entityUnitFieldTypePluginTest: 8 个测试
+  DrupalTestsbaas_entityUnitSimpleUnitTest: 2 个测试
+
+=== 测试执行结果 ===
+测试执行完成

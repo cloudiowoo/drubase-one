@@ -1,0 +1,31 @@
+{#
+/**
+ * @file
+ * 默认主题实现，显示实体字段表单。
+ *
+ * 可用变量:
+ * - form: 实体字段表单。
+ *
+ * @see \Drupal\baas_entity\Form\EntityFieldForm
+ *
+ * @ingroup themeable
+ */
+#}
+
+<div class="baas-entity-field-form-wrapper">
+	<h2>{{ '实体字段'|t }}</h2>
+
+	{% if form.template_info is defined %}
+		<div class="template-info">
+			{{ form.template_info }}
+		</div>
+	{% endif %}
+
+	<div class="form-content">
+		{{ form|without('template_info', 'actions') }}
+	</div>
+
+	<div class="form-actions">
+		{{ form.actions }}
+	</div>
+</div>

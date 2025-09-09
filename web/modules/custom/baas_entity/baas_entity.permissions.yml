@@ -1,0 +1,50 @@
+administer baas entity templates:
+  title: '管理BaaS实体模板'
+  description: '允许创建、编辑和删除实体模板'
+  restrict access: true
+
+view baas entity templates:
+  title: '查看BaaS实体模板'
+  description: '允许查看实体模板列表'
+
+create baas entity content:
+  title: '创建BaaS实体内容'
+  description: '允许在租户中创建实体内容'
+
+edit own baas entity content:
+  title: '编辑自己的BaaS实体内容'
+  description: '允许编辑用户自己创建的实体内容'
+
+edit any baas entity content:
+  title: '编辑任何BaaS实体内容'
+  description: '允许编辑任何用户创建的实体内容'
+  restrict access: true
+
+delete own baas entity content:
+  title: '删除自己的BaaS实体内容'
+  description: '允许删除用户自己创建的实体内容'
+
+delete any baas entity content:
+  title: '删除任何BaaS实体内容'
+  description: '允许删除任何用户创建的实体内容'
+  restrict access: true
+
+access tenant entity templates:
+  title: '访问租户实体模板'
+  description: '允许通过API访问租户的实体模板。'
+
+access tenant entity data:
+  title: '访问租户实体数据'
+  description: '允许通过API访问租户的实体数据。'
+
+create tenant entity data:
+  title: '创建租户实体数据'
+  description: '允许通过API创建租户的实体数据。'
+
+update tenant entity data:
+  title: '更新租户实体数据'
+  description: '允许通过API更新租户的实体数据。'
+
+delete tenant entity data:
+  title: '删除租户实体数据'
+  description: '允许通过API删除租户的实体数据。'

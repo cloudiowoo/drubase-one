@@ -1,0 +1,15 @@
+# BaaS Realtime default settings
+websocket_server_url: 'ws://localhost:4000'
+max_connections_per_project: 1000
+heartbeat_interval: 30
+connection_timeout: 300
+message_history_retention: 86400
+max_message_size: 65536
+enable_message_compression: true
+enable_message_batching: true
+batch_size: 10
+require_ssl: false
+allowed_origins: ''
+enable_connection_logging: true
+enable_message_logging: false
+log_level: 'info'

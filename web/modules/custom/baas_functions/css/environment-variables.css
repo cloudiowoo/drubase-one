@@ -1,0 +1,352 @@
+/**
+ * 环境变量管理界面样式
+ */
+
+/* 环境变量表格样式 */
+.env-vars-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.env-vars-table th {
+  background: #f8f9fa;
+  padding: 12px 16px;
+  font-weight: 600;
+  text-align: left;
+  border-bottom: 2px solid #e9ecef;
+  color: #495057;
+}
+
+.env-vars-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e9ecef;
+  vertical-align: top;
+}
+
+.env-vars-table tbody tr:hover {
+  background: #f8f9fa;
+}
+
+.env-vars-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* 操作按钮区域 */
+.action-buttons {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  align-items: center;
+}
+
+.action-buttons .button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.action-buttons .button--primary {
+  background: #007cba;
+  color: white;
+  border: 1px solid #007cba;
+}
+
+.action-buttons .button--primary:hover {
+  background: #005a87;
+  border-color: #005a87;
+}
+
+.action-buttons .button:not(.button--primary) {
+  background: #f8f9fa;
+  color: #495057;
+  border: 1px solid #ced4da;
+}
+
+.action-buttons .button:not(.button--primary):hover {
+  background: #e9ecef;
+  border-color: #adb5bd;
+}
+
+/* 面包屑导航 */
+.breadcrumb {
+  display: flex;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 24px 0;
+  background: #f8f9fa;
+  padding: 12px 16px;
+  border-radius: 4px;
+}
+
+.breadcrumb li {
+  display: flex;
+  align-items: center;
+}
+
+.breadcrumb li::after {
+  content: '>';
+  margin: 0 12px;
+  color: #6c757d;
+}
+
+.breadcrumb li:last-child::after {
+  display: none;
+}
+
+.breadcrumb a {
+  color: #007cba;
+  text-decoration: none;
+}
+
+.breadcrumb a:hover {
+  text-decoration: underline;
+}
+
+/* 环境变量表单样式 */
+.env-var-form {
+  max-width: 600px;
+  background: #fff;
+  padding: 24px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.env-var-form .form-item {
+  margin-bottom: 20px;
+}
+
+.env-var-form label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+  color: #212529;
+}
+
+.env-var-form input[type="text"],
+.env-var-form textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 14px;
+  line-height: 1.5;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.env-var-form input[type="text"]:focus,
+.env-var-form textarea:focus {
+  border-color: #007cba;
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(0, 124, 186, 0.25);
+}
+
+.env-var-form .form-item .description {
+  font-size: 13px;
+  color: #6c757d;
+  margin-top: 4px;
+}
+
+/* 安全提示样式 */
+.messages--warning {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 4px;
+  padding: 16px;
+  margin: 16px 0;
+  color: #856404;
+}
+
+.messages--warning strong {
+  color: #856404;
+}
+
+.messages--warning ul {
+  margin: 8px 0 0 0;
+  padding-left: 20px;
+}
+
+/* 删除确认页面样式 */
+.delete-confirmation-details {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 16px;
+  margin: 16px 0;
+}
+
+.delete-confirmation-details p {
+  margin: 0 0 12px 0;
+}
+
+.delete-confirmation-details ul {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.delete-confirmation-details ul li {
+  margin-bottom: 4px;
+}
+
+/* 导入格式帮助样式 */
+.import-format-help h4,
+.import-format-help h5 {
+  margin: 16px 0 8px 0;
+  color: #212529;
+}
+
+.import-format-help pre {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  padding: 12px;
+  overflow-x: auto;
+  font-size: 13px;
+  margin: 8px 0 16px 0;
+}
+
+.import-format-help code {
+  background: #f8f9fa;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-size: 13px;
+}
+
+.import-format-help ul {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.import-format-help li {
+  margin-bottom: 4px;
+}
+
+/* 环境变量预览样式 */
+.env-vars-preview {
+  background: #e7f3ff;
+  border: 1px solid #b3d9ff;
+  border-radius: 4px;
+  padding: 16px;
+  margin: 16px 0;
+}
+
+.env-vars-preview h4 {
+  margin: 0 0 12px 0;
+  color: #0056b3;
+}
+
+.env-vars-preview ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.env-vars-preview li {
+  margin-bottom: 4px;
+  font-family: monospace;
+  font-size: 13px;
+}
+
+/* 帮助信息样式 */
+.env-vars-help h4 {
+  margin: 16px 0 8px 0;
+  color: #212529;
+}
+
+.env-vars-help ul {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.env-vars-help li {
+  margin-bottom: 6px;
+}
+
+.env-vars-help pre {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  padding: 12px;
+  overflow-x: auto;
+  font-size: 13px;
+  margin: 12px 0;
+}
+
+.env-vars-help code {
+  background: #f8f9fa;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-size: 13px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .action-buttons {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .action-buttons .button {
+    text-align: center;
+  }
+  
+  .env-vars-table {
+    font-size: 14px;
+  }
+  
+  .env-vars-table th,
+  .env-vars-table td {
+    padding: 8px 12px;
+  }
+  
+  .breadcrumb {
+    flex-wrap: wrap;
+  }
+  
+  .env-var-form {
+    margin: 0 -12px;
+    border-radius: 0;
+  }
+}
+
+/* 空状态样式 */
+.env-vars-table tbody:empty::after {
+  content: "暂无环境变量。点击上方按钮创建第一个环境变量。";
+  display: block;
+  text-align: center;
+  padding: 40px 20px;
+  color: #6c757d;
+  font-style: italic;
+}
+
+/* 变量名称单元格样式 */
+.env-vars-table .var-name {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-weight: 600;
+  color: #d73a49;
+  font-size: 14px;
+}
+
+/* 状态标签样式 */
+.status-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-badge--active {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-badge--inactive {
+  background: #f8d7da;
+  color: #721c24;
+}

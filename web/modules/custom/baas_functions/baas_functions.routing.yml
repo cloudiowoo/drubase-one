@@ -1,0 +1,303 @@
+# 用户前台函数仪表板
+baas_functions.user_dashboard:
+  path: '/user/functions'
+  defaults:
+    _controller: '\Drupal\baas_functions\Controller\UserFunctionController::dashboard'
+    _title: '我的函数'
+  requirements:
+    _permission: 'access baas functions'
+
+# 用户选择项目创建函数
+baas_functions.user_create_select:
+  path: '/user/functions/create'
+  defaults:
+    _controller: '\Drupal\baas_functions\Controller\UserFunctionController::selectProjectForCreate'
+    _title: '选择项目创建函数'
+  requirements:
+    _permission: 'create project functions'
+
+# 项目函数管理界面路由  
+baas_functions.project_manager:
+  path: '/tenant/{tenant_id}/project/{project_id}/functions'
+  defaults:
+    _controller: '\Drupal\baas_functions\Controller\ProjectFunctionController::functionsManager'
+    _title: '项目函数管理'
+  requirements:
+    _custom_access: '\Drupal\baas_functions\Controller\ProjectFunctionController::accessProjectFunctions'
+
+# 项目函数创建界面
+baas_functions.project_function_create:
+  path: '/tenant/{tenant_id}/project/{project_id}/functions/create'
+  defaults:
+    _form: '\Drupal\baas_functions\Form\ProjectFunctionForm'
+    _title: '创建函数'
+  requirements:
+    _custom_access: '\Drupal\baas_functions\Controller\ProjectFunctionController::accessProjectFunctions'
+
+# 项目函数编辑界面
+baas_functions.project_function_edit:
+  path: '/tenant/{tenant_id}/project/{project_id}/functions/{function_id}/edit'
+  defaults:
+    _form: '\Drupal\baas_functions\Form\ProjectFunctionForm'
+    _title: '编辑函数'
+  requirements:
+    _custom_access: '\Drupal\baas_functions\Controller\ProjectFunctionController::accessProjectFunctions'
+
+# 项目函数删除确认界面
+baas_functions.project_function_delete:
+  path: '/tenant/{tenant_id}/project/{project_id}/functions/{function_id}/delete'
+  defaults:
+    _form: '\Drupal\baas_functions\Form\ProjectFunctionDeleteForm'
+    _title: '删除函数'
+  requirements:
+    _custom_access: '\Drupal\baas_functions\Controller\ProjectFunctionController::accessProjectFunctions'
+
+# 函数状态管理路由
+baas_functions.project_function_activate:
+  path: '/tenant/{tenant_id}/project/{project_id}/functions/{function_id}/activate'
+  defaults:
+    _controller: '\Drupal\baas_functions\Controller\ProjectFunctionController::activateFunction'
+    _title: '发布函数'
+  requirements:
+    _custom_access: '\Drupal\baas_functions\Controller\ProjectFunctionController::accessProjectFunctions'
+
+baas_functions.project_function_deactivate:
+  path: '/tenant/{tenant_id}/project/{project_id}/functions/{function_id}/deactivate'
+  defaults:
+    _controller: '\Drupal\baas_functions\Controller\ProjectFunctionController::deactivateFunction'
+    _title: '下线函数'
+  requirements:
+    _custom_access: '\Drupal\baas_functions\Controller\ProjectFunctionController::accessProjectFunctions'
+
+# 函数测试界面
+baas_functions.project_function_test:
+  path: '/tenant/{tenant_id}/project/{project_id}/functions/{function_id}/test'
+  defaults:
+    _controller: '\Drupal\baas_functions\Controller\ProjectFunctionController::testFunction'
+    _title: '测试函数'
+  requirements:
+    _custom_access: '\Drupal\baas_functions\Controller\ProjectFunctionController::accessProjectFunctions'
+
+# 项目环境变量管理界面
+baas_functions.project_env_vars:
+  path: '/tenant/{tenant_id}/project/{project_id}/functions/env-vars'
+  defaults:
+    _controller: '\Drupal\baas_functions\Controller\EnvironmentVariableController::envVarsManager'
+    _title: '环境变量管理'
+  requirements:
+    _custom_access: '\Drupal\baas_functions\Controller\EnvironmentVariableController::accessManageEnvVars'
+
+# 环境变量创建/编辑界面
+baas_functions.project_env_var_create:
+  path: '/tenant/{tenant_id}/project/{project_id}/functions/env-vars/create'
+  defaults:
+    _form: '\Drupal\baas_functions\Form\EnvironmentVariableForm'
+    _title: '创建环境变量'
+  requirements:
+    _custom_access: '\Drupal\baas_functions\Controller\EnvironmentVariableController::accessManageEnvVars'
+
+baas_functions.project_env_var_edit:
+  path: '/tenant/{tenant_id}/project/{project_id}/functions/env-vars/{var_name}/edit'
+  defaults:
+    _form: '\Drupal\baas_functions\Form\EnvironmentVariableForm'
+    _title: '编辑环境变量'
+  requirements:
+    _custom_access: '\Drupal\baas_functions\Controller\EnvironmentVariableController::accessManageEnvVars'
+
+# 环境变量删除确认界面
+baas_functions.project_env_var_delete:
+  path: '/tenant/{tenant_id}/project/{project_id}/functions/env-vars/{var_name}/delete'
+  defaults:
+    _form: '\Drupal\baas_functions\Form\EnvironmentVariableDeleteForm'
+    _title: '删除环境变量'
+  requirements:
+    _custom_access: '\Drupal\baas_functions\Controller\EnvironmentVariableController::accessManageEnvVars'
+
+# 环境变量批量导入界面
+baas_functions.project_env_vars_import:
+  path: '/tenant/{tenant_id}/project/{project_id}/functions/env-vars/import'
+  defaults:
+    _form: '\Drupal\baas_functions\Form\EnvironmentVariableImportForm'
+    _title: '批量导入环境变量'
+  requirements:
+    _custom_access: '\Drupal\baas_functions\Controller\EnvironmentVariableController::accessManageEnvVars'
+
+# 函数设置和配置界面
+baas_functions.settings:
+  path: '/admin/baas/functions/settings'
+  defaults:
+    _form: '\Drupal\baas_functions\Form\FunctionSettingsForm'
+    _title: 'BaaS Functions Settings'
+  requirements:
+    _permission: 'administer baas functions'
+
+# Node.js服务状态检查
+baas_functions.nodejs_status:
+  path: '/admin/baas/functions/nodejs-status'
+  defaults:
+    _controller: '\Drupal\baas_functions\Controller\NodejsStatusController::status'
+    _title: 'Node.js Service Status'
+  requirements:
+    _permission: 'administer baas functions'
+
+# API路由 - 函数执行
+baas_functions.api.execute:
+  path: '/api/v1/{tenant_id}/projects/{project_id}/functions/{function_name}'
+  defaults:
+    _controller: '\Drupal\baas_functions\Controller\ProjectFunctionApiController::executeFunction'
+  methods: [POST]
+  requirements:
+    _custom_access: '\Drupal\baas_functions\Controller\ProjectFunctionApiController::accessExecuteFunction'
+  options:
+    _auth: ['api_key', 'jwt']
+
+# API路由 - 函数列表
+baas_functions.api.list:
+  path: '/api/v1/{tenant_id}/projects/{project_id}/functions'
+  defaults:
+    _controller: '\Drupal\baas_functions\Controller\ProjectFunctionApiController::listFunctions'
+  methods: [GET]
+  requirements:
+    _custom_access: '\Drupal\baas_functions\Controller\ProjectFunctionApiController::accessViewFunctions'
+  options:
+    _auth: ['api_key', 'jwt']
+
+# API路由 - 创建函数
+baas_functions.api.create:
+  path: '/api/v1/{tenant_id}/projects/{project_id}/functions'
+  defaults:
+    _controller: '\Drupal\baas_functions\Controller\ProjectFunctionApiController::createFunction'
+  methods: [POST]
+  requirements:
+    _custom_access: '\Drupal\baas_functions\Controller\ProjectFunctionApiController::accessCreateFunction'
+  options:
+    _auth: ['api_key', 'jwt']
+
+# API路由 - 获取函数详情
+baas_functions.api.get:
+  path: '/api/v1/{tenant_id}/projects/{project_id}/functions/{function_name}'
+  defaults:
+    _controller: '\Drupal\baas_functions\Controller\ProjectFunctionApiController::getFunction'
+  methods: [GET]
+  requirements:
+    _custom_access: '\Drupal\baas_functions\Controller\ProjectFunctionApiController::accessViewFunctions'
+  options:
+    _auth: ['api_key', 'jwt']
+
+# API路由 - 更新函数
+baas_functions.api.update:
+  path: '/api/v1/{tenant_id}/projects/{project_id}/functions/{function_name}'
+  defaults:
+    _controller: '\Drupal\baas_functions\Controller\ProjectFunctionApiController::updateFunction'
+  methods: [PUT]
+  requirements:
+    _custom_access: '\Drupal\baas_functions\Controller\ProjectFunctionApiController::accessEditFunction'
+  options:
+    _auth: ['api_key', 'jwt']
+
+# API路由 - 删除函数
+baas_functions.api.delete:
+  path: '/api/v1/{tenant_id}/projects/{project_id}/functions/{function_name}'
+  defaults:
+    _controller: '\Drupal\baas_functions\Controller\ProjectFunctionApiController::deleteFunction'
+  methods: [DELETE]
+  requirements:
+    _custom_access: '\Drupal\baas_functions\Controller\ProjectFunctionApiController::accessDeleteFunction'
+  options:
+    _auth: ['api_key', 'jwt']
+
+# API路由 - 函数测试
+baas_functions.api.test:
+  path: '/api/v1/{tenant_id}/projects/{project_id}/functions/{function_name}/test'
+  defaults:
+    _controller: '\Drupal\baas_functions\Controller\ProjectFunctionApiController::testFunction'
+  methods: [POST]
+  requirements:
+    _custom_access: '\Drupal\baas_functions\Controller\ProjectFunctionApiController::accessEditFunction'
+  options:
+    _auth: ['api_key', 'jwt']
+
+# API路由 - 函数状态管理
+baas_functions.api.status:
+  path: '/api/v1/{tenant_id}/projects/{project_id}/functions/{function_name}/status'
+  defaults:
+    _controller: '\Drupal\baas_functions\Controller\ProjectFunctionApiController::changeStatus'
+  methods: [PATCH]
+  requirements:
+    _custom_access: '\Drupal\baas_functions\Controller\ProjectFunctionApiController::accessEditFunction'
+  options:
+    _auth: ['api_key', 'jwt']
+
+# API路由 - 函数执行日志
+baas_functions.api.logs:
+  path: '/api/v1/{tenant_id}/projects/{project_id}/functions/{function_name}/logs'
+  defaults:
+    _controller: '\Drupal\baas_functions\Controller\ProjectFunctionApiController::getFunctionLogs'
+  methods: [GET]
+  requirements:
+    _custom_access: '\Drupal\baas_functions\Controller\ProjectFunctionApiController::accessViewFunctions'
+  options:
+    _auth: ['api_key', 'jwt']
+
+# API路由 - 函数版本管理
+baas_functions.api.versions:
+  path: '/api/v1/{tenant_id}/projects/{project_id}/functions/{function_name}/versions'
+  defaults:
+    _controller: '\Drupal\baas_functions\Controller\ProjectFunctionApiController::getFunctionVersions'
+  methods: [GET]
+  requirements:
+    _custom_access: '\Drupal\baas_functions\Controller\ProjectFunctionApiController::accessViewFunctions'
+  options:
+    _auth: ['api_key', 'jwt']
+
+# API路由 - 函数版本回滚
+baas_functions.api.rollback:
+  path: '/api/v1/{tenant_id}/projects/{project_id}/functions/{function_name}/rollback/{version}'
+  defaults:
+    _controller: '\Drupal\baas_functions\Controller\ProjectFunctionApiController::rollbackFunction'
+  methods: [POST]
+  requirements:
+    _custom_access: '\Drupal\baas_functions\Controller\ProjectFunctionApiController::accessEditFunction'
+  options:
+    _auth: ['api_key', 'jwt']
+
+# 环境变量管理API
+baas_functions.api.env_list:
+  path: '/api/v1/{tenant_id}/projects/{project_id}/functions/env-vars'
+  defaults:
+    _controller: '\Drupal\baas_functions\Controller\EnvironmentVariableApiController::listEnvVars'
+  methods: [GET]
+  requirements:
+    _custom_access: '\Drupal\baas_functions\Controller\EnvironmentVariableApiController::accessManageEnvVars'
+  options:
+    _auth: ['api_key', 'jwt']
+
+baas_functions.api.env_create:
+  path: '/api/v1/{tenant_id}/projects/{project_id}/functions/env-vars'
+  defaults:
+    _controller: '\Drupal\baas_functions\Controller\EnvironmentVariableApiController::createEnvVar'
+  methods: [POST]
+  requirements:
+    _custom_access: '\Drupal\baas_functions\Controller\EnvironmentVariableApiController::accessManageEnvVars'
+  options:
+    _auth: ['api_key', 'jwt']
+
+baas_functions.api.env_update:
+  path: '/api/v1/{tenant_id}/projects/{project_id}/functions/env-vars/{var_name}'
+  defaults:
+    _controller: '\Drupal\baas_functions\Controller\EnvironmentVariableApiController::updateEnvVar'
+  methods: [PUT]
+  requirements:
+    _custom_access: '\Drupal\baas_functions\Controller\EnvironmentVariableApiController::accessManageEnvVars'
+  options:
+    _auth: ['api_key', 'jwt']
+
+baas_functions.api.env_delete:
+  path: '/api/v1/{tenant_id}/projects/{project_id}/functions/env-vars/{var_name}'
+  defaults:
+    _controller: '\Drupal\baas_functions\Controller\EnvironmentVariableApiController::deleteEnvVar'
+  methods: [DELETE]
+  requirements:
+    _custom_access: '\Drupal\baas_functions\Controller\EnvironmentVariableApiController::accessManageEnvVars'
+  options:
+    _auth: ['api_key', 'jwt']

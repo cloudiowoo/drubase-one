@@ -1,0 +1,177 @@
+{#
+/**
+ * @file
+ * BaaS统一文件管理界面模板。
+ *
+ * Available variables:
+ * - tenants: 用户可访问的租户列表
+ * - projects: 用户可访问的项目列表
+ * - statistics: 文件统计信息
+ * - user_permissions: 用户权限
+ */
+#}
+
+<div class="baas-file-manager">
+  <div class="file-manager-header">
+    <h1 class="page-title">{{ 'BaaS文件管理'|t }}</h1>
+    <div class="header-actions">
+      {% if user_permissions.manage_project_files %}
+        <button class="btn btn-primary upload-file-btn" data-action="upload">
+          <i class="icon-upload"></i> {{ '上传文件'|t }}
+        </button>
+      {% endif %}
+      {% if user_permissions.view_file_statistics %}
+        <button class="btn btn-secondary statistics-btn" data-action="statistics">
+          <i class="icon-chart"></i> {{ '统计信息'|t }}
+        </button>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="file-manager-content">
+    <!-- 统计概览 -->
+    <div class="statistics-overview">
+      <div class="stat-card">
+        <div class="stat-value">{{ statistics.total_files }}</div>
+        <div class="stat-label">{{ '总文件数'|t }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">{{ statistics.total_size_formatted }}</div>
+        <div class="stat-label">{{ '总存储空间'|t }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">{{ projects|length }}</div>
+        <div class="stat-label">{{ '项目数量'|t }}</div>
+      </div>
+    </div>
+
+    <!-- 主要内容区域 -->
+    <div class="file-manager-main">
+      <!-- 左侧导航 - 仅显示项目 -->
+      <div class="file-manager-sidebar">
+        <div class="sidebar-section">
+          <h3 class="sidebar-title">{{ '我的项目'|t }}</h3>
+          <ul class="project-list">
+            {% for project in projects %}
+              <li class="project-item" data-project-id="{{ project.id }}" data-tenant-id="{{ project.tenant_id }}">
+                <div class="project-info">
+                  <span class="project-name">{{ project.name }}</span>
+                  <span class="project-role badge badge-{{ project.role }}">{{ project.role|title }}</span>
+                </div>
+                {% if statistics.by_project[project.id] %}
+                  <div class="project-stats">
+                    <small>{{ statistics.by_project[project.id].file_count }} 文件 | {{ statistics.by_project[project.id].total_size_formatted }}</small>
+                  </div>
+                {% endif %}
+                <div class="project-permissions">
+                  {% if project.file_permissions.view %}
+                    <span class="permission view" title="{{ '查看权限'|t }}">👁</span>
+                  {% endif %}
+                  {% if project.file_permissions.upload %}
+                    <span class="permission upload" title="{{ '上传权限'|t }}">⬆</span>
+                  {% endif %}
+                  {% if project.file_permissions.manage %}
+                    <span class="permission manage" title="{{ '管理权限'|t }}">⚙</span>
+                  {% endif %}
+                  {% if project.file_permissions.delete %}
+                    <span class="permission delete" title="{{ '删除权限'|t }}">🗑</span>
+                  {% endif %}
+                </div>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+
+      <!-- 右侧文件内容区域 -->
+      <div class="file-manager-content-area">
+        <div class="content-header">
+          <div class="breadcrumb">
+            <span class="breadcrumb-item active">{{ '所有文件'|t }}</span>
+          </div>
+          <div class="view-controls">
+            <button class="btn btn-sm view-grid active" data-view="grid">
+              <i class="icon-grid"></i>
+            </button>
+            <button class="btn btn-sm view-list" data-view="list">
+              <i class="icon-list"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="file-content" id="file-content">
+          <div class="loading-state">
+            <div class="spinner"></div>
+            <p>{{ '正在加载文件...'|t }}</p>
+          </div>
+        </div>
+
+        <!-- 分页器 -->
+        <div class="file-pagination" id="file-pagination"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 文件上传模态框 -->
+<div class="modal fade" id="uploadModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ '上传文件'|t }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="upload-form" enctype="multipart/form-data">
+          <div class="mb-3">
+            <label for="upload-project" class="form-label">{{ '选择项目'|t }}</label>
+            <select class="form-select" id="upload-project" required>
+              <option value="">{{ '请选择项目'|t }}</option>
+              {% for project in projects %}
+                {% if project.file_permissions.upload %}
+                  <option value="{{ project.id }}">{{ project.name }}</option>
+                {% endif %}
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="upload-files" class="form-label">{{ '选择文件'|t }}</label>
+            <input type="file" class="form-control" id="upload-files" multiple>
+            <div class="form-text">{{ '支持多文件上传，最大单文件大小: 50MB'|t }}</div>
+          </div>
+          <div class="upload-progress" style="display: none;">
+            <div class="progress">
+              <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ '取消'|t }}</button>
+        <button type="button" class="btn btn-primary" id="upload-submit">{{ '上传'|t }}</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 文件详情模态框 -->
+<div class="modal fade" id="fileDetailModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ '文件详情'|t }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="file-detail-content">
+        <!-- 动态加载文件详情 -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{{ '关闭'|t }}</button>
+        <div class="file-actions">
+          <button type="button" class="btn btn-primary download-btn">{{ '下载'|t }}</button>
+          <button type="button" class="btn btn-danger delete-btn">{{ '删除'|t }}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

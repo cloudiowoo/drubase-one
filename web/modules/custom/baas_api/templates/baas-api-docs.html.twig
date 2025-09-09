@@ -1,0 +1,151 @@
+{#
+/**
+ * @file
+ * Template for API文档页面.
+ *
+ * 可用变量:
+ * - docs: OpenAPI文档数组.
+ * - title: 页面标题.
+ */
+#}
+
+<div class="baas-api-docs">
+	<header class="baas-api-docs__header">
+		<h1>{{ title }}</h1>
+		<div class="baas-api-docs__actions">
+			<a href="#" class="button js-baas-api-docs-expand-all">展开全部</a>
+			<a href="#" class="button js-baas-api-docs-collapse-all">折叠全部</a>
+			<a href="{{ path('baas_api.download_docs') }}" class="button">下载文档</a>
+		</div>
+	</header>
+
+	<div id="swagger-ui" class="swagger-ui-container"></div>
+</div>
+
+<script src="https://unpkg.com/swagger-ui-dist@5.3.1/swagger-ui-bundle.js"></script>
+<script src="https://unpkg.com/swagger-ui-dist@5.3.1/swagger-ui-standalone-preset.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.3.1/swagger-ui.css">
+
+<script>
+	(function () { // 初始化Swagger UI
+window.onload = function () {
+const ui = SwaggerUIBundle({
+spec: {{ docs|json_encode|raw }},
+dom_id: '#swagger-ui',
+deepLinking: true,
+presets: [
+SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset
+],
+plugins: [SwaggerUIBundle.plugins.DownloadUrl],
+layout: "StandaloneLayout",
+defaultModelsExpandDepth: 1,
+defaultModelExpandDepth: 1,
+displayRequestDuration: true,
+docExpansion: "list",
+filter: true,
+tryItOutEnabled: true
+});
+
+window.ui = ui;
+
+// 展开全部按钮事件
+document.querySelector('.js-baas-api-docs-expand-all').addEventListener('click', function (e) {
+e.preventDefault();
+ui.layoutActions.show(null, true);
+});
+
+// 折叠全部按钮事件
+document.querySelector('.js-baas-api-docs-collapse-all').addEventListener('click', function (e) {
+e.preventDefault();
+ui.layoutActions.show(null, false);
+});
+}
+})();
+</script>
+
+<style>
+	.baas-api-docs {
+		max-width: 1200px;
+		margin: 0 auto;
+		padding: 20px;
+	}
+
+	.baas-api-docs__header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 20px;
+		padding-bottom: 20px;
+		border-bottom: 1px solid #ddd;
+	}
+
+	.baas-api-docs__actions {
+		display: flex;
+		gap: 10px;
+	}
+
+	.button {
+		display: inline-block;
+		padding: 8px 16px;
+		background: #0071b8;
+		color: white;
+		text-decoration: none;
+		border-radius: 4px;
+		font-weight: 500;
+	}
+
+	.button:hover {
+		background: #00598f;
+	}
+
+	.swagger-ui .opblock-tag {
+		font-size: 1.2rem;
+	}
+
+	.swagger-ui .opblock .opblock-summary-description {
+		font-size: 0.9rem;
+	}
+
+	/* 修改Swagger UI样式以匹配Drupal主题 */
+	.swagger-ui .btn.execute {
+		background-color: #0071b8;
+		border-color: #0071b8;
+	}
+
+	.swagger-ui .btn.execute:hover {
+		background-color: #00598f;
+		border-color: #00598f;
+	}
+
+	.swagger-ui .opblock.opblock-get {
+		border-color: #0071b8;
+	}
+
+	.swagger-ui .opblock.opblock-get .opblock-summary-method {
+		background-color: #0071b8;
+	}
+
+	.swagger-ui .opblock.opblock-post {
+		border-color: #00914a;
+	}
+
+	.swagger-ui .opblock.opblock-post .opblock-summary-method {
+		background-color: #00914a;
+	}
+
+	.swagger-ui .opblock.opblock-put {
+		border-color: #de7400;
+	}
+
+	.swagger-ui .opblock.opblock-put .opblock-summary-method {
+		background-color: #de7400;
+	}
+
+	.swagger-ui .opblock.opblock-delete {
+		border-color: #d93636;
+	}
+
+	.swagger-ui .opblock.opblock-delete .opblock-summary-method {
+		background-color: #d93636;
+	}
+</style>

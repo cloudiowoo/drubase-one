@@ -1,0 +1,17 @@
+function_test:
+  version: VERSION
+  js:
+    js/function-test.js: {}
+  css:
+    theme:
+      css/function-test.css: {}
+  dependencies:
+    - core/drupal
+
+environment_variables:
+  version: VERSION
+  css:
+    theme:
+      css/environment-variables.css: {}
+  dependencies:
+    - core/drupal

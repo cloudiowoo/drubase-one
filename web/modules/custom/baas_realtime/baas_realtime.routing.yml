@@ -1,0 +1,172 @@
+# 实时API直接路由 - 支持租户级和项目级访问
+# 这些路由提供直接访问，与baas_entity模块的路由模式保持一致
+
+# 租户级实时API路由
+baas_realtime.api_tenant_auth:
+  path: '/api/v1/{tenant_id}/realtime/auth'
+  defaults:
+    _controller: '\Drupal\baas_realtime\Controller\WebSocketController::authenticateConnection'
+  requirements:
+    _access: 'TRUE'
+  methods: [POST]
+  options:
+    _auth: ['api_key', 'jwt']
+
+baas_realtime.api_tenant_subscribe:
+  path: '/api/v1/{tenant_id}/realtime/subscribe'
+  defaults:
+    _controller: '\Drupal\baas_realtime\Controller\WebSocketController::subscribe'
+  requirements:
+    _access: 'TRUE'
+  methods: [POST]
+  options:
+    _auth: ['api_key', 'jwt']
+
+baas_realtime.api_tenant_unsubscribe:
+  path: '/api/v1/{tenant_id}/realtime/unsubscribe'
+  defaults:
+    _controller: '\Drupal\baas_realtime\Controller\WebSocketController::unsubscribe'
+  requirements:
+    _access: 'TRUE'
+  methods: [POST]
+  options:
+    _auth: ['api_key', 'jwt']
+
+baas_realtime.api_tenant_broadcast:
+  path: '/api/v1/{tenant_id}/realtime/broadcast'
+  defaults:
+    _controller: '\Drupal\baas_realtime\Controller\WebSocketController::broadcast'
+  requirements:
+    _access: 'TRUE'
+  methods: [POST]
+  options:
+    _auth: ['api_key', 'jwt']
+
+baas_realtime.api_tenant_filter:
+  path: '/api/v1/{tenant_id}/realtime/filter'
+  defaults:
+    _controller: '\Drupal\baas_realtime\Controller\WebSocketController::filterMessage'
+  requirements:
+    _access: 'TRUE'
+  methods: [POST]
+  options:
+    _auth: ['api_key', 'jwt']
+
+# 项目级实时API路由
+baas_realtime.api_project_auth:
+  path: '/api/v1/{tenant_id}/projects/{project_id}/realtime/auth'
+  defaults:
+    _controller: '\Drupal\baas_realtime\Controller\WebSocketController::authenticateConnection'
+  requirements:
+    _access: 'TRUE'
+  methods: [POST]
+  options:
+    _auth: ['api_key', 'jwt']
+
+baas_realtime.api_project_subscribe:
+  path: '/api/v1/{tenant_id}/projects/{project_id}/realtime/subscribe'
+  defaults:
+    _controller: '\Drupal\baas_realtime\Controller\WebSocketController::subscribe'
+  requirements:
+    _access: 'TRUE'
+  methods: [POST]
+  options:
+    _auth: ['api_key', 'jwt']
+
+baas_realtime.api_project_unsubscribe:
+  path: '/api/v1/{tenant_id}/projects/{project_id}/realtime/unsubscribe'
+  defaults:
+    _controller: '\Drupal\baas_realtime\Controller\WebSocketController::unsubscribe'
+  requirements:
+    _access: 'TRUE'
+  methods: [POST]
+  options:
+    _auth: ['api_key', 'jwt']
+
+baas_realtime.api_project_broadcast:
+  path: '/api/v1/{tenant_id}/projects/{project_id}/realtime/broadcast'
+  defaults:
+    _controller: '\Drupal\baas_realtime\Controller\WebSocketController::broadcast'
+  requirements:
+    _access: 'TRUE'
+  methods: [POST]
+  options:
+    _auth: ['api_key', 'jwt']
+
+baas_realtime.api_project_filter:
+  path: '/api/v1/{tenant_id}/projects/{project_id}/realtime/filter'
+  defaults:
+    _controller: '\Drupal\baas_realtime\Controller\WebSocketController::filterMessage'
+  requirements:
+    _access: 'TRUE'
+  methods: [POST]
+  options:
+    _auth: ['api_key', 'jwt']
+
+baas_realtime.settings:
+  path: '/admin/config/baas/realtime'
+  defaults:
+    _form: '\Drupal\baas_realtime\Form\RealtimeSettingsForm'
+    _title: 'BaaS Realtime Settings'
+  requirements:
+    _permission: 'administer baas realtime'
+
+# 项目实时管理页面
+baas_realtime.project_manage:
+  path: '/tenant/{tenant_id}/project/{project_id}/realtime'
+  defaults:
+    _controller: '\Drupal\baas_realtime\Controller\ProjectRealtimeController::managePage'
+    _title: '实时功能管理'
+  requirements:
+    _custom_access: '\Drupal\baas_realtime\Controller\ProjectRealtimeController::checkAccess'
+
+# 项目实时配置API
+baas_realtime.api.project.config:
+  path: '/admin/baas/realtime/project/{tenant_id}/{project_id}/config'
+  defaults:
+    _controller: '\Drupal\baas_realtime\Controller\ProjectRealtimeController::getConfig'
+  methods: [GET]
+  requirements:
+    _custom_access: '\Drupal\baas_realtime\Controller\ProjectRealtimeController::checkAccess'
+
+baas_realtime.api.project.save:
+  path: '/admin/baas/realtime/project/{tenant_id}/{project_id}/config'
+  defaults:
+    _controller: '\Drupal\baas_realtime\Controller\ProjectRealtimeController::saveConfig'
+  methods: [POST]
+  requirements:
+    _custom_access: '\Drupal\baas_realtime\Controller\ProjectRealtimeController::checkAccess'
+
+baas_realtime.api.project.toggle:
+  path: '/admin/baas/realtime/project/{tenant_id}/{project_id}/entity/{entity_name}/toggle'
+  defaults:
+    _controller: '\Drupal\baas_realtime\Controller\ProjectRealtimeController::toggleEntity'
+  methods: [POST]
+  requirements:
+    _custom_access: '\Drupal\baas_realtime\Controller\ProjectRealtimeController::checkAccess'
+
+# 管理员路由
+baas_realtime.admin.connections:
+  path: '/admin/structure/baas/realtime/connections'
+  defaults:
+    _controller: '\Drupal\baas_realtime\Controller\RealtimeAdminController::connectionsList'
+    _title: '实时连接监控'
+  requirements:
+    _permission: 'administer baas realtime'
+
+baas_realtime.admin.stats:
+  path: '/admin/reports/baas-realtime-stats'
+  defaults:
+    _controller: '\Drupal\baas_realtime\Controller\RealtimeAdminController::statistics'
+    _title: '实时统计报告'
+  requirements:
+    _permission: 'administer baas realtime'
+
+# 用户路由
+baas_realtime.user_projects:
+  path: '/user/realtime-projects'
+  defaults:
+    _controller: '\Drupal\baas_realtime\Controller\RealtimeUserController::userProjects'
+    _title: '我的实时项目'
+  requirements:
+    _permission: 'access realtime'

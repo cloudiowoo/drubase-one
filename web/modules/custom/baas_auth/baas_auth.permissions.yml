@@ -1,0 +1,85 @@
+administer baas auth:
+  title: '管理BaaS认证设置'
+  description: '允许配置BaaS认证模块的JWT、安全和权限设置'
+  restrict access: TRUE
+
+access baas auth api:
+  title: '访问BaaS认证API'
+  description: '允许访问BaaS认证API端点'
+
+manage user authentication:
+  title: '管理用户认证'
+  description: '允许管理用户的认证状态和会话'
+
+manage api keys:
+  title: '管理API密钥'
+  description: '允许创建、更新和删除API密钥'
+
+assign user roles:
+  title: '分配用户角色'
+  description: '允许为用户分配和撤销角色'
+
+view security logs:
+  title: '查看安全日志'
+  description: '允许查看认证和授权相关的安全日志'
+
+manage tenant users:
+  title: 'Manage Tenant Users'
+  description: 'Create, edit, and delete tenant users within the same tenant.'
+
+entity.create:
+  title: 'Create Entities'
+  description: 'Create new entities within the tenant.'
+
+entity.read:
+  title: 'Read Entities'
+  description: 'View and read entities within the tenant.'
+
+entity.update:
+  title: 'Update Entities'
+  description: 'Modify existing entities within the tenant.'
+
+entity.delete:
+  title: 'Delete Entities'
+  description: 'Delete entities within the tenant.'
+
+# 项目级权限定义
+create own project:
+  title: '创建自己的项目'
+  description: '允许用户在租户内创建项目'
+
+manage own projects:
+  title: '管理自己的项目'
+  description: '允许用户管理自己创建的项目'
+
+access project as member:
+  title: '作为成员访问项目'
+  description: '允许用户作为成员访问被邀请的项目'
+
+manage project members:
+  title: '管理项目成员'
+  description: '允许添加、移除和修改项目成员角色'
+
+access project entities:
+  title: '访问项目实体'
+  description: '允许查看项目中的实体数据'
+
+create project entities:
+  title: '创建项目实体'
+  description: '允许在项目中创建新的实体模板和数据'
+
+edit project entities:
+  title: '编辑项目实体'
+  description: '允许修改项目中的实体模板和数据'
+
+delete project entities:
+  title: '删除项目实体'
+  description: '允许删除项目中的实体模板和数据'
+
+manage project:
+  title: '管理项目'
+  description: '允许完全管理项目（项目所有者权限）'
+
+switch project context:
+  title: '切换项目上下文'
+  description: '允许用户在不同项目间切换工作上下文'

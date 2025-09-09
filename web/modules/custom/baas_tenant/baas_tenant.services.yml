@@ -1,0 +1,46 @@
+services:
+  baas_tenant.manager:
+    class: Drupal\baas_tenant\TenantManager
+    arguments: ['@database', '@config.factory', '@logger.factory', '@state', '@event_dispatcher', '@cache.default']
+    public: true
+
+  baas_tenant.event_subscriber:
+    class: Drupal\baas_tenant\EventSubscriber\TenantRequestSubscriber
+    arguments: ['@baas_tenant.resolver', '@logger.channel.baas_tenant', '@state']
+    tags:
+      - { name: event_subscriber }
+
+  baas_tenant.resolver:
+    class: Drupal\baas_tenant\TenantResolver
+    arguments: ['@request_stack', '@database', '@baas_tenant.manager', '@logger.channel.baas_tenant']
+    public: true
+
+  baas_tenant.request_subscriber:
+    class: Drupal\baas_tenant\EventSubscriber\TenantRequestSubscriber
+    arguments: ['@baas_tenant.resolver', '@logger.channel.baas_tenant', '@state']
+    tags:
+      - { name: event_subscriber }
+
+  logger.channel.baas_tenant:
+    parent: logger.channel_base
+    arguments: ['baas_tenant']
+
+  baas_tenant.access_check:
+    class: Drupal\baas_tenant\Access\TenantAccessCheck
+    arguments: ['@baas_tenant.resolver', '@request_stack', '@logger.factory', '@baas_tenant.permission_checker']
+    tags:
+      - { name: access_check, applies_to: _tenant_access }
+
+  baas_tenant.permission_checker:
+    class: Drupal\baas_tenant\Service\TenantPermissionChecker
+    arguments: ['@database', '@logger.factory', '@baas_auth.user_tenant_mapping']
+
+  baas_tenant.menu_access:
+    class: Drupal\baas_tenant\Access\TenantMenuAccessCheck
+    arguments: ['@entity_type.manager']
+    tags:
+      - { name: access_check, applies_to: _custom_access }
+
+  baas_tenant.menu_access_checker:
+    class: Drupal\baas_tenant\Access\MenuAccessChecker
+

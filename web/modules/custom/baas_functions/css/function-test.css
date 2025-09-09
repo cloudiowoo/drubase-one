@@ -1,0 +1,108 @@
+/**
+ * @file
+ * BaaS Functions test interface styles.
+ */
+
+.baas-function-test {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.function-info {
+  background: #f8f9fa;
+  padding: 1rem;
+  margin-bottom: 2rem;
+  border-radius: 4px;
+  border: 1px solid #dee2e6;
+}
+
+.test-form {
+  background: white;
+  padding: 2rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-bottom: 2rem;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+  color: #495057;
+}
+
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.form-group textarea {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  resize: vertical;
+}
+
+.form-actions {
+  margin-bottom: 1rem;
+}
+
+.form-actions .button {
+  margin-right: 1rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  border: none;
+}
+
+.form-actions .button--primary {
+  background: #28a745;
+  color: white;
+}
+
+.form-actions .button--primary:hover {
+  background: #218838;
+}
+
+.form-actions .button:not(.button--primary) {
+  background: white;
+  color: #495057;
+  border: 1px solid #ddd;
+}
+
+.form-actions .button:not(.button--primary):hover {
+  background: #f8f9fa;
+}
+
+#test-results {
+  margin-top: 2rem;
+}
+
+#test-output {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  white-space: pre-wrap;
+  font-size: 13px;
+  line-height: 1.4;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.function-info code {
+  background: #e9ecef;
+  padding: 0.2rem 0.4rem;
+  border-radius: 3px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 12px;
+}

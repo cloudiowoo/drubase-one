@@ -1,0 +1,92 @@
+services:
+  # 项目函数管理器 - 核心业务逻辑服务
+  baas_functions.manager:
+    class: Drupal\baas_functions\Service\ProjectFunctionManager
+    arguments: 
+      - '@database'
+      - '@baas_project.manager'
+      - '@baas_auth.unified_permission_checker'
+      - '@http_client'
+      - '@config.factory'
+      - '@logger.factory'
+
+  # 函数执行器 - 与Node.js服务通信
+  baas_functions.executor:
+    class: Drupal\baas_functions\Service\FunctionExecutor
+    arguments:
+      - '@baas_functions.manager'
+      - '@http_client'
+      - '@logger.factory'
+      - '@config.factory'
+      - '@database'
+      - '@baas_functions.env_manager'
+
+  # 代码验证器 - 验证函数代码规范和安全性
+  baas_functions.validator:
+    class: Drupal\baas_functions\Service\CodeValidator
+    arguments:
+      - '@config.factory'
+      - '@logger.factory'
+
+  # 环境变量管理器 - 管理项目级环境变量
+  baas_functions.env_manager:
+    class: Drupal\baas_functions\Service\EnvironmentVariableManager
+    arguments:
+      - '@database'
+      - '@baas_auth.unified_permission_checker'
+      - '@logger.factory'
+
+  # 函数统计服务 - 收集和分析函数执行统计
+  baas_functions.statistics:
+    class: Drupal\baas_functions\Service\FunctionStatistics
+    arguments:
+      - '@database'
+      - '@logger.factory'
+
+  # 版本管理器 - 管理函数版本和历史
+  baas_functions.version_manager:
+    class: Drupal\baas_functions\Service\VersionManager
+    arguments:
+      - '@database'
+      - '@baas_functions.manager'
+      - '@logger.factory'
+
+  # 日志管理器 - 管理函数执行日志
+  baas_functions.log_manager:
+    class: Drupal\baas_functions\Service\LogManager
+    arguments:
+      - '@database'
+      - '@logger.factory'
+
+  # 第三方API服务 - 微信API集成
+  baas_functions.wechat_api:
+    class: Drupal\baas_functions\Service\WeChatApiService
+    arguments:
+      - '@http_client'
+      - '@config.factory'
+      - '@logger.factory'
+
+  # 第三方API服务 - 支付宝API集成  
+  baas_functions.alipay_api:
+    class: Drupal\baas_functions\Service\AlipayApiService
+    arguments:
+      - '@http_client'
+      - '@config.factory'
+      - '@logger.factory'
+
+  # Node.js服务通信管理器
+  baas_functions.nodejs_client:
+    class: Drupal\baas_functions\Service\NodejsClient
+    arguments:
+      - '@http_client'
+      - '@config.factory'
+      - '@logger.factory'
+
+  # 函数部署管理器
+  baas_functions.deployment:
+    class: Drupal\baas_functions\Service\DeploymentManager
+    arguments:
+      - '@baas_functions.manager'
+      - '@baas_functions.nodejs_client'
+      - '@baas_functions.version_manager'
+      - '@logger.factory'

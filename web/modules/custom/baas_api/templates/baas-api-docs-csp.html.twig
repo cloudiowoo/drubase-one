@@ -1,0 +1,177 @@
+{#
+/**
+ * @file
+ * CSP-compliant template for API文档页面.
+ */
+#}
+
+<!-- CSP COMPLIANT TEMPLATE LOADED -->
+<div class="baas-api-docs">
+	<header class="baas-api-docs__header">
+		<h1>{{ title }}</h1>
+		<div class="baas-api-docs__actions">
+			<a href="#" class="button js-expand-all">展开全部</a>
+			<a href="#" class="button js-collapse-all">折叠全部</a>
+			<a href="{{ path('baas_api.download_docs') }}" class="button">下载文档</a>
+		</div>
+	</header>
+
+	<div class="api-info">
+		<h2>{{ docs.info.title }}</h2>
+		<p>{{ docs.info.description }}</p>
+		<p><strong>版本:</strong> {{ docs.info.version }}</p>
+		<p><strong>OpenAPI:</strong> {{ docs.openapi }}</p>
+	</div>
+
+	<div class="api-servers">
+		<h2>服务器</h2>
+		{% for server in docs.servers %}
+			<div class="server">
+				<strong>{{ server.url }}</strong>
+				{% if server.description %}
+					- {{ server.description }}
+				{% endif %}
+			</div>
+		{% endfor %}
+	</div>
+
+	<div class="api-controls">
+		<h2>搜索和过滤</h2>
+		<input type="text" class="api-search" placeholder="搜索API端点..." />
+		<div class="method-filters">
+			<div class="method-filter method-filter-get" data-method="get">GET</div>
+			<div class="method-filter method-filter-post" data-method="post">POST</div>
+			<div class="method-filter method-filter-put" data-method="put">PUT</div>
+			<div class="method-filter method-filter-delete" data-method="delete">DELETE</div>
+			<div class="method-filter method-filter-patch" data-method="patch">PATCH</div>
+		</div>
+	</div>
+
+	<div class="api-paths">
+		<h2>API端点 ({{ docs.paths|length }} 个)</h2>
+		{% for path, methods in docs.paths %}
+			<div class="path-group">
+				<h3 class="path-title">{{ path }}</h3>
+				{% for method, operation in methods %}
+					<div class="operation" data-method="{{ method|lower }}">
+						<div class="operation-header">
+							<span class="method method-{{ method|lower }}">{{ method|upper }}</span>
+							<span class="path">{{ path }}</span>
+							<span class="summary">{{ operation.summary ?? '' }}</span>
+							<button class="toggle-button">▶</button>
+						</div>
+						<div class="operation-details">
+							{% if operation.description %}
+								<p class="description">{{ operation.description }}</p>
+							{% endif %}
+							
+							{% if operation.parameters %}
+								<h4>参数</h4>
+								<table class="parameters-table">
+									<thead>
+										<tr>
+											<th>名称</th>
+											<th>位置</th>
+											<th>类型</th>
+											<th>必需</th>
+											<th>描述</th>
+										</tr>
+									</thead>
+									<tbody>
+										{% for param in operation.parameters %}
+											<tr>
+												<td><code>{{ param.name }}</code></td>
+												<td><span class="param-location">{{ param.in }}</span></td>
+												<td><span class="param-type">{{ param.schema.type ?? 'string' }}</span></td>
+												<td><span class="param-required">{{ param.required ? '是' : '否' }}</span></td>
+												<td>{{ param.description ?? '' }}</td>
+											</tr>
+										{% endfor %}
+									</tbody>
+								</table>
+							{% endif %}
+
+							{% if operation.requestBody %}
+								<h4>请求体</h4>
+								<div class="request-body">
+									{% for mediaType, content in operation.requestBody.content %}
+										<div class="media-type">
+											<strong>{{ mediaType }}</strong>
+											{% if content.schema %}
+												<pre class="schema">{{ content.schema|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
+											{% endif %}
+										</div>
+									{% endfor %}
+								</div>
+							{% endif %}
+
+							{% if operation.responses %}
+								<h4>响应</h4>
+								<div class="responses">
+									{% for code, response in operation.responses %}
+										<div class="response">
+											<strong class="response-code response-code-{{ code }}">{{ code }}</strong>
+											<span class="response-description">{{ response.description }}</span>
+											{% if response.content %}
+												{% for mediaType, content in response.content %}
+													<div class="response-content">
+														<strong>{{ mediaType }}</strong>
+														{% if content.schema %}
+															<pre class="schema">{{ content.schema|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
+														{% endif %}
+													</div>
+												{% endfor %}
+											{% endif %}
+										</div>
+									{% endfor %}
+								</div>
+							{% endif %}
+
+							{% if operation.security %}
+								<h4>认证</h4>
+								<div class="security">
+									{% for security in operation.security %}
+										<div class="security-requirement">
+											{% for name, scopes in security %}
+												<strong>{{ name }}</strong>
+												{% if scopes %}
+													<span class="security-scopes">(范围: {{ scopes|join(', ') }})</span>
+												{% endif %}
+											{% endfor %}
+										</div>
+									{% endfor %}
+								</div>
+							{% endif %}
+
+							{% if operation.tags %}
+								<h4>标签</h4>
+								<div class="tags">
+									{% for tag in operation.tags %}
+										<span class="tag">{{ tag }}</span>
+									{% endfor %}
+								</div>
+							{% endif %}
+						</div>
+					</div>
+				{% endfor %}
+			</div>
+		{% endfor %}
+	</div>
+
+	{% if docs.components and docs.components.schemas %}
+		<div class="api-schemas">
+			<h2>数据模型</h2>
+			{% for schemaName, schema in docs.components.schemas %}
+				<div class="schema-definition">
+					<h3>{{ schemaName }}</h3>
+					<pre class="schema">{{ schema|json_encode(constant('JSON_PRETTY_PRINT')) }}</pre>
+				</div>
+			{% endfor %}
+		</div>
+	{% endif %}
+
+	<div class="api-footer">
+		<p>此文档由 <strong>BaaS Platform</strong> 自动生成</p>
+		<p>生成时间: {{ "now"|date("Y-m-d H:i:s") }}</p>
+	</div>
+</div>

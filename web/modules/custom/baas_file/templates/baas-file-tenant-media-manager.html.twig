@@ -1,0 +1,115 @@
+{#
+/**
+ * @file
+ * 租户媒体文件管理界面模板。
+ *
+ * 可用变量:
+ * - tenant_id: 租户ID
+ * - tenant_info: 租户信息数组
+ * - projects: 项目列表数组
+ * - media_stats: 媒体统计数据
+ */
+#}
+
+<div class="baas-file-tenant-media-manager" data-tenant-id="{{ tenant_id }}">
+  <div class="media-manager-header">
+    <h2>{{ '媒体文件管理'|t }} - {{ tenant_info.name }}</h2>
+    <div class="media-stats-summary">
+      <div class="stat-item">
+        <span class="stat-label">{{ '总文件数'|t }}:</span>
+        <span class="stat-value">{{ media_stats.total_files|default(0) }}</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">{{ '总大小'|t }}:</span>
+        <span class="stat-value">{{ media_stats.total_size_formatted|default('0 bytes') }}</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">{{ '项目数'|t }}:</span>
+        <span class="stat-value">{{ media_stats.project_count|default(0) }}</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="media-manager-content">
+    <div class="media-filters">
+      <div class="filter-group">
+        <label for="media-type-filter">{{ '文件类型'|t }}:</label>
+        <select id="media-type-filter" class="form-select">
+          <option value="all">{{ '全部'|t }}</option>
+          <option value="image">{{ '图片'|t }}</option>
+          <option value="file">{{ '文档'|t }}</option>
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <label for="project-filter">{{ '项目'|t }}:</label>
+        <select id="project-filter" class="form-select">
+          <option value="">{{ '全部项目'|t }}</option>
+          {% for project in projects %}
+            <option value="{{ project.project_id }}">{{ project.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="filter-actions">
+        <button type="button" class="btn btn-primary" id="refresh-media-list">
+          {{ '刷新'|t }}
+        </button>
+      </div>
+    </div>
+
+    <div class="media-list-container">
+      <div id="media-loading" class="loading-indicator" style="display: none;">
+        {{ '加载中...'|t }}
+      </div>
+      <div id="media-list" class="media-grid">
+        <!-- 媒体文件列表将通过JavaScript动态加载 -->
+      </div>
+      <div id="media-pagination" class="pagination-container">
+        <!-- 分页将通过JavaScript动态生成 -->
+      </div>
+    </div>
+  </div>
+
+  <div class="media-manager-sidebar">
+    <div class="sidebar-section">
+      <h3>{{ '项目列表'|t }}</h3>
+      <ul class="project-list">
+        {% for project in projects %}
+          <li class="project-item">
+            <a href="/tenant/{{ tenant_id }}/project/{{ project.project_id }}/media">
+              {{ project.name }}
+            </a>
+            <span class="project-file-count">
+              {{ project.file_count|default(0) }} {{ '个文件'|t }}
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>{{ '快速操作'|t }}</h3>
+      <div class="quick-actions">
+        <button type="button" class="btn btn-secondary" id="export-media-list">
+          {{ '导出文件列表'|t }}
+        </button>
+        <button type="button" class="btn btn-secondary" id="cleanup-unused-files">
+          {{ '清理未使用文件'|t }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="media-detail-modal" class="modal" style="display: none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>{{ '文件详情'|t }}</h3>
+      <button type="button" class="close-modal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <!-- 文件详情内容将通过JavaScript动态加载 -->
+    </div>
+  </div>
+</div>

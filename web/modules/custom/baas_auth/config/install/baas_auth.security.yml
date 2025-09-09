@@ -1,0 +1,19 @@
+security:
+  password_policy:
+    min_length: 8
+    require_uppercase: true
+    require_lowercase: true
+    require_numbers: true
+    require_special_chars: true
+    max_age_days: 90
+  login_attempts:
+    max_attempts: 5
+    lockout_duration: 900
+    reset_time: 3600
+  session:
+    max_concurrent_sessions: 5
+    session_timeout: 7200
+    idle_timeout: 1800
+  api_keys:
+    default_ttl: 2592000
+    max_keys_per_tenant: 10

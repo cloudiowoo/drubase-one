@@ -1,0 +1,238 @@
+# 认证API路由
+
+# 用户登录
+baas_auth.api.login:
+  path: '/api/auth/login'
+  defaults:
+    _controller: '\Drupal\baas_auth\Controller\AuthApiController::login'
+  methods: [POST]
+  requirements:
+    _custom_access: '\Drupal\baas_auth\Controller\AuthApiController::checkApiKeyAccess'
+  options:
+    _auth: ['api_key']
+
+# 刷新令牌
+baas_auth.api.refresh:
+  path: '/api/auth/refresh'
+  defaults:
+    _controller: '\Drupal\baas_auth\Controller\AuthApiController::refresh'
+  methods: [POST]
+  requirements:
+    _custom_access: '\Drupal\baas_auth\Controller\AuthApiController::checkApiKeyAccess'
+  options:
+    _auth: ['api_key']
+
+# 用户注销
+baas_auth.api.logout:
+  path: '/api/auth/logout'
+  defaults:
+    _controller: '\Drupal\baas_auth\Controller\AuthApiController::logout'
+  methods: [POST]
+  requirements:
+    _access: 'TRUE'
+  options:
+    _auth: ['jwt', 'api_key']
+
+# 获取当前用户信息
+baas_auth.api.me:
+  path: '/api/auth/me'
+  defaults:
+    _controller: '\Drupal\baas_auth\Controller\AuthApiController::me'
+  methods: [GET]
+  requirements:
+    _access: 'TRUE'
+  options:
+    _auth: ['jwt']
+
+# 验证令牌
+baas_auth.api.verify:
+  path: '/api/auth/verify'
+  defaults:
+    _controller: '\Drupal\baas_auth\Controller\AuthApiController::verify'
+  methods: [POST]
+  requirements:
+    _custom_access: '\Drupal\baas_auth\Controller\AuthApiController::checkApiKeyAccess'
+  options:
+    _auth: ['api_key']
+
+# 获取用户权限
+baas_auth.api.permissions:
+  path: '/api/auth/permissions'
+  defaults:
+    _controller: '\Drupal\baas_auth\Controller\AuthApiController::permissions'
+  methods: [GET]
+  requirements:
+    _access: 'TRUE'
+  options:
+    _auth: ['jwt', 'api_key']
+
+# 修改密码
+baas_auth.api.change_password:
+  path: '/api/auth/change-password'
+  defaults:
+    _controller: '\Drupal\baas_auth\Controller\AuthApiController::changePassword'
+  methods: [POST]
+  requirements:
+    _access: 'TRUE'
+  options:
+    _auth: ['jwt', 'api_key']
+
+# 获取用户角色
+baas_auth.api.roles:
+  path: '/api/auth/roles'
+  defaults:
+    _controller: '\Drupal\baas_auth\Controller\AuthApiController::roles'
+  methods: [GET]
+  requirements:
+    _access: 'TRUE'
+  options:
+    _auth: ['jwt', 'api_key']
+
+# 分配角色
+baas_auth.api.assign_role:
+  path: '/api/auth/assign-role'
+  defaults:
+    _controller: '\Drupal\baas_auth\Controller\AuthApiController::assignRole'
+  methods: [POST]
+  requirements:
+    _access: 'TRUE'
+  options:
+    _auth: ['jwt', 'api_key']
+
+# 撤销角色
+baas_auth.api.revoke_role:
+  path: '/api/auth/revoke-role'
+  defaults:
+    _controller: '\Drupal\baas_auth\Controller\AuthApiController::revokeRole'
+  methods: [POST]
+  requirements:
+    _access: 'TRUE'
+  options:
+    _auth: ['jwt', 'api_key']
+
+# 权限管理API路由
+baas_auth.api.user_permissions:
+  path: '/api/auth/user-permissions'
+  defaults:
+    _controller: '\Drupal\baas_auth\Controller\PermissionController::getUserPermissions'
+  methods: [GET]
+  requirements:
+    _user_is_logged_in: 'TRUE'
+
+# API密钥管理路由
+baas_auth.api.api_keys:
+  path: '/api/auth/api-keys'
+  defaults:
+    _controller: '\Drupal\baas_auth\Controller\ApiKeyController::index'
+  methods: [GET]
+  requirements:
+    _custom_access: '\Drupal\baas_auth\Controller\ApiKeyController::access'
+
+baas_auth.api.api_keys_create:
+  path: '/api/auth/api-keys'
+  defaults:
+    _controller: '\Drupal\baas_auth\Controller\ApiKeyController::createApiKey'
+  methods: [POST]
+  requirements:
+    _custom_access: '\Drupal\baas_auth\Controller\ApiKeyController::adminAccess'
+
+baas_auth.api.api_keys_update:
+  path: '/api/auth/api-keys/{id}'
+  defaults:
+    _controller: '\Drupal\baas_auth\Controller\ApiKeyController::update'
+  methods: [PUT]
+  requirements:
+    _custom_access: '\Drupal\baas_auth\Controller\ApiKeyController::adminAccess'
+    id: '\d+'
+
+baas_auth.api.api_keys_delete:
+  path: '/api/auth/api-keys/{id}'
+  defaults:
+    _controller: '\Drupal\baas_auth\Controller\ApiKeyController::delete'
+  methods: [DELETE]
+  requirements:
+    _custom_access: '\Drupal\baas_auth\Controller\ApiKeyController::adminAccess'
+    id: '\d+'
+
+baas_auth.api.api_keys_regenerate:
+  path: '/api/auth/api-keys/{id}/regenerate'
+  defaults:
+    _controller: '\Drupal\baas_auth\Controller\ApiKeyController::regenerate'
+  methods: [POST]
+  requirements:
+    _custom_access: '\Drupal\baas_auth\Controller\ApiKeyController::adminAccess'
+    id: '\d+'
+
+# 会话管理路由
+baas_auth.api.sessions:
+  path: '/api/auth/sessions'
+  defaults:
+    _controller: '\Drupal\baas_auth\Controller\SessionController::getSessions'
+  methods: [GET]
+  requirements:
+    _user_is_logged_in: 'TRUE'
+
+baas_auth.api.sessions_delete:
+  path: '/api/auth/sessions/{id}'
+  defaults:
+    _controller: '\Drupal\baas_auth\Controller\SessionController::deleteSession'
+  methods: [DELETE]
+  requirements:
+    _user_is_logged_in: 'TRUE'
+    id: '\d+'
+
+baas_auth.api.sessions_delete_all:
+  path: '/api/auth/sessions/all'
+  defaults:
+    _controller: '\Drupal\baas_auth\Controller\SessionController::deleteAllSessions'
+  methods: [DELETE]
+  requirements:
+    _user_is_logged_in: 'TRUE'
+
+baas_auth.api.security_logs:
+  path: '/api/auth/security-logs'
+  defaults:
+    _controller: '\Drupal\baas_auth\Controller\SecurityController::getSecurityLogs'
+  methods: [GET]
+  requirements:
+    _custom_access: '\Drupal\baas_auth\Controller\SecurityController::adminAccess'
+
+# 管理界面路由
+baas_auth.settings:
+  path: '/admin/config/baas/auth'
+  defaults:
+    _form: '\Drupal\baas_auth\Form\SettingsForm'
+    _title: 'BaaS认证设置'
+  requirements:
+    _permission: 'administer baas auth'
+
+# 角色管理API
+baas_auth.api.user_roles:
+  path: '/api/auth/user-roles'
+  defaults:
+    _controller: '\Drupal\baas_auth\Controller\AuthApiController::getUserRoles'
+  methods: [POST]
+  requirements:
+    _access: 'TRUE'
+  options:
+    _auth: [jwt, api_key]
+
+baas_auth.api.remove_role:
+  path: '/api/auth/remove-role'
+  defaults:
+    _controller: '\Drupal\baas_auth\Controller\AuthApiController::removeRole'
+  methods: [POST]
+  requirements:
+    _access: 'TRUE'
+  options:
+    _auth: [jwt, api_key]
+
+baas_auth.api.available_roles:
+  path: '/api/auth/available-roles'
+  defaults:
+    _controller: '\Drupal\baas_auth\Controller\AuthApiController::getAvailableRoles'
+  methods: [GET]
+  requirements:
+    _access: 'TRUE'
+  options:
+    _auth: [jwt, api_key]

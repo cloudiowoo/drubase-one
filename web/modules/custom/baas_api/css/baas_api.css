@@ -1,0 +1,123 @@
+/**
+ * @file
+ * BaaS API模块样式表
+ */
+
+/* API文档页面样式 */
+.baas-api-docs {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.baas-api-docs__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #ddd;
+}
+
+.baas-api-docs__actions {
+  display: flex;
+  gap: 10px;
+}
+
+.baas-api-docs .button {
+  display: inline-block;
+  padding: 8px 16px;
+  background: #0071b8;
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+}
+
+.baas-api-docs .button:hover {
+  background: #00598f;
+  color: white;
+  text-decoration: none;
+}
+
+/* Swagger UI容器 */
+.swagger-ui-container {
+  min-height: 500px;
+}
+
+/* 修改Swagger UI样式以匹配Drupal主题 */
+.swagger-ui .btn.execute {
+  background-color: #0071b8 !important;
+  border-color: #0071b8 !important;
+}
+
+.swagger-ui .btn.execute:hover {
+  background-color: #00598f !important;
+  border-color: #00598f !important;
+}
+
+.swagger-ui .opblock.opblock-get {
+  border-color: #0071b8;
+  background: rgba(0, 113, 184, 0.1);
+}
+
+.swagger-ui .opblock.opblock-get .opblock-summary-method {
+  background-color: #0071b8;
+}
+
+.swagger-ui .opblock.opblock-post {
+  border-color: #00914a;
+  background: rgba(0, 145, 74, 0.1);
+}
+
+.swagger-ui .opblock.opblock-post .opblock-summary-method {
+  background-color: #00914a;
+}
+
+.swagger-ui .opblock.opblock-put {
+  border-color: #de7400;
+  background: rgba(222, 116, 0, 0.1);
+}
+
+.swagger-ui .opblock.opblock-put .opblock-summary-method {
+  background-color: #de7400;
+}
+
+.swagger-ui .opblock.opblock-patch {
+  border-color: #de7400;
+  background: rgba(222, 116, 0, 0.1);
+}
+
+.swagger-ui .opblock.opblock-patch .opblock-summary-method {
+  background-color: #de7400;
+}
+
+.swagger-ui .opblock.opblock-delete {
+  border-color: #d93636;
+  background: rgba(217, 54, 54, 0.1);
+}
+
+.swagger-ui .opblock.opblock-delete .opblock-summary-method {
+  background-color: #d93636;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .baas-api-docs {
+    padding: 10px;
+  }
+  
+  .baas-api-docs__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  
+  .baas-api-docs__actions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+}

@@ -1,0 +1,129 @@
+# 项目管理权限配置
+
+# 管理员权限
+administer baas project:
+  title: 'Administer BaaS Project'
+  description: 'Perform administrative tasks for the BaaS Project system, including migration and system configuration.'
+  restrict access: true
+
+# 项目创建权限
+create baas project:
+  title: 'Create BaaS Project'
+  description: 'Create new projects within tenants.'
+
+# 项目查看权限
+view baas project:
+  title: 'View BaaS Project'
+  description: 'View project information and details.'
+
+# 项目编辑权限
+edit baas project:
+  title: 'Edit BaaS Project'
+  description: 'Edit project settings and configuration.'
+
+# 项目删除权限
+delete baas project:
+  title: 'Delete BaaS Project'
+  description: 'Delete projects and all associated data.'
+  restrict access: true
+
+# 项目成员管理权限
+manage baas project members:
+  title: 'Manage BaaS Project Members'
+  description: 'Add, remove, and modify project member roles.'
+
+# 项目所有权转移权限
+transfer baas project ownership:
+  title: 'Transfer BaaS Project Ownership'
+  description: 'Transfer project ownership to other users.'
+  restrict access: true
+
+# 项目使用统计查看权限
+view baas project usage:
+  title: 'View BaaS Project Usage'
+  description: 'View project resource usage statistics and reports.'
+
+# 项目设置管理权限
+manage baas project settings:
+  title: 'Manage BaaS Project Settings'
+  description: 'Configure project settings, limits, and policies.'
+
+# 项目资源限制管理权限
+manage baas project resource limits:
+  title: 'Manage BaaS Project Resource Limits'
+  description: 'Configure project-level resource usage limits and quotas.'
+
+# 项目邀请管理权限
+manage baas project invitations:
+  title: 'Manage BaaS Project Invitations'
+  description: 'Send, accept, and manage project member invitations.'
+
+# 项目API访问权限
+access baas project api:
+  title: 'Access BaaS Project API'
+  description: 'Access project management APIs and endpoints.'
+
+# 项目内容访问权限（与项目角色映射）
+access baas project content:
+  title: 'Access BaaS Project Content'
+  description: 'Access project entities and data.'
+
+# 项目内容创建权限
+create baas project content:
+  title: 'Create BaaS Project Content'
+  description: 'Create new entities and content in projects.'
+
+# 项目内容编辑权限
+edit baas project content:
+  title: 'Edit BaaS Project Content'
+  description: 'Edit existing project entities and content.'
+
+# 项目内容删除权限
+delete baas project content:
+  title: 'Delete BaaS Project Content'
+  description: 'Delete project entities and content.'
+
+# 项目内容查看权限
+view baas project content:
+  title: 'View BaaS Project Content'
+  description: 'View project entities and content.'
+
+# 项目内容管理权限
+manage baas project content:
+  title: 'Manage BaaS Project Content'
+  description: 'Full administrative access to project entities and content.'
+  restrict access: true
+
+# 项目实体模板权限
+view project entity templates:
+  title: 'View Project Entity Templates'
+  description: 'View entity templates within projects.'
+
+create project entity templates:
+  title: 'Create Project Entity Templates'
+  description: 'Create new entity templates in projects.'
+
+edit project entity templates:
+  title: 'Edit Project Entity Templates'
+  description: 'Edit existing project entity templates.'
+
+delete project entity templates:
+  title: 'Delete Project Entity Templates'
+  description: 'Delete project entity templates.'
+
+# 项目实体数据权限
+view project entity data:
+  title: 'View Project Entity Data'
+  description: 'View entity data within projects.'
+
+create project entity data:
+  title: 'Create Project Entity Data'
+  description: 'Create new entity data in projects.'
+
+edit project entity data:
+  title: 'Edit Project Entity Data'
+  description: 'Edit existing project entity data.'
+
+delete project entity data:
+  title: 'Delete Project Entity Data'
+  description: 'Delete project entity data.'

@@ -1,0 +1,21 @@
+# BaaS Functions local task links (tabs)
+
+# 项目级函数管理标签页
+baas_functions.project_functions_tab:
+  route_name: baas_functions.project_manager
+  title: 'Edge Functions'
+  base_route: baas_project.project_dashboard
+  weight: 40
+
+# 函数管理子标签页
+baas_functions.project_functions_list_tab:
+  route_name: baas_functions.project_manager
+  title: '函数列表'
+  base_route: baas_functions.project_manager
+  weight: 10
+
+baas_functions.project_env_vars_tab:
+  route_name: baas_functions.project_env_vars
+  title: '环境变量'
+  base_route: baas_functions.project_manager
+  weight: 20

@@ -1,0 +1,28 @@
+project-manage:
+  version: 1.2
+  js:
+    js/project-manage.js: {}
+  css:
+    theme:
+      css/project-manage.css: {}
+  dependencies:
+    - core/jquery
+    - core/drupal
+    - core/drupalSettings
+
+realtime-client:
+  version: 1.x
+  js:
+    js/realtime-client.js: {}
+  dependencies:
+    - core/jquery
+    - core/drupal
+    - core/drupalSettings
+
+admin:
+  version: 1.x
+  css:
+    theme:
+      css/admin.css: {}
+  dependencies:
+    - core/drupal

@@ -1,0 +1,108 @@
+{#
+/**
+ * @file
+ * Template for BaaS Project migration administration page.
+ *
+ * Available variables:
+ * - migration_status: Migration status information
+ * - migrate_button: Migration button render array
+ * - rollback_button: Rollback button render array
+ */
+#}
+
+<div class="baas-project-admin">
+  <h1>{{ 'BaaS Project Migration'|t }}</h1>
+  
+  {% if migration_status %}
+    <div class="baas-project-migration-status {{ migration_status.is_migrated ? 'migrated' : 'not-migrated' }}">
+      <h3>
+        <span class="status-icon {{ migration_status.is_migrated ? 'success' : 'warning' }}"></span>
+        {{ migration_status.is_migrated ? 'Migration Completed'|t : 'Migration Pending'|t }}
+      </h3>
+      
+      {% if migration_status.is_migrated %}
+        <p>{{ 'The project migration has been completed successfully.'|t }}</p>
+        {% if migration_status.timestamp %}
+          <p><strong>{{ 'Migration Date:'|t }}</strong> {{ migration_status.timestamp|date('Y-m-d H:i:s') }}</p>
+        {% endif %}
+      {% else %}
+        <p>{{ 'The project migration has not been executed yet. This migration will:'|t }}</p>
+        <ul>
+          <li>{{ 'Create default projects for all existing tenants'|t }}</li>
+          <li>{{ 'Add project_id fields to entity templates and fields'|t }}</li>
+          <li>{{ 'Migrate existing entity templates to default projects'|t }}</li>
+          <li>{{ 'Update tenant configurations to support project management'|t }}</li>
+        </ul>
+        <div class="messages messages--warning">
+          <strong>{{ 'Warning:'|t }}</strong> {{ 'This migration will modify your database structure. Please backup your database before proceeding.'|t }}
+        </div>
+      {% endif %}
+      
+      {% if migration_status.validation %}
+        {% if migration_status.validation.valid %}
+          <div class="messages messages--status">
+            {{ 'Migration validation passed.'|t }}
+          </div>
+        {% else %}
+          <div class="messages messages--error">
+            <strong>{{ 'Validation Errors:'|t }}</strong>
+            <ul>
+              {% for error in migration_status.validation.errors %}
+                <li>{{ error }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endif %}
+      {% endif %}
+    </div>
+  {% endif %}
+  
+  <div class="baas-project-actions">
+    {% if migrate_button %}
+      {{ migrate_button }}
+    {% endif %}
+    
+    {% if rollback_button %}
+      {{ rollback_button }}
+    {% endif %}
+    
+    <a href="{{ path('baas_project.admin.status') }}" class="baas-project-button secondary">
+      {{ 'View System Status'|t }}
+    </a>
+  </div>
+  
+  <div class="baas-project-info">
+    <h3>{{ 'Migration Details'|t }}</h3>
+    
+    <div class="baas-project-info-section">
+      <h4>{{ 'What this migration does:'|t }}</h4>
+      <ol>
+        <li><strong>{{ 'Create Database Tables:'|t }}</strong> {{ 'Creates baas_project_config, baas_project_members, and baas_project_usage tables.'|t }}</li>
+        <li><strong>{{ 'Add Project Fields:'|t }}</strong> {{ 'Adds project_id columns to baas_entity_template and baas_entity_field tables.'|t }}</li>
+        <li><strong>{{ 'Create Default Projects:'|t }}</strong> {{ 'Creates a default project for each existing tenant.'|t }}</li>
+        <li><strong>{{ 'Migrate Entity Templates:'|t }}</strong> {{ 'Associates existing entity templates with their tenant\'s default project.'|t }}</li>
+        <li><strong>{{ 'Update Permissions:'|t }}</strong> {{ 'Adds project-level permissions to the authentication system.'|t }}</li>
+      </ol>
+    </div>
+    
+    <div class="baas-project-info-section">
+      <h4>{{ 'Prerequisites:'|t }}</h4>
+      <ul>
+        <li>{{ 'BaaS Auth module must be enabled and configured'|t }}</li>
+        <li>{{ 'BaaS Tenant module must be enabled and configured'|t }}</li>
+        <li>{{ 'BaaS Entity module must be enabled and configured'|t }}</li>
+        <li>{{ 'Database backup is strongly recommended'|t }}</li>
+      </ul>
+    </div>
+    
+    <div class="baas-project-info-section">
+      <h4>{{ 'Post-Migration:'|t }}</h4>
+      <ul>
+        <li>{{ 'All existing entity templates will be associated with default projects'|t }}</li>
+        <li>{{ 'Tenant owners will become owners of their default projects'|t }}</li>
+        <li>{{ 'Project-level access control will be enforced'|t }}</li>
+        <li>{{ 'New projects can be created within tenants'|t }}</li>
+      </ul>
+    </div>
+  </div>
+</div>

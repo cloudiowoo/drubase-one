@@ -1,0 +1,580 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * @file
+ * Install, update and uninstall functions for the baas_project module.
+ */
+
+use Drupal\Core\Database\Database;
+
+/**
+ * Implements hook_schema().
+ */
+function baas_project_schema(): array
+{
+  $schema = [];
+
+  // 项目配置表
+  $schema['baas_project_config'] = [
+    'description' => 'Stores project configuration and metadata.',
+    'fields' => [
+      'project_id' => [
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'description' => 'Unique project identifier: {tenant_id}_project_{uuid}.',
+      ],
+      'tenant_id' => [
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'description' => 'The tenant ID this project belongs to.',
+      ],
+      'name' => [
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'description' => 'Project display name.',
+      ],
+      'machine_name' => [
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'description' => 'Project machine name (URL-safe).',
+      ],
+      'description' => [
+        'type' => 'text',
+        'description' => 'Project description.',
+      ],
+      'status' => [
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 1,
+        'description' => 'Project status: 1=active, 0=inactive.',
+      ],
+      'settings' => [
+        'type' => 'text',
+        'size' => 'medium',
+        'description' => 'JSON-formatted project settings.',
+      ],
+      'owner_uid' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'The Drupal user ID of the project owner.',
+      ],
+      'created' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Timestamp when the project was created.',
+      ],
+      'updated' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Timestamp when the project was last updated.',
+      ],
+    ],
+    'primary key' => ['project_id'],
+    'unique keys' => [
+      'tenant_machine_name' => ['tenant_id', 'machine_name'],
+    ],
+    'indexes' => [
+      'idx_tenant_id' => ['tenant_id'],
+      'idx_owner_uid' => ['owner_uid'],
+      'idx_status' => ['status'],
+      'idx_created' => ['created'],
+    ],
+    'foreign keys' => [
+      'fk_project_tenant' => [
+        'table' => 'baas_tenant_config',
+        'columns' => ['tenant_id' => 'tenant_id'],
+      ],
+      'fk_project_owner' => [
+        'table' => 'users',
+        'columns' => ['owner_uid' => 'uid'],
+      ],
+    ],
+  ];
+
+  // 项目成员表
+  $schema['baas_project_members'] = [
+    'description' => 'Stores project member relationships and roles.',
+    'fields' => [
+      'id' => [
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique member record ID.',
+      ],
+      'project_id' => [
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'description' => 'The project ID.',
+      ],
+      'user_id' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'The Drupal user ID.',
+      ],
+      'role' => [
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => 'member',
+        'description' => 'Project role: owner, admin, editor, viewer, member.',
+      ],
+      'permissions' => [
+        'type' => 'text',
+        'description' => 'JSON-formatted special permissions for this member.',
+      ],
+      'status' => [
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 1,
+        'description' => 'Member status: 1=active, 0=inactive.',
+      ],
+      'invited_by' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'description' => 'The user ID who invited this member.',
+      ],
+      'joined_at' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Timestamp when the member joined.',
+      ],
+      'updated_at' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Timestamp when the member record was last updated.',
+      ],
+    ],
+    'primary key' => ['id'],
+    'unique keys' => [
+      'project_user' => ['project_id', 'user_id'],
+    ],
+    'indexes' => [
+      'idx_project_id' => ['project_id'],
+      'idx_user_id' => ['user_id'],
+      'idx_role' => ['role'],
+      'idx_status' => ['status'],
+      'idx_invited_by' => ['invited_by'],
+    ],
+    'foreign keys' => [
+      'fk_member_project' => [
+        'table' => 'baas_project_config',
+        'columns' => ['project_id' => 'project_id'],
+      ],
+      'fk_member_user' => [
+        'table' => 'users',
+        'columns' => ['user_id' => 'uid'],
+      ],
+    ],
+  ];
+
+  // 项目资源使用统计表
+  $schema['baas_project_usage'] = [
+    'description' => 'Stores project resource usage statistics.',
+    'fields' => [
+      'project_id' => [
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'description' => 'The project ID.',
+      ],
+      'resource_type' => [
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'description' => 'Resource type: entities, storage, api_calls, functions.',
+      ],
+      'usage_count' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Usage count for countable resources.',
+      ],
+      'usage_size' => [
+        'type' => 'int',
+        'size' => 'big',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Usage size in bytes for storage resources.',
+      ],
+      'period_start' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Start timestamp of the usage period.',
+      ],
+      'period_end' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'End timestamp of the usage period.',
+      ],
+      'recorded_at' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Timestamp when the usage was recorded.',
+      ],
+    ],
+    'primary key' => ['project_id', 'resource_type', 'period_start'],
+    'indexes' => [
+      'idx_project_id' => ['project_id'],
+      'idx_resource_type' => ['resource_type'],
+      'idx_period_start' => ['period_start'],
+      'idx_recorded_at' => ['recorded_at'],
+    ],
+    'foreign keys' => [
+      'fk_usage_project' => [
+        'table' => 'baas_project_config',
+        'columns' => ['project_id' => 'project_id'],
+      ],
+    ],
+  ];
+
+  return $schema;
+}
+
+/**
+ * Implements hook_install().
+ */
+function baas_project_install()
+{
+  // 确保创建所有项目角色并设置权限
+  _baas_project_ensure_roles_and_permissions();
+  
+  // 如果baas_entity模块已安装，添加project_id字段
+  if (\Drupal::moduleHandler()->moduleExists('baas_entity')) {
+    \Drupal::moduleHandler()->invoke('baas_entity', 'baas_project_installed');
+  }
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function baas_project_uninstall()
+{
+  // 删除由模块创建的角色
+  $roles_to_delete = [
+    'project_viewer',
+    'project_editor',
+    'project_admin',
+    'project_owner',
+  ];
+
+  $role_storage = \Drupal::entityTypeManager()->getStorage('user_role');
+  $user_storage = \Drupal::entityTypeManager()->getStorage('user');
+
+  // 清理用户的角色分配
+  foreach ($roles_to_delete as $role_id) {
+    $role = $role_storage->load($role_id);
+    if ($role) {
+      // 查找所有有此角色的用户
+      $users = $user_storage->loadByProperties(['roles' => $role_id]);
+      foreach ($users as $user) {
+        $user->removeRole($role_id);
+        $user->save();
+      }
+
+      // 删除角色
+      $role->delete();
+
+      \Drupal::logger('baas_project')->notice('移除了角色 @role_id 和相关用户分配', [
+        '@role_id' => $role_id,
+      ]);
+    }
+  }
+
+  \Drupal::logger('baas_project')->notice('项目相关角色已被移除');
+}
+
+/**
+ * 确保项目相关角色和权限正确设置。
+ *
+ * 注意：此处创建的角色是项目内部角色系统，与系统级角色不同：
+ * - project_manager：系统级角色，由baas_tenant模块管理，授予用户创建和管理项目的权限
+ * - project_admin：项目级角色，表示用户在特定项目中的管理员权限
+ */
+function _baas_project_ensure_roles_and_permissions()
+{
+  // 角色和权限映射
+  $role_permissions = [
+    'project_viewer' => [
+      'label' => '项目查看者',
+      'weight' => 2,
+      'permissions' => [
+        'view baas project',
+        'access baas project api',
+        'access baas project content',
+      ],
+    ],
+    'project_editor' => [
+      'label' => '项目编辑者',
+      'weight' => 3,
+      'permissions' => [
+        'view baas project',
+        'edit baas project',
+        'access baas project api',
+        'access baas project content',
+        'create baas project content',
+        'edit baas project content',
+      ],
+    ],
+    'project_admin' => [
+      'label' => '项目管理员', // 项目内部角色，表示项目内的管理员权限
+      'weight' => 4,
+      'permissions' => [
+        'view baas project',
+        'edit baas project',
+        'manage baas project members',
+        'access baas project api',
+        'access baas project content',
+        'create baas project content',
+        'edit baas project content',
+        'delete baas project content',
+      ],
+    ],
+    'project_owner' => [
+      'label' => '项目拥有者',
+      'weight' => 5,
+      'permissions' => [
+        'view baas project',
+        'edit baas project',
+        'delete baas project',
+        'manage baas project members',
+        'manage baas project settings',
+        'transfer baas project ownership',
+        'access baas project api',
+        'access baas project content',
+        'create baas project content',
+        'edit baas project content',
+        'delete baas project content',
+      ],
+    ],
+  ];
+
+  // 创建或更新角色和权限
+  $role_storage = \Drupal::entityTypeManager()->getStorage('user_role');
+
+  foreach ($role_permissions as $role_id => $config) {
+    // 检查角色是否存在
+    $role = $role_storage->load($role_id);
+
+    if (!$role) {
+      // 创建新角色
+      $role = $role_storage->create([
+        'id' => $role_id,
+        'label' => $config['label'],
+        'weight' => $config['weight'],
+      ]);
+      $role->save();
+
+      \Drupal::logger('baas_project')->notice('@role 角色已创建', [
+        '@role' => $config['label'],
+      ]);
+    }
+
+    // 授予权限
+    user_role_grant_permissions($role_id, $config['permissions']);
+  }
+
+  \Drupal::logger('baas_project')->notice('项目角色和权限设置完成');
+}
+
+/**
+ * 为现有实体模板表添加project_id字段 (Update 9001).
+ */
+function baas_project_update_9001(): string
+{
+  $database = \Drupal::database();
+  $schema = $database->schema();
+
+  // 通知baas_entity模块需要添加project_id字段
+  // 使用模块间通信的正确方式
+  try {
+    $entity_manager = \Drupal::service('baas_entity.manager');
+    if ($entity_manager && method_exists($entity_manager, 'addProjectIdField')) {
+      $entity_manager->addProjectIdField();
+    } else {
+      // 备选方案：触发hook让baas_entity模块自己处理
+      \Drupal::moduleHandler()->invokeAll('baas_project_installed');
+    }
+  } catch (\Exception $e) {
+    // 如果服务不可用，记录并继续（避免阻止安装）
+    \Drupal::logger('baas_project')->warning('Cannot add project_id field to entity template: @error', [
+      '@error' => $e->getMessage(),
+    ]);
+  }
+
+  \Drupal::logger('baas_project')->info('Added project_id field to baas_entity_template table.');
+
+  // 为baas_entity_field表添加project_id字段（通过template_id关联）
+  if ($schema->tableExists('baas_entity_field') && !$schema->fieldExists('baas_entity_field', 'project_id')) {
+    $field_spec = [
+      'type' => 'varchar',
+      'length' => 64,
+      'description' => 'The project ID this field belongs to (denormalized for performance).',
+    ];
+
+    $schema->addField('baas_entity_field', 'project_id', $field_spec);
+
+    // 添加索引
+    $schema->addIndex('baas_entity_field', 'idx_project_id', ['project_id'], []);
+
+    \Drupal::logger('baas_project')->info('Added project_id field to baas_entity_field table.');
+  }
+
+  return (string) t('Project ID fields added to entity tables successfully.');
+}
+
+/**
+ * 迁移现有实体模板到默认项目 (Update 9002).
+ */
+function baas_project_update_9002(): string
+{
+  $database = \Drupal::database();
+
+  // 为每个租户创建默认项目
+  $tenants = $database->select('baas_tenant_config', 't')
+    ->fields('t', ['tenant_id', 'name'])
+    ->execute()
+    ->fetchAll();
+
+  foreach ($tenants as $tenant) {
+    // 添加空值检查
+    if (empty($tenant->tenant_id)) {
+      \Drupal::logger('baas_project')->warning('Skipping tenant with empty tenant_id');
+      continue;
+    }
+
+    $default_project_id = $tenant->tenant_id . '_project_default';
+
+    // 检查默认项目是否已存在
+    $exists = $database->select('baas_project_config', 'p')
+      ->condition('project_id', $default_project_id)
+      ->countQuery()
+      ->execute()
+      ->fetchField();
+
+    if (!$exists) {
+      try {
+        // 创建默认项目
+        $database->insert('baas_project_config')
+          ->fields([
+            'project_id' => $default_project_id,
+            'tenant_id' => $tenant->tenant_id,
+            'name' => 'Default Project',
+            'machine_name' => 'default',
+            'description' => 'Default project for migrated entities',
+            'status' => 1,
+            'settings' => json_encode(['is_default' => TRUE]),
+            'owner_uid' => 1, // 临时设置为管理员，后续需要更新
+            'created' => time(),
+            'updated' => time(),
+          ])
+          ->execute();
+
+        \Drupal::logger('baas_project')->info('Created default project for tenant: @tenant_id', ['@tenant_id' => $tenant->tenant_id]);
+      } catch (\Exception $e) {
+        \Drupal::logger('baas_project')->error('Failed to create default project for tenant @tenant_id: @error', [
+          '@tenant_id' => $tenant->tenant_id,
+          '@error' => $e->getMessage(),
+        ]);
+        continue;
+      }
+    }
+
+    // 更新实体模板的project_id
+    try {
+      $database->update('baas_entity_template')
+        ->fields(['project_id' => $default_project_id])
+        ->condition('tenant_id', $tenant->tenant_id)
+        ->condition('project_id', NULL, 'IS NULL')
+        ->execute();
+    } catch (\Exception $e) {
+      \Drupal::logger('baas_project')->error('Failed to update entity templates for tenant @tenant_id: @error', [
+        '@tenant_id' => $tenant->tenant_id,
+        '@error' => $e->getMessage(),
+      ]);
+    }
+
+    // 使用 Drupal 的查询构建器替代原生 SQL
+    try {
+      $subquery = $database->select('baas_entity_template', 't')
+        ->fields('t', ['id'])
+        ->condition('tenant_id', $tenant->tenant_id);
+
+      $database->update('baas_entity_field')
+        ->fields(['project_id' => $default_project_id])
+        ->condition('template_id', $subquery, 'IN')
+        ->condition('project_id', NULL, 'IS NULL')
+        ->execute();
+    } catch (\Exception $e) {
+      \Drupal::logger('baas_project')->error('Failed to update entity fields for tenant @tenant_id: @error', [
+        '@tenant_id' => $tenant->tenant_id,
+        '@error' => $e->getMessage(),
+      ]);
+    }
+  }
+
+  return (string) t('Migrated existing entity templates to default projects.');
+}
+
+/**
+ * 更新项目角色和权限。
+ */
+function baas_project_update_9003()
+{
+  // 确保角色和权限设置正确
+  _baas_project_ensure_roles_and_permissions();
+
+  return t('项目角色和权限已更新。');
+}
+
+/**
+ * 更新项目权限映射系统 (Update 9004)。
+ */
+function baas_project_update_9004(): string
+{
+  // 重新设置角色和权限以匹配新的权限映射系统
+  _baas_project_ensure_roles_and_permissions();
+
+  // 触发所有现有项目成员的权限重新映射
+  $database = \Drupal::database();
+  $members = $database->select('baas_project_members', 'm')
+    ->fields('m', ['user_id', 'role'])
+    ->condition('status', 1)
+    ->execute()
+    ->fetchAll();
+
+  $event_dispatcher = \Drupal::service('event_dispatcher');
+
+  foreach ($members as $member) {
+    // 创建虚拟事件来触发权限重新映射
+    $event = new \Drupal\baas_project\Event\ProjectEvent('permission_sync', [
+      'user_id' => $member->user_id,
+      'role' => $member->role,
+    ]);
+    $event_dispatcher->dispatch($event, 'baas_project.member_added');
+  }
+
+  \Drupal::logger('baas_project')->notice('项目权限映射系统已更新，已同步 @count 个用户的权限', [
+    '@count' => count($members),
+  ]);
+
+  return (string) t('项目权限映射系统已更新。');
+}

@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BaaS Realtime WebSocket 测试</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        .status.connected { background-color: #d4edda; color: #155724; }
+        .status.disconnected { background-color: #f8d7da; color: #721c24; }
+        .status.connecting { background-color: #fff3cd; color: #856404; }
+        .messages {
+            height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background-color: #f8f9fa;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        .message {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid #007bff;
+            background: white;
+        }
+        .message.notification {
+            border-left-color: #28a745;
+            background-color: #f0fff4;
+        }
+        .message.error {
+            border-left-color: #dc3545;
+            background-color: #fff5f5;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+        }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #6c757d; cursor: not-allowed; }
+        .controls {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+        }
+        input {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        h1 { color: #333; }
+        h2 { color: #666; }
+        .timestamp { color: #666; font-size: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 BaaS Realtime WebSocket 测试</h1>
+        
+        <div id="status" class="status disconnected">❌ 未连接</div>
+        
+        <div class="controls">
+            <h2>连接配置</h2>
+            <input type="text" id="tenantId" placeholder="Tenant ID" value="tenant_7375b0cd">
+            <input type="text" id="projectId" placeholder="Project ID" value="tenant_7375b0cd_project_6888d012be80c">
+            <input type="text" id="apikey" placeholder="API Key" value="drubase_e5452c4f0b8d5c1011016b12bddd1165136b6520f99479bc9a171fe767830275">
+            <input type="text" id="accessToken" placeholder="Access Token" value="eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxNyIsInVzZXJuYW1lIjoidXNlcjEiLCJ0ZW5hbnRfaWQiOiJ0ZW5hbnRfNzM3NWIwY2QiLCJhY2Nlc3NfdHlwZSI6InRlbmFudCIsImlzcyI6ImRydWJhc2UiLCJhdWQiOiJkcnViYXNlLWFwaSIsImlhdCI6MTc1NDQ4ODE0OSwiZXhwIjoxNzg2MDI0MTQ5LCJqdGkiOiIwYjg5ZWVmZTEzNGY0ZjM0ZDhlMTU3MmY2YmQ3ZjBmZSIsInR5cGUiOiJhY2Nlc3MifQ.E6CsN8dJBr2Kg98NLlsOmnAtvKgX5S_JuArl0YfrvGg">
+            <br>
+            <button onclick="connect()">🔌 连接</button>
+            <button onclick="disconnect()">❌ 断开</button>
+            <button onclick="subscribe()">📡 订阅频道</button>
+            <button onclick="clearMessages()">🧹 清空消息</button>
+        </div>
+        
+        <div class="controls">
+            <h2>测试操作</h2>
+            <button onclick="testAuth()">🔐 测试认证API</button>
+            <button onclick="testInsert()">📝 测试插入</button>
+            <button onclick="testUpdate()">✏️ 测试更新</button>  
+            <button onclick="testDelete()">🗑️ 测试删除</button>
+        </div>
+        
+        <h2>📨 消息日志</h2>
+        <div id="messages" class="messages"></div>
+    </div>
+
+    <script>
+        let ws = null;
+        let connectionId = null;
+        
+        function log(message, type = 'info') {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            messageDiv.innerHTML = `
+                <div class="timestamp">[${timestamp}]</div>
+                <div>${message}</div>
+            `;
+            
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+        
+        function updateStatus(status, message) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = `status ${status}`;
+            statusDiv.textContent = message;
+        }
+        
+        async function connect() {
+            const tenantId = document.getElementById('tenantId').value;
+            const projectId = document.getElementById('projectId').value;
+            const apikey = document.getElementById('apikey').value;
+            const accessToken = document.getElementById('accessToken').value;
+            
+            if (!tenantId || !projectId || !apikey || !accessToken) {
+                alert('请填写 Tenant ID、Project ID、API Key 和 Access Token');
+                return;
+            }
+            
+            if (ws) {
+                ws.close();
+            }
+            
+            updateStatus('connecting', '🔄 认证中...');
+            log('开始认证 WebSocket 连接...', 'info');
+            
+            try {
+                // 第一步：通过 Drupal API 进行认证
+                const authUrl = `http://localhost/api/v1/${tenantId}/projects/${projectId}/realtime/auth`;
+                log(`认证URL: ${authUrl}`, 'info');
+                
+                const authResponse = await fetch(authUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`,
+                        'X-API-Key': apikey
+                    },
+                    body: JSON.stringify({
+                        access_token: accessToken,
+                        apikey: apikey
+                    })
+                });
+                
+                if (!authResponse.ok) {
+                    const errorText = await authResponse.text();
+                    log(`认证失败: ${authResponse.status} - ${errorText}`, 'error');
+                    updateStatus('disconnected', '❌ 认证失败');
+                    return;
+                }
+                
+                const authData = await authResponse.json();
+                log(`认证响应: ${JSON.stringify(authData, null, 2)}`, 'info');
+                
+                if (!authData.success) {
+                    log(`认证失败: ${authData.error}`, 'error');
+                    updateStatus('disconnected', '❌ 认证失败');
+                    return;
+                }
+                
+                log('✅ 认证成功，建立 WebSocket 连接...', 'info');
+                updateStatus('connecting', '🔄 连接中...');
+                
+                // 第二步：使用认证信息建立 WebSocket 连接
+                const wsUrl = `ws://localhost:4000?tenant_id=${encodeURIComponent(tenantId)}&project_id=${encodeURIComponent(projectId)}&apikey=${encodeURIComponent(apikey)}&access_token=${encodeURIComponent(accessToken)}`;
+                
+                ws = new WebSocket(wsUrl);
+                
+                ws.onopen = function(event) {
+                    updateStatus('connected', '✅ 已连接');
+                    log('WebSocket 连接已建立', 'info');
+                };
+                
+                ws.onmessage = function(event) {
+                    try {
+                        const data = JSON.parse(event.data);
+                        log(`收到消息: ${JSON.stringify(data, null, 2)}`, 'notification');
+                        
+                        // 处理连接确认
+                        if (data.event === 'phx_reply' && data.topic === 'phoenix') {
+                            connectionId = data.payload?.response?.connection_id;
+                            log(`连接ID: ${connectionId}`, 'info');
+                        }
+                        
+                        // 处理实时通知
+                        if (data.event && data.payload) {
+                            log(`🔔 实时通知: ${data.event} - ${JSON.stringify(data.payload, null, 2)}`, 'notification');
+                        }
+                        
+                    } catch (e) {
+                        log(`原始消息: ${event.data}`, 'info');
+                    }
+                };
+                
+                ws.onclose = function(event) {
+                    updateStatus('disconnected', '❌ 连接已断开');
+                    log(`WebSocket 连接关闭: ${event.code} - ${event.reason}`, 'error');
+                    ws = null;
+                    connectionId = null;
+                };
+                
+                ws.onerror = function(error) {
+                    updateStatus('disconnected', '❌ 连接错误');
+                    log(`WebSocket 错误: ${error}`, 'error');
+                };
+                
+            } catch (error) {
+                log(`连接失败: ${error.message}`, 'error');
+                updateStatus('disconnected', '❌ 连接失败');
+            }
+        }
+        
+        function disconnect() {
+            if (ws) {
+                ws.close();
+                ws = null;
+                connectionId = null;
+                updateStatus('disconnected', '❌ 已断开');
+                log('手动断开连接', 'info');
+            }
+        }
+        
+        function subscribe() {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                alert('请先连接 WebSocket');
+                return;
+            }
+            
+            // 订阅 activities 表的变更
+            const message = {
+                event: 'phx_join',
+                topic: 'table:baas_00403b_activities',
+                payload: {
+                    filters: {},
+                    event_types: ['INSERT', 'UPDATE', 'DELETE']
+                },
+                ref: Date.now()
+            };
+            
+            ws.send(JSON.stringify(message));
+            log(`发送订阅消息: ${JSON.stringify(message, null, 2)}`, 'info');
+        }
+        
+        function clearMessages() {
+            document.getElementById('messages').innerHTML = '';
+        }
+        
+        // 测试认证API端点
+        async function testAuth() {
+            const tenantId = document.getElementById('tenantId').value;
+            const projectId = document.getElementById('projectId').value;
+            const apikey = document.getElementById('apikey').value;
+            const accessToken = document.getElementById('accessToken').value;
+            
+            if (!tenantId || !projectId || !apikey || !accessToken) {
+                alert('请填写 Tenant ID、Project ID、API Key 和 Access Token');
+                return;
+            }
+            
+            log('🔐 开始测试认证API...', 'info');
+            
+            try {
+                const authUrl = `http://localhost/api/v1/${tenantId}/projects/${projectId}/realtime/auth`;
+                log(`测试认证端点: ${authUrl}`, 'info');
+                
+                const response = await fetch(authUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${accessToken}`,
+                        'X-API-Key': apikey
+                    },
+                    body: JSON.stringify({
+                        access_token: accessToken,
+                        apikey: apikey
+                    })
+                });
+                
+                const responseText = await response.text();
+                let responseData;
+                
+                try {
+                    responseData = JSON.parse(responseText);
+                } catch (e) {
+                    responseData = { raw_response: responseText };
+                }
+                
+                log(`HTTP状态码: ${response.status} ${response.statusText}`, response.ok ? 'info' : 'error');
+                log(`响应头: ${JSON.stringify(Object.fromEntries(response.headers.entries()), null, 2)}`, 'info');
+                log(`响应内容: ${JSON.stringify(responseData, null, 2)}`, response.ok ? 'info' : 'error');
+                
+                if (response.ok && responseData.success) {
+                    log('✅ 认证API测试成功！', 'notification');
+                    log(`用户ID: ${responseData.data?.user_id}`, 'info');
+                    log(`租户ID: ${responseData.data?.tenant_id}`, 'info');
+                    log(`项目ID: ${responseData.data?.project_id}`, 'info');
+                    log(`权限: ${JSON.stringify(responseData.data?.permissions, null, 2)}`, 'info');
+                } else {
+                    log('❌ 认证API测试失败', 'error');
+                    if (responseData.error) {
+                        log(`错误信息: ${responseData.error}`, 'error');
+                        log(`错误代码: ${responseData.code}`, 'error');
+                    }
+                }
+                
+            } catch (error) {
+                log(`❌ 认证API测试异常: ${error.message}`, 'error');
+                console.error('认证测试错误:', error);
+            }
+        }
+        
+        // 测试数据库操作
+        function testInsert() {
+            log('触发插入操作...', 'info');
+            // 这里应该调用 API 来插入数据，为了简化，我们只记录
+            alert('请在另一个终端执行:\ndocker exec pg17 psql -U postgres -d db_drubase -c "INSERT INTO baas_00403b_activities (uuid, title, activity_date, activity_time, sport_type, team_count, players_per_team, creator_id, participants_visibility, created, updated) VALUES (\'test-\' || extract(epoch from now())::text, \'WebSocket Test Activity\', \'2024-01-01\', \'10:00\', \'football\', 2, 11, 17, \'public\', extract(epoch from now())::integer, extract(epoch from now())::integer);"');
+        }
+        
+        function testUpdate() {
+            log('触发更新操作...', 'info');
+            alert('请在另一个终端执行:\ndocker exec pg17 psql -U postgres -d db_drubase -c "UPDATE baas_00403b_activities SET title = \'Updated via WebSocket Test\', updated = extract(epoch from now())::integer WHERE uuid LIKE \'test-%\' LIMIT 1;"');
+        }
+        
+        function testDelete() {
+            log('触发删除操作...', 'info');
+            alert('请在另一个终端执行:\ndocker exec pg17 psql -U postgres -d db_drubase -c "DELETE FROM baas_00403b_activities WHERE uuid LIKE \'test-%\' LIMIT 1;"');
+        }
+        
+        // 页面加载完成后的初始化
+        window.onload = function() {
+            log('BaaS Realtime WebSocket 测试页面已加载', 'info');
+            log('请填写认证信息并点击连接', 'info');
+        };
+    </script>
+</body>
+</html>

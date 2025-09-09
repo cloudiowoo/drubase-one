@@ -1,0 +1,581 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * @file
+ * Install, update and uninstall functions for the baas_tenant module.
+ */
+
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+use Drupal\user\RoleInterface;
+
+/**
+ * Implements hook_schema().
+ */
+function baas_tenant_schema(): array
+{
+  $schema = [];
+
+  $schema['baas_tenant_config'] = [
+    'description' => '存储租户基本配置信息',
+    'fields' => [
+      'tenant_id' => [
+        'description' => '租户唯一标识',
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+      ],
+      'name' => [
+        'description' => '租户名称',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ],
+      'owner_uid' => [
+        'description' => '租户所有者用户ID',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'organization_type' => [
+        'description' => '组织类型',
+        'type' => 'varchar',
+        'length' => 50,
+        'not null' => FALSE,
+        'default' => 'company',
+      ],
+      'contact_email' => [
+        'description' => '联系邮箱',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ],
+      'settings' => [
+        'description' => '租户设置（JSON格式）',
+        'type' => 'text',
+        'size' => 'big',
+        'not null' => FALSE,
+      ],
+      'status' => [
+        'description' => '租户状态: 0-禁用, 1-启用',
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 1,
+      ],
+      'created' => [
+        'description' => '创建时间戳',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+      'updated' => [
+        'description' => '更新时间戳',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+    ],
+    'primary key' => ['tenant_id'],
+    'indexes' => [
+      'status' => ['status'],
+      'created' => ['created'],
+      'owner_uid' => ['owner_uid'],
+      'contact_email' => ['contact_email'],
+      'organization_type' => ['organization_type'],
+    ],
+  ];
+
+  $schema['baas_tenant_usage'] = [
+    'description' => '租户资源使用记录',
+    'fields' => [
+      'id' => [
+        'description' => '记录ID',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ],
+      'tenant_id' => [
+        'description' => '租户ID',
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+      ],
+      'resource_type' => [
+        'description' => '资源类型',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+      ],
+      'date' => [
+        'description' => '日期',
+        'type' => 'varchar',
+        'length' => 10,
+        'not null' => TRUE,
+      ],
+      'count' => [
+        'description' => '资源使用计数',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+      'timestamp' => [
+        'description' => '记录时间戳',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ],
+    ],
+    'primary key' => ['id'],
+    'indexes' => [
+      'tenant_resource_date' => ['tenant_id', 'resource_type', 'date'],
+      'timestamp' => ['timestamp'],
+    ],
+  ];
+
+  return $schema;
+}
+
+/**
+ * Implements hook_requirements().
+ */
+function baas_tenant_requirements($phase)
+{
+  $requirements = [];
+
+  if ($phase == 'runtime') {
+    $requirements['baas_tenant'] = [
+      'title' => new TranslatableMarkup('BaaS Tenant Module'),
+      'value' => new TranslatableMarkup('已安装'),
+      'severity' => 0, // REQUIREMENT_INFO = 0
+    ];
+  }
+
+  return $requirements;
+}
+
+/**
+ * 更新租户表字段，将changed字段改为updated，确保命名一致性.
+ */
+function baas_tenant_update_10001(): void
+{
+  $schema = \Drupal::database()->schema();
+  $table = 'baas_tenant_config';
+
+  if ($schema->tableExists($table) && $schema->fieldExists($table, 'changed') && !$schema->fieldExists($table, 'updated')) {
+    $spec = [
+      'description' => '更新时间戳',
+      'type' => 'int',
+      'not null' => TRUE,
+      'default' => 0,
+    ];
+
+    // 先创建新字段
+    $schema->addField($table, 'updated', $spec);
+
+    // 复制数据
+    \Drupal::database()->query("UPDATE {$table} SET updated = changed");
+
+    // 删除旧字段
+    $schema->dropField($table, 'changed');
+  }
+}
+
+/**
+ * 添加租户所有者字段，支持企业模式管理。
+ */
+function baas_tenant_update_10002(): string
+{
+  $database = \Drupal::database();
+  $schema = $database->schema();
+  $table = 'baas_tenant_config';
+
+  if ($schema->tableExists($table) && !$schema->fieldExists($table, 'owner_uid')) {
+    // 先添加字段，允许NULL值
+    $field_spec = [
+      'type' => 'int',
+      'unsigned' => TRUE,
+      'not null' => FALSE,
+      'description' => 'The user ID of the tenant owner.',
+    ];
+
+    $schema->addField($table, 'owner_uid', $field_spec);
+
+    // 为现有租户设置默认所有者（管理员用户ID=1）
+    $database->update($table)
+      ->fields(['owner_uid' => 1])
+      ->isNull('owner_uid')
+      ->execute();
+
+    // 现在将字段设置为NOT NULL
+    $schema->changeField($table, 'owner_uid', 'owner_uid', [
+      'type' => 'int',
+      'unsigned' => TRUE,
+      'not null' => TRUE,
+      'description' => 'The user ID of the tenant owner.',
+    ]);
+
+    // 添加索引
+    $schema->addIndex($table, 'idx_owner_uid', ['owner_uid'], []);
+
+    // 添加外键约束到用户表
+    // 注意：在Drupal中通常不直接添加外键约束，这里仅作为文档说明
+
+    \Drupal::logger('baas_tenant')->info('Added owner_uid field to baas_tenant_config table.');
+  }
+
+  // 同时添加组织类型和联系邮箱字段，支持企业信息管理
+  if (!$schema->fieldExists($table, 'organization_type')) {
+    $schema->addField($table, 'organization_type', [
+      'type' => 'varchar',
+      'length' => 32,
+      'not null' => FALSE,
+      'description' => 'Organization type: company, department, team, etc.',
+    ]);
+  }
+
+  if (!$schema->fieldExists($table, 'contact_email')) {
+    $schema->addField($table, 'contact_email', [
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => FALSE,
+      'description' => 'Primary contact email for the tenant.',
+    ]);
+  }
+
+  return (string) t('Added tenant owner and enterprise fields, migrated existing data to use admin as default owner.');
+}
+
+/**
+ * 创建租户权限角色，实现租户权限分离管理。
+ *
+ * 创建的 tenant_manager 角色是系统级角色，与 baas_project 模块中的 project_admin 项目级角色不同：
+ * - tenant_manager：系统级角色，用户可以创建和管理多个项目
+ * - project_admin：项目级角色，用户只在特定项目中拥有管理员权限
+ */
+function baas_tenant_update_10003(): string
+{
+  // 创建租户权限角色
+  $role_storage = \Drupal::entityTypeManager()->getStorage('user_role');
+
+  // 检查角色是否已存在
+  if (!$role_storage->load('tenant_manager')) {
+    /** @var RoleInterface $role */
+    $role = $role_storage->create([
+      'id' => 'tenant_manager',
+      'label' => '租户管理员', // 系统级角色，可创建和管理多个项目
+      'weight' => 5,
+      'is_admin' => FALSE,
+    ]);
+
+    // 添加租户管理权限
+    $permissions = [
+      'access baas tenant management',
+      'create own tenant',
+      'manage own tenant',
+      'view own tenant',
+      'edit own tenant',
+      'delete own tenant',
+      'create tenant projects',
+      'manage tenant projects',
+      'view tenant usage',
+      'manage tenant members',
+      'access tenant settings',
+      // 项目相关权限
+      'create baas project',
+      'view baas project',
+      'edit baas project',
+      'delete baas project',
+      'manage baas project members',
+      'view baas project usage',
+      'manage baas project settings',
+      'manage baas project invitations',
+      'access baas project api',
+    ];
+
+    foreach ($permissions as $permission) {
+      // 检查权限是否存在，如果存在则授予
+      $all_permissions = \Drupal::service('user.permissions')->getPermissions();
+      if (isset($all_permissions[$permission])) {
+        $role->grantPermission($permission);
+      } else {
+        \Drupal::logger('baas_tenant')->warning('权限 @permission 不存在，跳过授予', ['@permission' => $permission]);
+      }
+    }
+
+    $role->save();
+
+    \Drupal::logger('baas_tenant')->info('Created tenant_manager role with appropriate permissions.');
+  }
+
+  return (string) t('Created tenant_manager role for enhanced tenant permission management.');
+}
+
+/**
+ * 添加用户租户标记字段，使用Drupal字段API，简化权限模型。
+ */
+function baas_tenant_update_10004(): string
+{
+  // 使用字段API创建is_tenant字段
+  $field_storage = \Drupal\field\Entity\FieldStorageConfig::create([
+    'field_name' => 'field_is_tenant',
+    'entity_type' => 'user',
+    'type' => 'boolean',
+    'settings' => [],
+    'cardinality' => 1,
+  ]);
+
+  // 检查字段存储是否已存在
+  if (!\Drupal\field\Entity\FieldStorageConfig::loadByName('user', 'field_is_tenant')) {
+    $field_storage->save();
+  }
+
+  // 创建字段实例
+  $field = \Drupal\field\Entity\FieldConfig::create([
+    'field_storage' => $field_storage,
+    'bundle' => 'user',
+    'label' => '租户状态',
+    'description' => '标记用户是否具有租户权限（可以管理项目）',
+    'required' => FALSE,
+    'default_value' => [['value' => 0]],
+  ]);
+
+  // 检查字段实例是否已存在
+  if (!\Drupal\field\Entity\FieldConfig::loadByName('user', 'user', 'field_is_tenant')) {
+    $field->save();
+  }
+
+  // 迁移现有的租户管理员用户到新字段
+  $database = \Drupal::database();
+  $tenant_manager_users = $database->select('user__roles', 'ur')
+    ->fields('ur', ['entity_id'])
+    ->condition('roles_target_id', 'tenant_manager')
+    ->execute()
+    ->fetchCol();
+
+  if (!empty($tenant_manager_users)) {
+    $user_storage = \Drupal::entityTypeManager()->getStorage('user');
+    foreach ($tenant_manager_users as $uid) {
+      /** @var \Drupal\user\UserInterface $user */
+      $user = $user_storage->load($uid);
+      if ($user) {
+        $user->set('field_is_tenant', TRUE);
+        $user->save();
+      }
+    }
+
+    \Drupal::logger('baas_tenant')->info('Migrated @count tenant_manager users to field_is_tenant field', [
+      '@count' => count($tenant_manager_users),
+    ]);
+  }
+
+  return (string) t('Added field_is_tenant field using Drupal Field API and migrated existing tenant managers.');
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function baas_tenant_uninstall(): void
+{
+  // 删除用户租户字段
+  $field = \Drupal\field\Entity\FieldConfig::loadByName('user', 'user', 'field_is_tenant');
+  if ($field) {
+    $field->delete();
+  }
+
+  // 删除字段存储
+  $field_storage = \Drupal\field\Entity\FieldStorageConfig::loadByName('user', 'field_is_tenant');
+  if ($field_storage) {
+    $field_storage->delete();
+  }
+
+  // 删除租户管理员角色
+  $role_storage = \Drupal::entityTypeManager()->getStorage('user_role');
+  $role = $role_storage->load('tenant_manager');
+  if ($role) {
+    $role->delete();
+  }
+
+  \Drupal::logger('baas_tenant')->info('BaaS Tenant module uninstalled, cleaned up fields and roles.');
+}
+
+/**
+ * 修正租户字段实现，使用正确的Drupal字段API。
+ */
+function baas_tenant_update_10005(): string
+{
+  // 先删除之前错误添加的字段（如果存在）
+  $database = \Drupal::database();
+  $schema = $database->schema();
+
+  if ($schema->fieldExists('users_field_data', 'is_tenant')) {
+    // 保存现有数据
+    $existing_data = $database->select('users_field_data', 'u')
+      ->fields('u', ['uid', 'is_tenant'])
+      ->condition('is_tenant', 1)
+      ->execute()
+      ->fetchAllKeyed();
+
+    // 删除错误的字段
+    $schema->dropField('users_field_data', 'is_tenant');
+
+    \Drupal::logger('baas_tenant')->info('Removed incorrect is_tenant field from users_field_data table.');
+  }
+
+  // 使用字段API创建field_is_tenant字段
+  $field_storage = \Drupal\field\Entity\FieldStorageConfig::create([
+    'field_name' => 'field_is_tenant',
+    'entity_type' => 'user',
+    'type' => 'boolean',
+    'settings' => [],
+    'cardinality' => 1,
+  ]);
+
+  // 检查字段存储是否已存在
+  if (!\Drupal\field\Entity\FieldStorageConfig::loadByName('user', 'field_is_tenant')) {
+    $field_storage->save();
+  }
+
+  // 创建字段实例
+  $field = \Drupal\field\Entity\FieldConfig::create([
+    'field_storage' => $field_storage,
+    'bundle' => 'user',
+    'label' => '租户状态',
+    'description' => '标记用户是否具有租户权限（可以管理项目）',
+    'required' => FALSE,
+    'default_value' => [['value' => 0]],
+  ]);
+
+  // 检查字段实例是否已存在
+  if (!\Drupal\field\Entity\FieldConfig::loadByName('user', 'user', 'field_is_tenant')) {
+    $field->save();
+  }
+
+  // 迁移现有的租户管理员用户到新字段
+  $tenant_manager_users = $database->select('user__roles', 'ur')
+    ->fields('ur', ['entity_id'])
+    ->condition('roles_target_id', 'tenant_manager')
+    ->execute()
+    ->fetchCol();
+
+  // 如果有之前保存的数据，也包含进来
+  if (!empty($existing_data)) {
+    $tenant_manager_users = array_unique(array_merge($tenant_manager_users, array_keys($existing_data)));
+  }
+
+  if (!empty($tenant_manager_users)) {
+    $user_storage = \Drupal::entityTypeManager()->getStorage('user');
+    foreach ($tenant_manager_users as $uid) {
+      /** @var \Drupal\user\UserInterface $user */
+      $user = $user_storage->load($uid);
+      if ($user) {
+        $user->set('field_is_tenant', TRUE);
+        $user->save();
+      }
+    }
+
+    \Drupal::logger('baas_tenant')->info('Migrated @count users to field_is_tenant field using Field API', [
+      '@count' => count($tenant_manager_users),
+    ]);
+  }
+
+  return (string) t('Fixed tenant field implementation using proper Drupal Field API.');
+}
+
+/**
+ * 添加租户配置表缺失的字段 (Update 10006)。
+ * 
+ * 此更新解决了模块重装后缺失字段的问题，确保TenantManager服务
+ * 能够正常工作。添加的字段包括：
+ * - owner_uid: 租户所有者用户ID
+ * - organization_type: 组织类型
+ * - contact_email: 联系邮箱
+ */
+function baas_tenant_update_10006(): string
+{
+  $database = \Drupal::database();
+  $schema = $database->schema();
+  $table = 'baas_tenant_config';
+  
+  $updated_fields = [];
+  
+  // 检查并添加owner_uid字段
+  if (!$schema->fieldExists($table, 'owner_uid')) {
+    $field_spec = [
+      'type' => 'int',
+      'unsigned' => TRUE,
+      'not null' => FALSE, // 先设为可空，方便迁移
+      'description' => '租户所有者用户ID',
+    ];
+    
+    $schema->addField($table, 'owner_uid', $field_spec);
+    
+    // 为现有租户设置默认所有者（使用管理员用户ID=1）
+    $database->update($table)
+      ->fields(['owner_uid' => 1])
+      ->isNull('owner_uid')
+      ->execute();
+    
+    // 现在将字段设置为NOT NULL
+    $schema->changeField($table, 'owner_uid', 'owner_uid', [
+      'type' => 'int',
+      'unsigned' => TRUE,
+      'not null' => TRUE,
+      'description' => '租户所有者用户ID',
+    ]);
+    
+    $updated_fields[] = 'owner_uid';
+  }
+  
+  // 检查并添加organization_type字段
+  if (!$schema->fieldExists($table, 'organization_type')) {
+    $schema->addField($table, 'organization_type', [
+      'type' => 'varchar',
+      'length' => 50,
+      'not null' => FALSE,
+      'default' => 'company',
+      'description' => '组织类型',
+    ]);
+    
+    $updated_fields[] = 'organization_type';
+  }
+  
+  // 检查并添加contact_email字段
+  if (!$schema->fieldExists($table, 'contact_email')) {
+    $schema->addField($table, 'contact_email', [
+      'type' => 'varchar',
+      'length' => 255,
+      'not null' => FALSE,
+      'description' => '联系邮箱',
+    ]);
+    
+    $updated_fields[] = 'contact_email';
+  }
+  
+  // 添加索引
+  $indexes = [
+    'idx_owner_uid' => ['owner_uid'],
+    'idx_contact_email' => ['contact_email'],
+    'idx_organization_type' => ['organization_type'],
+  ];
+  
+  foreach ($indexes as $index_name => $index_fields) {
+    if (!$schema->indexExists($table, $index_name)) {
+      $schema->addIndex($table, $index_name, $index_fields, []);
+    }
+  }
+  
+  if (!empty($updated_fields)) {
+    \Drupal::logger('baas_tenant')->info('Added missing fields to baas_tenant_config: @fields', [
+      '@fields' => implode(', ', $updated_fields),
+    ]);
+    
+    return (string) t('添加了租户配置表缺失的字段: @fields，并创建了相应索引。', [
+      '@fields' => implode(', ', $updated_fields),
+    ]);
+  } else {
+    return (string) t('租户配置表字段完整，无需更新。');
+  }
+}

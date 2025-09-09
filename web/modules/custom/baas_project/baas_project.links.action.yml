@@ -1,0 +1,18 @@
+# 项目详情页面操作链接
+
+# 项目资源限制配置链接
+baas_project.resource_limits_action:
+  route_name: baas_project.resource_limits
+  title: '资源限制配置'
+  appears_on:
+    - baas_project.user_view
+    - baas_project.user_edit_simple
+  weight: 30
+
+# 简化版项目资源限制配置链接 - 仅在有project_id上下文的页面显示
+# baas_project.resource_limits_simple_action:
+#   route_name: baas_project.resource_limits_simple
+#   title: '资源限制配置'
+#   appears_on:
+#     - baas_project.user_view  # 只在项目详情页面显示
+#   weight: 30

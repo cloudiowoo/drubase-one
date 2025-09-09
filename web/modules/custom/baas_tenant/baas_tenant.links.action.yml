@@ -1,0 +1,4 @@
+# 租户管理页面操作链接
+
+# 租户资源限制配置链接已移除
+# 统一使用系统级API限流配置：/admin/config/baas/api/settings

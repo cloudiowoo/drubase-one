@@ -1,0 +1,238 @@
+/**
+ * 实体数据表格样式
+ */
+
+/* 表格基本样式 */
+.entity-data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1.5em;
+  font-size: 0.95em;
+}
+
+.entity-data-table th {
+  background-color: #f5f5f5;
+  border-bottom: 2px solid #ddd;
+  padding: 10px;
+  text-align: left;
+  font-weight: bold;
+  color: #333;
+}
+
+.entity-data-table th.sortable a {
+  display: block;
+  position: relative;
+  padding-right: 18px;
+  color: #0074bd;
+  text-decoration: none;
+}
+
+.entity-data-table th.sortable a:hover {
+  text-decoration: underline;
+}
+
+.entity-data-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #eee;
+  vertical-align: middle;
+}
+
+.entity-data-table tr:hover {
+  background-color: #f9f9f9;
+}
+
+/* 特殊字段样式 */
+.entity-data-table .date-cell {
+  white-space: nowrap;
+  color: #666;
+}
+
+.entity-data-table .boolean-cell {
+  text-align: center;
+  font-weight: bold;
+}
+
+.entity-data-table .boolean-true {
+  color: #0c881c;
+}
+
+.entity-data-table .boolean-false {
+  color: #e32700;
+}
+
+/* 操作列样式 */
+.entity-data-table .operations {
+  white-space: nowrap;
+  text-align: right;
+}
+
+.entity-data-table .operations .button {
+  margin: 0 2px;
+  padding: 4px 8px;
+  font-size: 0.85em;
+}
+
+/* 响应式表格 */
+@media screen and (max-width: 767px) {
+  .entity-data-table.responsive-enabled {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* 分页样式 */
+.entity-data-pager {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1em;
+  padding: 10px;
+  background-color: #f5f5f5;
+  border-radius: 3px;
+}
+
+.pager-summary {
+  color: #666;
+  font-size: 0.9em;
+}
+
+.pager-links {
+  display: flex;
+  gap: 8px;
+}
+
+.pager-link {
+  display: inline-block;
+  padding: 5px 10px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  color: #0074bd;
+  text-decoration: none;
+}
+
+.pager-link:hover {
+  background-color: #f0f0f0;
+}
+
+.page-size-selector {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9em;
+}
+
+.page-size-link {
+  display: inline-block;
+  padding: 3px 8px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  color: #666;
+  text-decoration: none;
+}
+
+.page-size-link.active {
+  background-color: #0074bd;
+  color: #fff;
+  border-color: #0074bd;
+}
+
+/* 过滤表单样式 */
+.entity-data-filters {
+  margin-bottom: 1.5em;
+  padding: 15px;
+  background-color: #f5f5f5;
+  border-radius: 3px;
+}
+
+.filters-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.filters-wrapper .form-item {
+  margin: 0;
+  flex: 1 1 200px;
+}
+
+.filters-wrapper .form-item label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  font-size: 0.9em;
+}
+
+.filters-wrapper .form-text {
+  width: 100%;
+  padding: 6px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+}
+
+.filter-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* 空状态样式 */
+.empty-state {
+  padding: 30px;
+  text-align: center;
+  background-color: #f9f9f9;
+  border: 1px solid #eee;
+  border-radius: 3px;
+  color: #666;
+}
+
+/* 表格操作按钮 */
+.button--small {
+  padding: 4px 10px;
+  font-size: 0.85em;
+}
+
+.button--danger {
+  background-color: #e32700;
+  color: white;
+}
+
+.button--danger:hover {
+  background-color: #c52300;
+}
+
+/* 表格标题和ID列样式 */
+.entity-data-table td:first-child {
+  font-weight: bold;
+}
+
+/* 表格标题和说明 */
+.entity-data-header {
+  margin-bottom: 1.5em;
+}
+
+.entity-data-header h2 {
+  margin-bottom: 0.5em;
+}
+
+.entity-data-header p {
+  color: #666;
+  margin-bottom: 1em;
+}
+
+/* 表格底部样式 */
+.entity-data-table tfoot {
+  background-color: #f5f5f5;
+}
+
+/* 表格行交替颜色 */
+.entity-data-table tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+/* 表格行悬停效果 */
+.entity-data-table tr:hover td {
+  background-color: #f0f7fd;
+}

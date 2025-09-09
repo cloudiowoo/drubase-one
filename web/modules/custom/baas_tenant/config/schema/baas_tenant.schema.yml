@@ -1,0 +1,32 @@
+# BaaS租户模块配置结构定义
+
+baas_tenant.settings:
+  type: config_object
+  label: 'BaaS租户模块设置'
+  mapping:
+    auto_create_default_project:
+      type: boolean
+      label: '自动创建默认项目'
+    default_project:
+      type: mapping
+      label: '默认项目设置'
+      mapping:
+        machine_name:
+          type: string
+          label: '机器名'
+        display_name:
+          type: string
+          label: '显示名称'
+        description:
+          type: string
+          label: '描述'
+    creation_limits:
+      type: mapping
+      label: '创建限制'
+      mapping:
+        restrict_creation:
+          type: boolean
+          label: '限制创建'
+        max_tenants_per_user:
+          type: integer
+          label: '每用户最大租户数'

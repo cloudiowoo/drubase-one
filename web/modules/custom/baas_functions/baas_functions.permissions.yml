@@ -1,0 +1,34 @@
+# BaaS Functions permissions
+
+administer baas functions:
+  title: 'Administer BaaS Functions'
+  description: 'Perform administrative tasks for the BaaS Functions module'
+  restrict access: true
+
+access baas functions:
+  title: 'Access BaaS Functions'
+  description: 'View and interact with BaaS Functions interface'
+
+create project functions:
+  title: 'Create project functions'
+  description: 'Create new functions within projects'
+
+edit project functions:
+  title: 'Edit project functions'
+  description: 'Edit existing project functions'
+
+delete project functions:
+  title: 'Delete project functions'
+  description: 'Delete project functions'
+
+execute project functions:
+  title: 'Execute project functions'
+  description: 'Execute functions and view results'
+
+view function logs:
+  title: 'View function logs'
+  description: 'View function execution logs and statistics'
+
+manage project env vars:
+  title: 'Manage project environment variables'
+  description: 'Create, edit, and delete project environment variables'

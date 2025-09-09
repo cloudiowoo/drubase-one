@@ -1,0 +1,482 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the BaaS Functions module.
+ */
+
+use Drupal\Core\Database\Database;
+
+/**
+ * Implements hook_install().
+ */
+function baas_functions_install() {
+  // 创建函数模块的4个核心表
+  $connection = Database::getConnection();
+  
+  // 1. 创建项目函数定义表
+  if (!$connection->schema()->tableExists('baas_project_functions')) {
+    $schema = baas_functions_schema();
+    $connection->schema()->createTable('baas_project_functions', $schema['baas_project_functions']);
+  }
+  
+  // 2. 创建项目函数版本历史表
+  if (!$connection->schema()->tableExists('baas_project_function_versions')) {
+    $schema = baas_functions_schema();
+    $connection->schema()->createTable('baas_project_function_versions', $schema['baas_project_function_versions']);
+  }
+  
+  // 3. 创建项目函数执行日志表
+  if (!$connection->schema()->tableExists('baas_project_function_logs')) {
+    $schema = baas_functions_schema();
+    $connection->schema()->createTable('baas_project_function_logs', $schema['baas_project_function_logs']);
+  }
+  
+  // 4. 创建项目环境变量配置表
+  if (!$connection->schema()->tableExists('baas_project_function_env_vars')) {
+    $schema = baas_functions_schema();
+    $connection->schema()->createTable('baas_project_function_env_vars', $schema['baas_project_function_env_vars']);
+  }
+  
+  \Drupal::messenger()->addMessage(t('BaaS Functions module installed successfully. Created 4 database tables.'));
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function baas_functions_uninstall() {
+  $connection = Database::getConnection();
+  
+  // 按依赖顺序删除表
+  $tables = [
+    'baas_project_function_logs',
+    'baas_project_function_versions', 
+    'baas_project_function_env_vars',
+    'baas_project_functions',
+  ];
+  
+  foreach ($tables as $table) {
+    if ($connection->schema()->tableExists($table)) {
+      $connection->schema()->dropTable($table);
+    }
+  }
+  
+  \Drupal::messenger()->addMessage(t('BaaS Functions module uninstalled. All related tables have been removed.'));
+}
+
+/**
+ * Implements hook_schema().
+ */
+function baas_functions_schema() {
+  $schema = [];
+  
+  // 1. 项目函数定义表
+  $schema['baas_project_functions'] = [
+    'description' => 'Stores project-level function definitions and metadata.',
+    'fields' => [
+      'id' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'Unique function identifier.',
+      ],
+      'project_id' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'Project ID this function belongs to.',
+      ],
+      'function_name' => [
+        'type' => 'varchar',
+        'length' => 100,
+        'not null' => TRUE,
+        'description' => 'Function name (unique within project).',
+      ],
+      'display_name' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'description' => 'Human-readable function name.',
+      ],
+      'description' => [
+        'type' => 'text',
+        'not null' => FALSE,
+        'description' => 'Function description.',
+      ],
+      'code' => [
+        'type' => 'text',
+        'size' => 'big',
+        'not null' => TRUE,
+        'description' => 'Function JavaScript code.',
+      ],
+      'config' => [
+        'type' => 'text',
+        'not null' => FALSE,
+        'description' => 'Function configuration as JSON (timeout, memory, env_required, etc.).',
+      ],
+      'status' => [
+        'type' => 'varchar',
+        'length' => 20,
+        'not null' => TRUE,
+        'default' => 'draft',
+        'description' => 'Function status: draft, testing, online, offline.',
+      ],
+      'version' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 1,
+        'description' => 'Current version number.',
+      ],
+      'call_count' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Total number of function calls.',
+      ],
+      'success_count' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Number of successful calls.',
+      ],
+      'error_count' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Number of failed calls.',
+      ],
+      'avg_response_time' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Average response time in milliseconds.',
+      ],
+      'created_by' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => 'User ID who created this function.',
+      ],
+      'created_at' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => 'Unix timestamp of creation.',
+      ],
+      'updated_at' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => 'Unix timestamp of last update.',
+      ],
+      'last_deployed_at' => [
+        'type' => 'int',
+        'not null' => FALSE,
+        'description' => 'Unix timestamp of last deployment.',
+      ],
+    ],
+    'primary key' => ['id'],
+    'unique keys' => [
+      'unique_project_function' => ['project_id', 'function_name'],
+    ],
+    'indexes' => [
+      'idx_project_status' => ['project_id', 'status'],
+      'idx_created_by' => ['created_by'],
+      'idx_created_at' => ['created_at'],
+    ],
+    'foreign keys' => [
+      'project_id' => [
+        'table' => 'baas_project_config',
+        'columns' => ['project_id' => 'project_id'],
+        'delete' => 'cascade',
+      ],
+    ],
+  ];
+  
+  // 2. 项目函数版本历史表
+  $schema['baas_project_function_versions'] = [
+    'description' => 'Stores version history of project functions.',
+    'fields' => [
+      'id' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'Unique version identifier.',
+      ],
+      'function_id' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'Function ID this version belongs to.',
+      ],
+      'version' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => 'Version number.',
+      ],
+      'code' => [
+        'type' => 'text',
+        'size' => 'big',
+        'not null' => TRUE,
+        'description' => 'Function code for this version.',
+      ],
+      'config' => [
+        'type' => 'text',
+        'not null' => FALSE,
+        'description' => 'Function configuration for this version as JSON.',
+      ],
+      'deployed_at' => [
+        'type' => 'int',
+        'not null' => FALSE,
+        'description' => 'Unix timestamp when this version was deployed.',
+      ],
+      'deployed_by' => [
+        'type' => 'int',
+        'not null' => FALSE,
+        'description' => 'User ID who deployed this version.',
+      ],
+    ],
+    'primary key' => ['id'],
+    'unique keys' => [
+      'unique_function_version' => ['function_id', 'version'],
+    ],
+    'indexes' => [
+      'idx_function_id' => ['function_id'],
+      'idx_deployed_at' => ['deployed_at'],
+    ],
+    'foreign keys' => [
+      'function_id' => [
+        'table' => 'baas_project_functions',
+        'columns' => ['function_id' => 'id'],
+        'delete' => 'cascade',
+      ],
+    ],
+  ];
+  
+  // 3. 项目函数执行日志表
+  $schema['baas_project_function_logs'] = [
+    'description' => 'Stores execution logs for project functions.',
+    'fields' => [
+      'id' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'Unique log entry identifier.',
+      ],
+      'function_id' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'Function ID that was executed.',
+      ],
+      'project_id' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'Project ID (redundant for performance).',
+      ],
+      'execution_id' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'Unique execution identifier.',
+      ],
+      'input_data' => [
+        'type' => 'text',
+        'not null' => FALSE,
+        'description' => 'Input data as JSON.',
+      ],
+      'output_data' => [
+        'type' => 'text',
+        'not null' => FALSE,
+        'description' => 'Output data as JSON.',
+      ],
+      'execution_time_ms' => [
+        'type' => 'int',
+        'not null' => FALSE,
+        'description' => 'Execution time in milliseconds.',
+      ],
+      'memory_used_mb' => [
+        'type' => 'int',
+        'not null' => FALSE,
+        'description' => 'Memory used in megabytes.',
+      ],
+      'status' => [
+        'type' => 'varchar',
+        'length' => 20,
+        'not null' => TRUE,
+        'description' => 'Execution status: success, error, timeout.',
+      ],
+      'error_message' => [
+        'type' => 'text',
+        'not null' => FALSE,
+        'description' => 'Error message if execution failed.',
+      ],
+      'error_stack' => [
+        'type' => 'text',
+        'not null' => FALSE,
+        'description' => 'Error stack trace if execution failed.',
+      ],
+      'user_id' => [
+        'type' => 'int',
+        'not null' => FALSE,
+        'description' => 'User ID who triggered the execution.',
+      ],
+      'ip_address' => [
+        'type' => 'varchar',
+        'length' => 45,
+        'not null' => FALSE,
+        'description' => 'IP address of the request.',
+      ],
+      'user_agent' => [
+        'type' => 'text',
+        'not null' => FALSE,
+        'description' => 'User agent string of the request.',
+      ],
+      'created_at' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => 'Unix timestamp of execution.',
+      ],
+    ],
+    'primary key' => ['id'],
+    'indexes' => [
+      'idx_function_id' => ['function_id'],
+      'idx_project_time' => ['project_id', 'created_at'],
+      'idx_function_time' => ['function_id', 'created_at'],
+      'idx_execution_id' => ['execution_id'],
+      'idx_status' => ['status'],
+      'idx_created_at' => ['created_at'],
+    ],
+    'foreign keys' => [
+      'function_id' => [
+        'table' => 'baas_project_functions',
+        'columns' => ['function_id' => 'id'],
+        'delete' => 'cascade',
+      ],
+    ],
+  ];
+  
+  // 4. 项目环境变量配置表
+  $schema['baas_project_function_env_vars'] = [
+    'description' => 'Stores environment variables for project functions.',
+    'fields' => [
+      'id' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'Unique environment variable identifier.',
+      ],
+      'project_id' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'Project ID this environment variable belongs to.',
+      ],
+      'var_name' => [
+        'type' => 'varchar',
+        'length' => 100,
+        'not null' => TRUE,
+        'description' => 'Environment variable name.',
+      ],
+      'encrypted_value' => [
+        'type' => 'text',
+        'not null' => TRUE,
+        'description' => 'Encrypted environment variable value.',
+      ],
+      'description' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'description' => 'Description of this environment variable.',
+      ],
+      'created_by' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => 'User ID who created this environment variable.',
+      ],
+      'created_at' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => 'Unix timestamp of creation.',
+      ],
+      'updated_at' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => 'Unix timestamp of last update.',
+      ],
+    ],
+    'primary key' => ['id'],
+    'unique keys' => [
+      'unique_project_var' => ['project_id', 'var_name'],
+    ],
+    'indexes' => [
+      'idx_project_id' => ['project_id'],
+      'idx_created_by' => ['created_by'],
+    ],
+    'foreign keys' => [
+      'project_id' => [
+        'table' => 'baas_project_config',
+        'columns' => ['project_id' => 'project_id'],
+        'delete' => 'cascade',
+      ],
+    ],
+  ];
+  
+  return $schema;
+}
+
+/**
+ * Update 8001: Add indexes for better performance.
+ */
+function baas_functions_update_8001() {
+  $connection = Database::getConnection();
+  $schema = $connection->schema();
+  
+  // 为函数日志表添加性能优化索引
+  if ($schema->tableExists('baas_project_function_logs')) {
+    if (!$schema->indexExists('baas_project_function_logs', 'idx_status_time')) {
+      $schema->addIndex('baas_project_function_logs', 'idx_status_time', ['status', 'created_at'], [
+        'description' => 'Index for status and time based queries.',
+      ]);
+    }
+  }
+  
+  return t('Added performance indexes for function logs.');
+}
+
+/**
+ * Update 8002: Add function statistics columns.
+ */
+function baas_functions_update_8002() {
+  $connection = Database::getConnection();
+  $schema = $connection->schema();
+  
+  if ($schema->tableExists('baas_project_functions')) {
+    // 添加统计相关字段（如果不存在）
+    $fields_to_add = [
+      'last_executed_at' => [
+        'type' => 'int',
+        'not null' => FALSE,
+        'description' => 'Unix timestamp of last execution.',
+      ],
+      'max_execution_time' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Maximum execution time recorded in milliseconds.',
+      ],
+      'min_execution_time' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Minimum execution time recorded in milliseconds.',
+      ],
+    ];
+    
+    foreach ($fields_to_add as $field_name => $spec) {
+      if (!$schema->fieldExists('baas_project_functions', $field_name)) {
+        $schema->addField('baas_project_functions', $field_name, $spec);
+      }
+    }
+  }
+  
+  return t('Added function statistics columns.');
+}

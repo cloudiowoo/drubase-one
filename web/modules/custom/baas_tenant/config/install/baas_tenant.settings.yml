@@ -1,0 +1,17 @@
+# BaaS租户模块默认配置
+
+# 是否在创建租户时自动创建默认项目
+auto_create_default_project: true
+
+# 默认项目设置
+default_project:
+  machine_name: 'default'
+  display_name: '默认项目'
+  description: '租户的默认项目，用于快速开始使用'
+
+# 租户创建限制
+creation_limits:
+  # 是否限制非管理员用户创建租户
+  restrict_creation: false
+  # 每个用户最多可创建的租户数量（0表示无限制）
+  max_tenants_per_user: 0

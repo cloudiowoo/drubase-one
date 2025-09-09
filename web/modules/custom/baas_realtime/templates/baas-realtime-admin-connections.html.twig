@@ -1,0 +1,94 @@
+{#
+/**
+ * @file
+ * 实时连接监控管理页面模板
+ *
+ * Available variables:
+ * - connections: 活跃连接列表
+ * - stats: 统计信息
+ */
+#}
+
+<div class="baas-realtime-admin-connections">
+  <div class="page-header">
+    <h2>实时连接监控</h2>
+    <p class="page-description">
+      监控WebSocket连接状态和实时数据流
+    </p>
+  </div>
+
+  <div class="stats-overview">
+    <div class="stats-grid">
+      <div class="stat-card">
+        <h3>{{ stats.active_connections }}</h3>
+        <p>活跃连接</p>
+      </div>
+      <div class="stat-card">
+        <h3>{{ stats.total_connections }}</h3>
+        <p>总连接数</p>
+      </div>
+      <div class="stat-card">
+        <h3>{{ stats.total_subscriptions }}</h3>
+        <p>总订阅数</p>
+      </div>
+      <div class="stat-card">
+        <h3>{{ stats.messages_today }}</h3>
+        <p>今日消息</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="connections-section">
+    <h3>活跃连接详情</h3>
+    
+    {% if connections %}
+      <div class="connections-table">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>连接ID</th>
+              <th>用户ID</th>
+              <th>租户ID</th>
+              <th>项目ID</th>
+              <th>连接时间</th>
+              <th>最后活动</th>
+              <th>状态</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for connection in connections %}
+              <tr>
+                <td>{{ connection.connection_id|slice(0, 8) }}...</td>
+                <td>{{ connection.user_id }}</td>
+                <td>{{ connection.tenant_id }}</td>
+                <td>{{ connection.project_id }}</td>
+                <td>{{ connection.connected_at|date('Y-m-d H:i:s') }}</td>
+                <td>{{ connection.last_activity|date('Y-m-d H:i:s') }}</td>
+                <td>
+                  <span class="status-badge status-{{ connection.status }}">
+                    {{ connection.status == 'active' ? '活跃' : '断开' }}
+                  </span>
+                </td>
+                <td>
+                  <button class="btn btn-sm btn-secondary" onclick="viewConnectionDetails('{{ connection.id }}')">
+                    详情
+                  </button>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="no-connections">
+        <p>当前没有活跃的实时连接</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="actions-section">
+    <button class="btn btn-primary" onclick="refreshConnections()">刷新连接状态</button>
+    <button class="btn btn-secondary" onclick="exportConnectionData()">导出数据</button>
+  </div>
+</div>

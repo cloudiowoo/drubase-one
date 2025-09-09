@@ -1,0 +1,548 @@
+<?php
+
+/**
+ * @file
+ * Contains installation functions for baas_entity module.
+ */
+
+use Drupal\Core\File\FileSystemInterface;
+
+/**
+ * Implements hook_schema().
+ */
+function baas_entity_schema() {
+  $schema = [];
+
+  // 实体模板表
+  $schema['baas_entity_template'] = [
+    'description' => '存储动态实体模板定义',
+    'fields' => [
+      'id' => [
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => '模板ID',
+      ],
+      'tenant_id' => [
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'description' => '所属租户ID',
+      ],
+      'name' => [
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'description' => '模板名称（机器名）',
+      ],
+      'label' => [
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'description' => '模板显示名称',
+      ],
+      'description' => [
+        'type' => 'text',
+        'size' => 'medium',
+        'description' => '模板描述',
+        'not null' => FALSE,
+      ],
+      'project_id' => [
+        'type' => 'varchar',
+        'length' => 64,
+        'description' => '所属项目ID',
+        'not null' => FALSE,
+      ],
+      'status' => [
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 1,
+        'description' => '模板状态：0-禁用，1-启用',
+      ],
+      'settings' => [
+        'type' => 'text',
+        'size' => 'medium',
+        'description' => '模板配置（JSON格式）',
+        'not null' => FALSE,
+      ],
+      'created' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => '创建时间',
+      ],
+      'updated' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => '更新时间',
+      ],
+    ],
+    'primary key' => ['id'],
+    'unique keys' => [
+      'tenant_name' => ['tenant_id', 'name'],
+    ],
+    'indexes' => [
+      'tenant_id' => ['tenant_id'],
+      'name' => ['name'],
+      'status' => ['status'],
+    ],
+  ];
+
+  // 实体字段表
+  $schema['baas_entity_field'] = [
+    'description' => '存储动态实体字段定义',
+    'fields' => [
+      'id' => [
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => '字段ID',
+      ],
+      'template_id' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => '所属模板ID',
+      ],
+      'name' => [
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'description' => '字段名称（机器名）',
+      ],
+      'label' => [
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'description' => '字段显示名称',
+      ],
+      'type' => [
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'description' => '字段类型',
+      ],
+      'description' => [
+        'type' => 'text',
+        'size' => 'medium',
+        'description' => '字段描述',
+        'not null' => FALSE,
+      ],
+      'required' => [
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => '是否必填：0-非必填，1-必填',
+      ],
+      'multiple' => [
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => '是否多值：0-单值，1-多值',
+      ],
+      'settings' => [
+        'type' => 'text',
+        'size' => 'medium',
+        'description' => '字段配置（JSON格式）',
+        'not null' => FALSE,
+      ],
+      'weight' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => '字段权重',
+      ],
+      'created' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => '创建时间',
+      ],
+      'updated' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => '更新时间',
+      ],
+    ],
+    'primary key' => ['id'],
+    'unique keys' => [
+      'template_name' => ['template_id', 'name'],
+    ],
+    'indexes' => [
+      'template_id' => ['template_id'],
+      'name' => ['name'],
+      'type' => ['type'],
+      'weight' => ['weight'],
+    ],
+  ];
+
+  return $schema;
+}
+
+/**
+ * Implements hook_install().
+ */
+function baas_entity_install() {
+  \Drupal::messenger()->addStatus(t('BaaS Entity 模块已安装。'));
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function baas_entity_uninstall() {
+  // 清理动态创建的实体类型和表
+  // 注意：此处仅在开发环境使用，生产环境应当保留数据
+  if (getenv('APP_ENV') === 'dev') {
+    $database = \Drupal::database();
+    $tables = $database->query("SELECT table_name FROM information_schema.tables WHERE table_name LIKE 'tenant_%\_entity\_%' ESCAPE '\'")->fetchCol();
+
+    foreach ($tables as $table) {
+      $database->schema()->dropTable($table);
+    }
+  }
+}
+
+/**
+ * 添加动态实体类文件存储目录和配置表。
+ */
+function baas_entity_update_11001() {
+  // 创建文件存储目录
+  $directory = 'public://dynamic_entities';
+  \Drupal::service('file_system')->prepareDirectory($directory, \Drupal\Core\File\FileSystemInterface::CREATE_DIRECTORY);
+
+  // 添加动态实体类文件位置记录表
+  $schema = \Drupal::database()->schema();
+
+  if (!$schema->tableExists('baas_entity_class_files')) {
+    $schema->createTable('baas_entity_class_files', [
+      'description' => '存储动态实体类文件位置信息',
+      'fields' => [
+        'id' => [
+          'type' => 'serial',
+          'not null' => TRUE,
+          'description' => '记录ID',
+        ],
+        'entity_type_id' => [
+          'type' => 'varchar',
+          'length' => 128,
+          'not null' => TRUE,
+          'description' => '实体类型ID',
+        ],
+        'tenant_id' => [
+          'type' => 'varchar',
+          'length' => 64,
+          'not null' => TRUE,
+          'description' => '所属租户ID',
+        ],
+        'class_name' => [
+          'type' => 'varchar',
+          'length' => 128,
+          'not null' => TRUE,
+          'description' => '类名',
+        ],
+        'class_type' => [
+          'type' => 'varchar',
+          'length' => 32,
+          'not null' => TRUE,
+          'description' => '类型（Entity、Storage等）',
+        ],
+        'file_path' => [
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+          'description' => '文件路径（相对于public://）',
+        ],
+        'created' => [
+          'type' => 'int',
+          'not null' => TRUE,
+          'description' => '创建时间',
+          'default' => 0,
+        ],
+        'updated' => [
+          'type' => 'int',
+          'not null' => TRUE,
+          'description' => '更新时间',
+          'default' => 0,
+        ],
+      ],
+      'primary key' => ['id'],
+      'unique keys' => [
+        'entity_class' => ['entity_type_id', 'class_type'],
+      ],
+      'indexes' => [
+        'tenant_id' => ['tenant_id'],
+        'class_name' => ['class_name'],
+      ],
+    ]);
+  }
+
+  return t('已创建动态实体文件存储目录和配置表。');
+}
+
+/**
+ * 修复动态实体类文件路径记录和加载机制。
+ */
+function baas_entity_update_11002() {
+  $database = \Drupal::database();
+  $file_system = \Drupal::service('file_system');
+  $logger = \Drupal::logger('baas_entity');
+
+  // 创建baas_entity_class_files表（如果不存在）
+  if (!$database->schema()->tableExists('baas_entity_class_files')) {
+    $schema = [
+      'description' => '存储动态实体类文件路径',
+      'fields' => [
+        'id' => [
+          'type' => 'serial',
+          'not null' => TRUE,
+          'description' => '记录ID',
+        ],
+        'entity_type_id' => [
+          'type' => 'varchar',
+          'length' => 128,
+          'not null' => TRUE,
+          'description' => '实体类型ID',
+        ],
+        'tenant_id' => [
+          'type' => 'varchar',
+          'length' => 64,
+          'not null' => TRUE,
+          'description' => '所属租户ID',
+        ],
+        'class_name' => [
+          'type' => 'varchar',
+          'length' => 128,
+          'not null' => TRUE,
+          'description' => '类名',
+        ],
+        'class_type' => [
+          'type' => 'varchar',
+          'length' => 32,
+          'not null' => TRUE,
+          'description' => '类型（Entity、Storage、Form等）',
+        ],
+        'file_path' => [
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+          'description' => '相对于public://的文件路径',
+        ],
+        'created' => [
+          'type' => 'int',
+          'not null' => TRUE,
+          'description' => '创建时间',
+        ],
+        'updated' => [
+          'type' => 'int',
+          'not null' => TRUE,
+          'description' => '更新时间',
+        ],
+      ],
+      'primary key' => ['id'],
+      'unique keys' => [
+        'entity_class_type' => ['entity_type_id', 'class_type'],
+      ],
+      'indexes' => [
+        'tenant_id' => ['tenant_id'],
+        'class_name' => ['class_name'],
+        'class_type' => ['class_type'],
+      ],
+    ];
+
+    $database->schema()->createTable('baas_entity_class_files', $schema);
+    $logger->notice('创建了baas_entity_class_files表。');
+  }
+
+  // 获取所有租户模板
+  $templates = $database->select('baas_entity_template', 't')
+    ->fields('t', ['id', 'tenant_id', 'name', 'label', 'status'])
+    ->condition('status', 1)
+    ->execute()
+    ->fetchAll();
+
+  // 扫描并记录所有动态实体类文件
+  $entity_directory = 'public://dynamic_entities';
+  $file_system->prepareDirectory($entity_directory, FileSystemInterface::CREATE_DIRECTORY);
+  $current_time = time();
+
+  foreach ($templates as $template) {
+    $tenant_id = $template->tenant_id;
+    $entity_name = $template->name;
+    $entity_type_id = $tenant_id . '_' . $entity_name;
+
+    // 生成类名
+    $name_parts = explode('_', $entity_name);
+    $name_parts = array_map('ucfirst', $name_parts);
+    $class_base = implode('', $name_parts);
+
+    $tenant_parts = explode('_', $tenant_id);
+    $tenant_parts = array_map('ucfirst', $tenant_parts);
+    $tenant_prefix = implode('', $tenant_parts);
+
+    $class_name = $tenant_prefix . $class_base;
+
+    // 检查Entity类文件
+    $entity_file_path = 'dynamic_entities/' . $tenant_id . '/Entity/' . $class_name . '.php';
+    $entity_real_path = $file_system->realpath('public://' . $entity_file_path);
+
+    if (file_exists($entity_real_path)) {
+      // 记录Entity类文件
+      $database->merge('baas_entity_class_files')
+        ->key(['entity_type_id' => $entity_type_id, 'class_type' => 'Entity'])
+        ->fields([
+          'tenant_id' => $tenant_id,
+          'class_name' => $class_name,
+          'file_path' => $entity_file_path,
+          'created' => $current_time,
+          'updated' => $current_time,
+        ])
+        ->execute();
+
+      $logger->notice('记录Entity类文件: @path', ['@path' => $entity_file_path]);
+    }
+
+    // 检查Storage类文件
+    $storage_class_name = $class_name . 'Storage';
+    $storage_file_path = 'dynamic_entities/' . $tenant_id . '/Storage/' . $storage_class_name . '.php';
+    $storage_real_path = $file_system->realpath('public://' . $storage_file_path);
+
+    if (file_exists($storage_real_path)) {
+      // 记录Storage类文件
+      $database->merge('baas_entity_class_files')
+        ->key(['entity_type_id' => $entity_type_id, 'class_type' => 'Storage'])
+        ->fields([
+          'tenant_id' => $tenant_id,
+          'class_name' => $storage_class_name,
+          'file_path' => $storage_file_path,
+          'created' => $current_time,
+          'updated' => $current_time,
+        ])
+        ->execute();
+
+      $logger->notice('记录Storage类文件: @path', ['@path' => $storage_file_path]);
+    }
+
+    // 检查Form类文件
+    $form_class_name = $class_name . 'Form';
+    $form_file_path = 'dynamic_entities/' . $tenant_id . '/Form/' . $form_class_name . '.php';
+    $form_real_path = $file_system->realpath('public://' . $form_file_path);
+
+    if (file_exists($form_real_path)) {
+      // 记录Form类文件
+      $database->merge('baas_entity_class_files')
+        ->key(['entity_type_id' => $entity_type_id, 'class_type' => 'Form'])
+        ->fields([
+          'tenant_id' => $tenant_id,
+          'class_name' => $form_class_name,
+          'file_path' => $form_file_path,
+          'created' => $current_time,
+          'updated' => $current_time,
+        ])
+        ->execute();
+
+      $logger->notice('记录Form类文件: @path', ['@path' => $form_file_path]);
+    }
+
+    // 检查DeleteForm类文件
+    $delete_form_class_name = $class_name . 'DeleteForm';
+    $delete_form_file_path = 'dynamic_entities/' . $tenant_id . '/Form/' . $delete_form_class_name . '.php';
+    $delete_form_real_path = $file_system->realpath('public://' . $delete_form_file_path);
+
+    if (file_exists($delete_form_real_path)) {
+      // 记录DeleteForm类文件
+      $database->merge('baas_entity_class_files')
+        ->key(['entity_type_id' => $entity_type_id, 'class_type' => 'DeleteForm'])
+        ->fields([
+          'tenant_id' => $tenant_id,
+          'class_name' => $delete_form_class_name,
+          'file_path' => $delete_form_file_path,
+          'created' => $current_time,
+          'updated' => $current_time,
+        ])
+        ->execute();
+
+      $logger->notice('记录DeleteForm类文件: @path', ['@path' => $delete_form_file_path]);
+    }
+
+    // 检查ListBuilder类文件
+    $list_builder_class_name = $class_name . 'ListBuilder';
+    $list_builder_file_path = 'dynamic_entities/' . $tenant_id . '/ListBuilder/' . $list_builder_class_name . '.php';
+    $list_builder_real_path = $file_system->realpath('public://' . $list_builder_file_path);
+
+    if (file_exists($list_builder_real_path)) {
+      // 记录ListBuilder类文件
+      $database->merge('baas_entity_class_files')
+        ->key(['entity_type_id' => $entity_type_id, 'class_type' => 'ListBuilder'])
+        ->fields([
+          'tenant_id' => $tenant_id,
+          'class_name' => $list_builder_class_name,
+          'file_path' => $list_builder_file_path,
+          'created' => $current_time,
+          'updated' => $current_time,
+        ])
+        ->execute();
+
+      $logger->notice('记录ListBuilder类文件: @path', ['@path' => $list_builder_file_path]);
+    }
+  }
+
+  return t('已修复动态实体类文件路径记录和加载机制。');
+}
+
+/**
+ * 修复所有实体模板的project_id字段 (Update 11003)。
+ */
+function baas_entity_update_11003() {
+  $database = \Drupal::database();
+  
+  // 获取所有没有project_id的实体模板
+  $templates = $database->select('baas_entity_template', 't')
+    ->fields('t', ['id', 'tenant_id', 'name'])
+    ->condition('project_id', NULL, 'IS NULL')
+    ->execute()
+    ->fetchAll();
+  
+  $updated_count = 0;
+  
+  foreach ($templates as $template) {
+    // 为每个租户查找默认项目
+    $default_project = $database->select('baas_project_config', 'p')
+      ->fields('p', ['project_id'])
+      ->condition('tenant_id', $template->tenant_id)
+      ->condition('machine_name', 'default')
+      ->execute()
+      ->fetchField();
+    
+    if (!$default_project) {
+      // 如果没有默认项目，尝试查找该租户的第一个项目
+      $default_project = $database->select('baas_project_config', 'p')
+        ->fields('p', ['project_id'])
+        ->condition('tenant_id', $template->tenant_id)
+        ->condition('status', 1)
+        ->range(0, 1)
+        ->execute()
+        ->fetchField();
+    }
+    
+    if ($default_project) {
+      // 更新实体模板的project_id
+      $database->update('baas_entity_template')
+        ->fields(['project_id' => $default_project])
+        ->condition('id', $template->id)
+        ->execute();
+      
+      // 更新对应的字段记录
+      $database->update('baas_entity_field')
+        ->fields(['project_id' => $default_project])
+        ->condition('template_id', $template->id)
+        ->execute();
+      
+      $updated_count++;
+      
+      \Drupal::logger('baas_entity')->notice('为实体模板 @name 设置 project_id: @project_id', [
+        '@name' => $template->name,
+        '@project_id' => $default_project,
+      ]);
+    }
+  }
+  
+  return t('已为 @count 个实体模板修复 project_id 字段。', ['@count' => $updated_count]);
+}

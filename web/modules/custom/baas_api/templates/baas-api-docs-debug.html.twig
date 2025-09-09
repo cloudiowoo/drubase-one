@@ -1,0 +1,172 @@
+{#
+/**
+ * @file
+ * Debug template for API文档页面.
+ */
+#}
+
+<div class="baas-api-docs">
+	<header class="baas-api-docs__header">
+		<h1>{{ title }}</h1>
+		<div class="baas-api-docs__actions">
+			<a href="#" class="button js-baas-api-docs-expand-all">展开全部</a>
+			<a href="#" class="button js-baas-api-docs-collapse-all">折叠全部</a>
+			<a href="{{ path('baas_api.download_docs') }}" class="button">下载文档</a>
+		</div>
+	</header>
+
+	<div class="debug-info">
+		<h2>Debug Information</h2>
+		<p>Docs variable type: {{ docs is defined ? 'defined' : 'undefined' }}</p>
+		<p>Docs is array: {{ docs is iterable ? 'yes' : 'no' }}</p>
+		<p>Docs keys: {{ docs ? docs|keys|join(', ') : 'no keys' }}</p>
+		<p>OpenAPI version: {{ docs.openapi ?? 'not set' }}</p>
+		<p>Info title: {{ docs.info.title ?? 'not set' }}</p>
+		<p>Paths count: {{ docs.paths ? docs.paths|length : 'not set' }}</p>
+		<p id="debug-resources">Resource loading status: <span id="resource-status">checking...</span></p>
+	</div>
+
+	<div id="swagger-ui" class="swagger-ui-container"></div>
+</div>
+
+<script src="https://unpkg.com/swagger-ui-dist@5.3.1/swagger-ui-bundle.js"></script>
+<script src="https://unpkg.com/swagger-ui-dist@5.3.1/swagger-ui-standalone-preset.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.3.1/swagger-ui.css">
+
+<script>
+(function () {
+	console.log('Debug: Starting Swagger UI initialization');
+	console.log('Debug: docs variable:', {{ docs|json_encode|raw }});
+	
+	// 更新资源状态显示
+	function updateResourceStatus(status) {
+		const statusElement = document.getElementById('resource-status');
+		if (statusElement) {
+			statusElement.textContent = status;
+			statusElement.style.color = status.includes('Error') ? 'red' : (status.includes('OK') ? 'green' : 'orange');
+		}
+	}
+	
+	// 检查 SwaggerUIBundle 是否加载
+	function checkSwaggerUILoaded() {
+		if (typeof SwaggerUIBundle !== 'undefined') {
+			console.log('Debug: SwaggerUIBundle is available');
+			updateResourceStatus('SwaggerUIBundle loaded OK');
+			initializeSwaggerUI();
+		} else {
+			console.error('Debug: SwaggerUIBundle not loaded');
+			updateResourceStatus('Error: SwaggerUIBundle not loaded');
+			document.getElementById('swagger-ui').innerHTML = '<div style="padding: 20px; border: 2px solid red; background: #ffeeee;"><h3>Error: Swagger UI not loaded</h3><p>SwaggerUIBundle is not available. This might be due to CDN loading failure.</p></div>';
+		}
+	}
+	
+	function initializeSwaggerUI() {
+		console.log('Debug: Initializing Swagger UI');
+		updateResourceStatus('Initializing Swagger UI...');
+		
+		try {
+			const spec = {{ docs|json_encode|raw }};
+			console.log('Debug: Spec object:', spec);
+			
+			// 验证规范对象
+			if (!spec || !spec.openapi) {
+				throw new Error('Invalid OpenAPI specification');
+			}
+			
+			updateResourceStatus('Creating Swagger UI instance...');
+			const ui = SwaggerUIBundle({
+				spec: spec,
+				dom_id: '#swagger-ui',
+				deepLinking: true,
+				presets: [
+					SwaggerUIBundle.presets.apis,
+					SwaggerUIStandalonePreset
+				],
+				plugins: [SwaggerUIBundle.plugins.DownloadUrl],
+				layout: "StandaloneLayout",
+				defaultModelsExpandDepth: 1,
+				defaultModelExpandDepth: 1,
+				displayRequestDuration: true,
+				docExpansion: "list",
+				filter: true,
+				tryItOutEnabled: true,
+				onComplete: function() {
+					console.log('Debug: Swagger UI rendering complete');
+					updateResourceStatus('Swagger UI rendering complete - OK');
+				},
+				onFailure: function(error) {
+					console.error('Debug: Swagger UI rendering failed:', error);
+					updateResourceStatus('Error: Swagger UI rendering failed');
+					document.getElementById('swagger-ui').innerHTML = '<div style="padding: 20px; border: 2px solid red; background: #ffeeee;"><h3>Error: Swagger UI rendering failed</h3><pre>' + error.toString() + '</pre></div>';
+				}
+			});
+
+			window.ui = ui;
+			console.log('Debug: Swagger UI initialized successfully');
+		} catch (error) {
+			console.error('Debug: Error initializing Swagger UI:', error);
+			updateResourceStatus('Error: Swagger UI initialization failed');
+			document.getElementById('swagger-ui').innerHTML = '<div style="padding: 20px; border: 2px solid red; background: #ffeeee;"><h3>Error: Swagger UI initialization failed</h3><pre>' + error.toString() + '</pre><h4>Spec data:</h4><pre>' + JSON.stringify({{ docs|json_encode|raw }}, null, 2) + '</pre></div>';
+		}
+	}
+	
+	// 延迟检查，确保所有资源都加载完成
+	window.onload = function () {
+		console.log('Debug: Window loaded, checking Swagger UI availability');
+		setTimeout(checkSwaggerUILoaded, 100);
+	};
+})();
+</script>
+
+<style>
+	.baas-api-docs {
+		max-width: 1200px;
+		margin: 0 auto;
+		padding: 20px;
+	}
+
+	.baas-api-docs__header {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		margin-bottom: 20px;
+		padding-bottom: 20px;
+		border-bottom: 1px solid #ddd;
+	}
+
+	.baas-api-docs__actions {
+		display: flex;
+		gap: 10px;
+	}
+
+	.button {
+		display: inline-block;
+		padding: 8px 16px;
+		background: #0071b8;
+		color: white;
+		text-decoration: none;
+		border-radius: 4px;
+		font-weight: 500;
+	}
+
+	.button:hover {
+		background: #00598f;
+	}
+
+	.debug-info {
+		background: #f0f0f0;
+		padding: 20px;
+		margin-bottom: 20px;
+		border-radius: 4px;
+	}
+
+	.debug-info h2 {
+		margin-top: 0;
+		color: #d93636;
+	}
+
+	.debug-info p {
+		margin: 5px 0;
+		font-family: monospace;
+	}
+</style>

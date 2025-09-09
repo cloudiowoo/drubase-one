@@ -1,0 +1,60 @@
+# BaaS文件模块权限定义
+
+# 统一文件管理界面权限
+access baas file manager:
+  title: '访问BaaS文件管理器'
+  description: '允许访问统一文件管理界面'
+
+# 基础文件管理权限
+manage project files:
+  title: '管理项目文件'
+  description: '允许在项目中上传、删除和管理文件'
+
+upload project files:
+  title: '上传项目文件'
+  description: '允许向项目上传文件'
+
+view project files:
+  title: '查看项目文件'
+  description: '允许查看和下载项目文件'
+
+delete project files:
+  title: '删除项目文件'
+  description: '允许删除项目中的文件'
+
+# 租户级别媒体管理权限
+manage tenant media:
+  title: '管理租户媒体文件'
+  description: '允许管理租户下所有项目的媒体文件'
+
+view tenant media:
+  title: '查看租户媒体文件'
+  description: '允许查看租户下的媒体文件列表和统计'
+
+# 系统管理员权限
+administer baas file:
+  title: '管理BaaS文件系统'
+  description: '完全的文件系统管理权限，包括全局媒体管理和系统配置'
+  restrict access: TRUE
+
+# 文件字段类型管理权限
+administer baas file fields:
+  title: '管理BaaS文件字段类型'
+  description: '允许配置和管理文件字段类型插件'
+  restrict access: TRUE
+
+# 统计和日志权限
+view project file statistics:
+  title: '查看项目文件统计'
+  description: '允许查看项目的文件使用统计信息'
+
+view file access logs:
+  title: '查看文件访问日志'
+  description: '允许查看文件访问和操作日志'
+  restrict access: TRUE
+
+# 存储配置权限
+configure file storage:
+  title: '配置文件存储'
+  description: '允许配置文件存储方式和参数'
+  restrict access: TRUE

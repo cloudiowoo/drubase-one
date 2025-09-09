@@ -1,0 +1,9 @@
+# BaaS Functions Service Configuration
+nodejs_service_url: 'http://172.31.1.40:3001'
+default_timeout: 30
+max_timeout: 300
+rate_limit_enabled: true
+rate_limit_window: 60
+rate_limit_max_requests: 100
+security_checks_enabled: true
+logging_enabled: true

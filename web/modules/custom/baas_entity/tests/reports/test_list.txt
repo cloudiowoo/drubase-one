@@ -1,0 +1,23 @@
+PHPUnit 10.5.46 by Sebastian Bergmann and contributors.
+
+Available test(s):
+ - Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::testFieldTypeManagerInstantiation
+ - Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::testFieldTypeManagerMethods
+ - Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::testEmptyFieldTypeManager
+ - Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::testHasType
+ - Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::testNonExistentFieldTypeInfo
+ - Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::testValidationForNonExistentType
+ - Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::testCacheClear
+ - Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::testStorageSchemaForNonExistentType
+ - Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::testProcessValueForNonExistentType
+ - Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::testFormatValueForNonExistentType
+ - Drupal\Tests\baas_entity\Unit\FieldTypePluginTest::testPluginRegistration
+ - Drupal\Tests\baas_entity\Unit\FieldTypePluginTest::testGetAvailableTypes
+ - Drupal\Tests\baas_entity\Unit\FieldTypePluginTest::testGetTypeInfo
+ - Drupal\Tests\baas_entity\Unit\FieldTypePluginTest::testGetStorageSchema
+ - Drupal\Tests\baas_entity\Unit\FieldTypePluginTest::testValidateValue
+ - Drupal\Tests\baas_entity\Unit\FieldTypePluginTest::testProcessValue
+ - Drupal\Tests\baas_entity\Unit\FieldTypePluginTest::testFormatValue
+ - Drupal\Tests\baas_entity\Unit\FieldTypePluginTest::testNonExistentType
+ - Drupal\Tests\baas_entity\Unit\SimpleUnitTest::testBasicAssertion
+ - Drupal\Tests\baas_entity\Unit\SimpleUnitTest::testArrayOperations

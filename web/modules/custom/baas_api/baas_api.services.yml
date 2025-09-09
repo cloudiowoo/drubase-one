@@ -1,0 +1,141 @@
+services:
+  baas_api.manager:
+    class: Drupal\baas_api\Service\ApiManager
+    arguments: ['@database', '@config.factory', '@logger.factory', '@baas_tenant.manager', '@state']
+    public: true
+
+  baas_api.docs_generator:
+    class: Drupal\baas_api\Service\ApiDocGenerator
+    arguments: ['@entity_type.manager', '@baas_entity.template_manager', '@baas_tenant.manager', '@config.factory']
+    public: true
+
+  baas_api.rate_limiter:
+    class: Drupal\baas_api\Service\RateLimitService
+    arguments: ['@cache.default', '@config.factory', '@logger.factory', '@?baas_project.usage_tracker']
+    public: true
+  
+  baas_api.rate_limit:
+    alias: baas_api.rate_limiter
+    public: true
+
+  baas_api.stats:
+    class: Drupal\baas_api\Service\ApiStatsService
+    arguments: ['@database', '@logger.factory']
+    public: true
+
+  # API缓存服务
+  baas_api.cache:
+    class: Drupal\baas_api\Service\ApiCacheService
+    arguments: ['@cache.default', '@config.factory', '@logger.factory']
+    public: true
+
+  # API缓存事件订阅器
+  baas_api.cache_subscriber:
+    class: Drupal\baas_api\EventSubscriber\ApiCacheSubscriber
+    arguments: ['@baas_api.cache']
+    tags:
+      - { name: event_subscriber }
+
+  baas_api.event_subscriber:
+    class: Drupal\baas_api\EventSubscriber\ApiEventSubscriber
+    arguments: ['@baas_api.manager', '@logger.factory', '@current_user']
+    tags:
+      - { name: event_subscriber }
+
+  baas_api.request_subscriber:
+    class: Drupal\baas_api\EventSubscriber\ApiRequestSubscriber
+    arguments: ['@baas_api.rate_limiter', '@baas_tenant.resolver', '@logger.factory', '@state']
+    tags:
+      - { name: event_subscriber }
+
+  baas_api.token_usage_subscriber:
+    class: Drupal\baas_api\EventSubscriber\ApiTokenUsageSubscriber
+    arguments: ['@database', '@logger.factory']
+    tags:
+      - { name: event_subscriber }
+
+  baas_api.method_override_subscriber:
+    class: Drupal\baas_api\EventSubscriber\ApiMethodOverrideSubscriber
+    arguments: ['@logger.factory']
+    tags:
+      - { name: event_subscriber }
+
+  logger.channel.baas_api:
+    parent: logger.channel_base
+    arguments: ['baas_api']
+
+  baas_api.commands:
+    class: Drupal\baas_api\Commands\BaasApiCommands
+    arguments: ['@baas_api.docs_generator', '@baas_tenant.manager']
+    tags:
+      - { name: drush.command }
+
+  baas_api.cache_commands:
+    class: Drupal\baas_api\Commands\ApiCacheCommands
+    arguments: ['@baas_api.cache']
+    tags:
+      - { name: drush.command }
+
+  baas_api.token_manager:
+    class: Drupal\baas_api\Service\ApiTokenManager
+    arguments:
+      - '@database'
+      - '@config.factory'
+      - '@logger.factory'
+      - '@datetime.time'
+      - '@token'
+
+  baas_api.response:
+    class: Drupal\baas_api\Service\ApiResponseService
+    arguments: ['@logger.factory', '@config.factory']
+    public: true
+
+  baas_api.validation:
+    class: Drupal\baas_api\Service\ApiValidationService
+    arguments: ['@logger.factory']
+    public: true
+
+  # 统一认证中间件服务
+  baas_api.authentication_subscriber:
+    class: Drupal\baas_api\EventSubscriber\ApiAuthenticationSubscriber
+    arguments:
+      - '@baas_api.response'
+      - '@baas_auth.jwt_token_manager'
+      - '@baas_auth.jwt_blacklist_service'
+      - '@baas_auth.api_key_manager'
+      - '@baas_auth.unified_permission_checker'
+      - '@logger.factory'
+    tags:
+      - { name: event_subscriber }
+
+  baas_api.permission_subscriber:
+    class: Drupal\baas_api\EventSubscriber\ApiPermissionSubscriber
+    arguments:
+      - '@baas_api.response'
+      - '@baas_auth.unified_permission_checker'
+      - '@logger.factory'
+    tags:
+      - { name: event_subscriber }
+
+  baas_api.rate_limit_subscriber:
+    class: Drupal\baas_api\EventSubscriber\ApiRateLimitSubscriber
+    arguments:
+      - '@baas_api.response'
+      - '@baas_api.rate_limiter'
+      - '@logger.factory'
+    tags:
+      - { name: event_subscriber }
+
+  baas_api.response_subscriber:
+    class: Drupal\baas_api\EventSubscriber\ApiResponseSubscriber
+    arguments:
+      - '@logger.factory'
+    tags:
+      - { name: event_subscriber }
+
+  baas_api.public_endpoint_access:
+    class: Drupal\baas_api\Access\PublicEndpointAccessChecker
+    arguments: []
+    tags:
+      - { name: access_check, applies_to: _public_api_endpoint }
+

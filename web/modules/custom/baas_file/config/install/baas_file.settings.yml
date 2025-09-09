@@ -1,0 +1,104 @@
+# BaaS File模块配置文件
+# 文件存储和管理相关的配置设置
+
+# 存储限制功能
+enable_storage_limits: false  # 默认关闭存储限制功能，确保向后兼容
+
+# 文件上传设置
+upload_settings:
+  # 是否启用文件类型验证
+  enable_file_type_validation: true
+  
+  # 允许的文件扩展名（空表示使用默认设置）
+  allowed_extensions: ''
+  
+  # 是否启用文件大小验证
+  enable_file_size_validation: true
+  
+  # 默认单个文件大小限制（MB，0表示无限制）
+  default_max_file_size: 100
+
+# 存储限制设置
+storage_limit_settings:
+  # 存储限制检查模式
+  # - disabled: 完全禁用
+  # - warning: 仅警告，不阻止上传
+  # - enforced: 强制执行，超限阻止上传
+  check_mode: 'disabled'
+  
+  # 存储使用警告阈值（百分比）
+  warning_threshold: 80
+  
+  # 存储使用危险阈值（百分比）
+  critical_threshold: 90
+  
+  # 是否在接近限制时发送通知
+  enable_limit_notifications: false
+  
+  # 通知收件人（留空使用项目管理员）
+  notification_recipients: []
+
+# 文件访问设置
+access_settings:
+  # 是否启用文件访问日志
+  enable_access_logging: true
+  
+  # 访问日志保留天数
+  access_log_retention_days: 90
+  
+  # 是否启用文件下载统计
+  enable_download_stats: true
+
+# 清理设置
+cleanup_settings:
+  # 是否启用自动清理未使用的文件
+  enable_auto_cleanup: false
+  
+  # 未使用文件保留天数
+  unused_file_retention_days: 30
+  
+  # 临时文件保留小时数
+  temp_file_retention_hours: 24
+
+# 性能设置
+performance_settings:
+  # 文件使用统计更新间隔（秒）
+  usage_stats_update_interval: 300
+  
+  # 是否启用文件缓存
+  enable_file_cache: true
+  
+  # 缓存TTL（秒）
+  cache_ttl: 3600
+
+# 安全设置
+security_settings:
+  # 是否启用文件内容扫描
+  enable_content_scanning: false
+  
+  # 禁止的文件类型（MIME types）
+  blocked_mime_types:
+    - 'application/x-executable'
+    - 'application/x-msdownload'
+    - 'application/x-php'
+  
+  # 是否限制文件名字符
+  restrict_filename_chars: true
+
+# 特性标志控制
+feature_flags:
+  # 渐进式部署阶段
+  # - disabled: 功能完全禁用
+  # - testing: 仅测试项目启用
+  # - partial: 部分项目启用
+  # - full: 全部项目启用
+  rollout_phase: 'disabled'
+  
+  # 测试项目ID列表（仅在testing阶段生效）
+  test_projects: []
+  
+  # 排除的项目ID列表
+  excluded_projects: []
+  
+  # 是否启用调试模式
+  debug_mode: false

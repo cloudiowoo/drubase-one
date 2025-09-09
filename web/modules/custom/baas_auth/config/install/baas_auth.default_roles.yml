@@ -1,0 +1,33 @@
+title: 'BaaS Default Roles Configuration'
+description: 'Default roles and permissions for BaaS tenants'
+
+default_roles:
+  tenant_admin:
+    label: 'Tenant Administrator'
+    description: 'Full administrative access within the tenant'
+    permissions:
+      - 'manage tenant users'
+      - 'manage api keys'
+      - 'assign user roles'
+      - 'view security logs'
+      - 'manage user sessions'
+      - 'entity.create'
+      - 'entity.read'
+      - 'entity.update'
+      - 'entity.delete'
+
+  tenant_user:
+    label: 'Tenant User'
+    description: 'Standard user access within the tenant'
+    permissions:
+      - 'entity.read'
+      - 'entity.create'
+      - 'entity.update'
+      - 'manage user sessions'
+
+  api_client:
+    label: 'API Client'
+    description: 'Limited API access for external applications'
+    permissions:
+      - 'entity.read'
+      - 'entity.create'

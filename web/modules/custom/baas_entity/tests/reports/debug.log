@@ -1,0 +1,62 @@
+PHPUnit Started (PHPUnit 10.5.46 using PHP 8.4.2 (cli) on Linux)
+Test Runner Configured
+Test Suite Loaded (20 tests)
+Event Facade Sealed
+Test Runner Started
+Test Suite Sorted
+Test Runner Execution Started (20 tests)
+Test Suite Started (CLI Arguments, 20 tests)
+Test Suite Started (Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest, 10 tests)
+Test Preparation Started (Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::testFieldTypeManagerInstantiation)
+Before Test Method Called (Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::setUp)
+Before Test Method Finished:
+- Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::setUp
+Test Prepared (Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::testFieldTypeManagerInstantiation)
+Assertion Succeeded (Constraint: is an instance of class Drupal\baas_entity\Service\FieldTypeManager, Value: {enable export of objects to see this value})
+Test Passed (Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::testFieldTypeManagerInstantiation)
+Test Finished (Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::testFieldTypeManagerInstantiation)
+Test Preparation Started (Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::testFieldTypeManagerMethods)
+Before Test Method Called (Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::setUp)
+Before Test Method Finished:
+- Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::setUp
+Test Prepared (Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::testFieldTypeManagerMethods)
+Assertion Succeeded (Constraint: is true, Value: true)
+Assertion Succeeded (Constraint: is true, Value: true)
+Assertion Succeeded (Constraint: is true, Value: true)
+Assertion Succeeded (Constraint: is true, Value: true)
+Assertion Succeeded (Constraint: is true, Value: true)
+Test Passed (Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::testFieldTypeManagerMethods)
+Test Finished (Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::testFieldTypeManagerMethods)
+Test Preparation Started (Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::testEmptyFieldTypeManager)
+Before Test Method Called (Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::setUp)
+Before Test Method Finished:
+- Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::setUp
+Test Prepared (Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::testEmptyFieldTypeManager)
+Assertion Succeeded (Constraint: is of type array, Value: Array &0 [])
+Assertion Succeeded (Constraint: is empty, Value: Array &0 [], Message: Empty field type manager should return empty array)
+Test Passed (Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::testEmptyFieldTypeManager)
+Test Finished (Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::testEmptyFieldTypeManager)
+Test Preparation Started (Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::testHasType)
+Before Test Method Called (Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::setUp)
+Before Test Method Finished:
+- Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::setUp
+Test Prepared (Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::testHasType)
+Assertion Succeeded (Constraint: is false, Value: false)
+Assertion Succeeded (Constraint: is false, Value: false)
+Test Passed (Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::testHasType)
+Test Finished (Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::testHasType)
+Test Preparation Started (Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::testNonExistentFieldTypeInfo)
+Before Test Method Called (Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::setUp)
+Before Test Method Finished:
+- Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::setUp
+Test Prepared (Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::testNonExistentFieldTypeInfo)
+Assertion Succeeded (Constraint: is null, Value: null, Message: Non-existent field type should return null)
+Test Passed (Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::testNonExistentFieldTypeInfo)
+Test Finished (Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::testNonExistentFieldTypeInfo)
+Test Preparation Started (Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::testValidationForNonExistentType)
+Before Test Method Called (Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::setUp)
+Before Test Method Finished:
+- Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::setUp
+Test Prepared (Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::testValidationForNonExistentType)
+Test Triggered Warning (Drupal\Tests\baas_entity\Unit\FieldTypeManagerUnitTest::testValidationForNonExistentType) in /var/www/webs/cloudio/drubase/web/core/lib/Drupal/Component/Utility/ToStringTrait.php:20
+Drupal\Core\DependencyInjection\ContainerNotInitializedException thrown while calling __toString on a Drupal\Core\StringTranslation\TranslatableMarkup object in /var/www/webs/cloudio/drubase/web/core/lib/Drupal.php on line 169: \Drupal::$container is not initialized yet. \Drupal::setContainer() must be called with a real container.

@@ -1,0 +1,31 @@
+# 系统管理员菜单 - 实时功能管理
+baas_realtime.admin:
+  title: '实时功能管理'
+  description: '管理BaaS平台实时数据同步功能'
+  parent: baas.admin
+  route_name: baas_realtime.settings
+  weight: 30
+
+# 系统管理员菜单 - 实时连接监控
+baas_realtime.admin.connections:
+  title: '实时连接监控'
+  description: '监控WebSocket连接和实时数据流'
+  parent: baas_realtime.admin
+  route_name: baas_realtime.admin.connections
+  weight: 10
+
+# 系统管理员菜单 - 实时统计报告
+baas_realtime.admin.stats:
+  title: '实时统计报告'
+  description: '查看实时功能使用统计和性能报告'
+  parent: system.admin_reports
+  route_name: baas_realtime.admin.stats
+  weight: 15
+
+# 用户账户菜单 - 我的实时项目
+baas_realtime.user_projects:
+  title: '实时项目管理'
+  description: '管理我的项目的实时功能设置'
+  menu_name: account
+  route_name: baas_realtime.user_projects
+  weight: 12

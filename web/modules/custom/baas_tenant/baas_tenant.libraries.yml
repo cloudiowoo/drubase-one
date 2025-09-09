@@ -1,0 +1,35 @@
+admin:
+  version: 1.x
+  css:
+    theme:
+      css/baas-tenant-admin.css: {}
+
+toolbar:
+  version: 1.x
+  css:
+    theme:
+      css/baas-tenant-toolbar.css: {}
+  dependencies:
+    - core/drupal.toolbar
+
+api-keys:
+  version: 2.1
+  css:
+    theme:
+      css/api-keys.css: {}
+  js:
+    js/api-keys.js: {}
+  dependencies:
+    - core/jquery
+    - core/drupal
+
+api-key-success:
+  version: 2.1
+  css:
+    theme:
+      css/api-keys.css: {}
+  js:
+    js/api-key-success.js: {}
+  dependencies:
+    - core/jquery
+    - core/drupal

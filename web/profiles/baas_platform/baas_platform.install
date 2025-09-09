@@ -1,0 +1,60 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for Drubase One profile.
+ */
+
+use Drupal\Core\Config\FileStorage;
+use Drupal\user\Entity\User;
+
+/**
+ * Implements hook_install().
+ */
+function baas_platform_install() {
+  // 设置默认主题
+  \Drupal::configFactory()->getEditable('system.theme')
+    ->set('default', 'gin')
+    ->set('admin', 'gin')
+    ->save();
+    
+  // 启用Gin工具栏
+  \Drupal::service('module_installer')->install(['gin_toolbar']);
+  
+  // 创建默认管理员用户
+  $admin_user = User::create([
+    'name' => 'admin',
+    'mail' => 'admin@drubase-one.local',
+    'pass' => 'admin123',
+    'status' => 1,
+    'roles' => ['administrator'],
+  ]);
+  $admin_user->save();
+  
+  // 初始化BaaS平台
+  _baas_platform_initialize();
+  
+  \Drupal::messenger()->addMessage(t('Drubase One has been installed successfully!'));
+}
+
+/**
+ * Initialize BaaS platform with default configuration.
+ */
+function _baas_platform_initialize() {
+  // 创建默认租户
+  if (\Drupal::moduleHandler()->moduleExists('baas_tenant')) {
+    $tenant_service = \Drupal::service('baas_tenant.manager');
+    $tenant_service->createTenant('default', 'Default Tenant', ['status' => 1]);
+  }
+  
+  // 设置默认API配置
+  if (\Drupal::moduleHandler()->moduleExists('baas_api')) {
+    \Drupal::configFactory()->getEditable('baas_api.settings')
+      ->set('enable_rate_limiting', TRUE)
+      ->set('rate_limits.user.requests', 60)
+      ->set('rate_limits.user.window', 60)
+      ->set('rate_limits.ip.requests', 30)
+      ->set('rate_limits.ip.window', 60)
+      ->save();
+  }
+}

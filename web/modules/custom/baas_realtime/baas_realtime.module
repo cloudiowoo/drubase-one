@@ -1,0 +1,43 @@
+<?php
+
+/**
+ * @file
+ * BaaS Realtime module hooks and functions.
+ */
+
+/**
+ * Implements hook_theme().
+ */
+function baas_realtime_theme($existing, $type, $theme, $path) {
+  return [
+    'baas_realtime_project_manage' => [
+      'variables' => [
+        'project' => NULL,
+        'config' => NULL,
+        'entities' => NULL,
+      ],
+      'template' => 'baas-realtime-project-manage',
+    ],
+    'baas_realtime_admin_connections' => [
+      'variables' => [
+        'connections' => NULL,
+        'stats' => NULL,
+      ],
+      'template' => 'baas-realtime-admin-connections',
+    ],
+    'baas_realtime_admin_stats' => [
+      'variables' => [
+        'connection_stats' => NULL,
+        'message_stats' => NULL,
+        'popular_channels' => NULL,
+      ],
+      'template' => 'baas-realtime-admin-stats',
+    ],
+    'baas_realtime_user_projects' => [
+      'variables' => [
+        'projects' => NULL,
+      ],
+      'template' => 'baas-realtime-user-projects',
+    ],
+  ];
+}

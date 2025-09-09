@@ -1,0 +1,552 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * @file
+ * Install, update and uninstall functions for the baas_realtime module.
+ */
+
+use Drupal\Core\Database\Database;
+
+/**
+ * Implements hook_schema().
+ */
+function baas_realtime_schema(): array {
+  $schema = [];
+
+  // 实时连接表
+  $schema['baas_realtime_connections'] = [
+    'description' => 'Store WebSocket connection information',
+    'fields' => [
+      'id' => [
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Connection ID',
+      ],
+      'connection_id' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'Unique connection identifier',
+      ],
+      'user_id' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => 'User ID',
+      ],
+      'project_id' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'Project ID',
+      ],
+      'tenant_id' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'Tenant ID',
+      ],
+      'socket_id' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'WebSocket socket ID',
+      ],
+      'ip_address' => [
+        'type' => 'varchar',
+        'length' => 45,
+        'description' => 'Client IP address',
+      ],
+      'user_agent' => [
+        'type' => 'text',
+        'description' => 'Client user agent',
+      ],
+      'connected_at' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => 'Connection timestamp',
+      ],
+      'last_heartbeat' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => 'Last heartbeat timestamp',
+      ],
+      'status' => [
+        'type' => 'varchar',
+        'length' => 20,
+        'not null' => TRUE,
+        'default' => 'connected',
+        'description' => 'Connection status: connected, disconnected, idle',
+      ],
+      'metadata' => [
+        'type' => 'text',
+        'description' => 'JSON metadata',
+      ],
+    ],
+    'primary key' => ['id'],
+    'unique keys' => [
+      'connection_id' => ['connection_id'],
+    ],
+    'indexes' => [
+      'user_project' => ['user_id', 'project_id'],
+      'socket_id' => ['socket_id'],
+      'status' => ['status'],
+      'tenant_id' => ['tenant_id'],
+    ],
+  ];
+
+  // 实时订阅表
+  $schema['baas_realtime_subscriptions'] = [
+    'description' => 'Store channel subscription information',
+    'fields' => [
+      'id' => [
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Subscription ID',
+      ],
+      'connection_id' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'Connection identifier',
+      ],
+      'channel_name' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'Channel name',
+      ],
+      'channel_type' => [
+        'type' => 'varchar',
+        'length' => 50,
+        'not null' => TRUE,
+        'description' => 'Channel type: table, custom, presence, broadcast',
+      ],
+      'table_name' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'description' => 'Associated table name',
+      ],
+      'filters' => [
+        'type' => 'text',
+        'description' => 'JSON filters',
+      ],
+      'event_types' => [
+        'type' => 'text',
+        'description' => 'Comma-separated event types: INSERT,UPDATE,DELETE',
+      ],
+      'subscribed_at' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => 'Subscription timestamp',
+      ],
+    ],
+    'primary key' => ['id'],
+    'unique keys' => [
+      'connection_channel' => ['connection_id', 'channel_name'],
+    ],
+    'indexes' => [
+      'channel' => ['channel_name'],
+      'table' => ['table_name'],
+      'channel_type' => ['channel_type'],
+    ],
+  ];
+
+  // 实时消息表
+  $schema['baas_realtime_messages'] = [
+    'description' => 'Store realtime messages for history and replay',
+    'fields' => [
+      'id' => [
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Message ID',
+      ],
+      'channel_name' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'Channel name',
+      ],
+      'event_type' => [
+        'type' => 'varchar',
+        'length' => 50,
+        'not null' => TRUE,
+        'description' => 'Event type',
+      ],
+      'payload' => [
+        'type' => 'text',
+        'not null' => TRUE,
+        'description' => 'JSON payload',
+      ],
+      'metadata' => [
+        'type' => 'text',
+        'description' => 'JSON metadata',
+      ],
+      'created_at' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => 'Message timestamp',
+      ],
+      'expires_at' => [
+        'type' => 'int',
+        'description' => 'Message expiration timestamp',
+      ],
+    ],
+    'primary key' => ['id'],
+    'indexes' => [
+      'channel_created' => ['channel_name', 'created_at'],
+      'expires' => ['expires_at'],
+    ],
+  ];
+
+  // 实时在线状态表
+  $schema['baas_realtime_presence'] = [
+    'description' => 'Store user presence information',
+    'fields' => [
+      'id' => [
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Presence ID',
+      ],
+      'channel_name' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'Presence channel name',
+      ],
+      'user_id' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => 'User ID',
+      ],
+      'presence_ref' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'Presence reference',
+      ],
+      'payload' => [
+        'type' => 'text',
+        'description' => 'JSON presence data',
+      ],
+      'joined_at' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => 'Join timestamp',
+      ],
+      'updated_at' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => 'Last update timestamp',
+      ],
+    ],
+    'primary key' => ['id'],
+    'unique keys' => [
+      'channel_user_ref' => ['channel_name', 'user_id', 'presence_ref'],
+    ],
+    'indexes' => [
+      'channel_user' => ['channel_name', 'user_id'],
+    ],
+  ];
+
+  // 项目实时配置表
+  $schema['baas_realtime_project_config'] = [
+    'description' => 'Store project-level realtime configuration',
+    'fields' => [
+      'id' => [
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Config ID',
+      ],
+      'project_id' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'Project ID',
+      ],
+      'tenant_id' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'Tenant ID',
+      ],
+      'enabled' => [
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Whether realtime is enabled for this project',
+      ],
+      'enabled_entities' => [
+        'type' => 'text',
+        'description' => 'JSON array of enabled entity table names',
+      ],
+      'settings' => [
+        'type' => 'text',
+        'description' => 'JSON configuration settings',
+      ],
+      'created_by' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => 'User ID who created this config',
+      ],
+      'updated_by' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => 'User ID who last updated this config',
+      ],
+      'created_at' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => 'Creation timestamp',
+      ],
+      'updated_at' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => 'Last update timestamp',
+      ],
+    ],
+    'primary key' => ['id'],
+    'unique keys' => [
+      'project_unique' => ['project_id', 'tenant_id'],
+    ],
+    'indexes' => [
+      'tenant_id' => ['tenant_id'],
+      'enabled' => ['enabled'],
+    ],
+  ];
+
+  return $schema;
+}
+
+/**
+ * Implements hook_install().
+ */
+function baas_realtime_install(): void {
+  // 设置默认配置
+  \Drupal::configFactory()->getEditable('baas_realtime.settings')
+    ->set('websocket_server_url', 'ws://localhost:4000')
+    ->set('max_connections_per_project', 1000)
+    ->set('heartbeat_interval', 30)
+    ->set('connection_timeout', 300)
+    ->set('message_history_retention', 86400)
+    ->save();
+
+  // 使用专门的服务创建PostgreSQL触发器函数
+  try {
+    /** @var \Drupal\baas_realtime\Service\DatabaseTriggerManager $trigger_manager */
+    $trigger_manager = \Drupal::service('baas_realtime.database_trigger_manager');
+    
+    if ($trigger_manager->createRealtimeTriggerFunction()) {
+      \Drupal::messenger()->addStatus('BaaS Realtime: PostgreSQL trigger function created successfully.');
+    } else {
+      \Drupal::messenger()->addWarning('BaaS Realtime: PostgreSQL trigger function creation failed. Check logs for manual creation instructions.');
+    }
+    
+  } catch (\Exception $e) {
+    \Drupal::messenger()->addError('BaaS Realtime: Error during trigger function creation: ' . $e->getMessage());
+    \Drupal::logger('baas_realtime')->error('Install hook failed: @error', ['@error' => $e->getMessage()]);
+  }
+}
+
+/**
+ * Add project realtime configuration table.
+ */
+function baas_realtime_update_8001(): void {
+  $connection = \Drupal::database();
+  $schema = $connection->schema();
+  
+  // 检查表是否已存在
+  if (!$schema->tableExists('baas_realtime_project_config')) {
+    $table_schema = [
+      'description' => 'Store project-level realtime configuration',
+      'fields' => [
+        'id' => [
+          'type' => 'serial',
+          'not null' => TRUE,
+          'description' => 'Primary Key: Config ID',
+        ],
+        'project_id' => [
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+          'description' => 'Project ID',
+        ],
+        'tenant_id' => [
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+          'description' => 'Tenant ID',
+        ],
+        'enabled' => [
+          'type' => 'int',
+          'size' => 'tiny',
+          'not null' => TRUE,
+          'default' => 0,
+          'description' => 'Whether realtime is enabled for this project',
+        ],
+        'enabled_entities' => [
+          'type' => 'text',
+          'description' => 'JSON array of enabled entity table names',
+        ],
+        'settings' => [
+          'type' => 'text',
+          'description' => 'JSON configuration settings',
+        ],
+        'created_by' => [
+          'type' => 'int',
+          'not null' => TRUE,
+          'description' => 'User ID who created this config',
+        ],
+        'updated_by' => [
+          'type' => 'int',
+          'not null' => TRUE,
+          'description' => 'User ID who last updated this config',
+        ],
+        'created_at' => [
+          'type' => 'int',
+          'not null' => TRUE,
+          'description' => 'Creation timestamp',
+        ],
+        'updated_at' => [
+          'type' => 'int',
+          'not null' => TRUE,
+          'description' => 'Last update timestamp',
+        ],
+      ],
+      'primary key' => ['id'],
+      'unique keys' => [
+        'project_config' => ['project_id', 'tenant_id'],
+      ],
+      'indexes' => [
+        'tenant_project' => ['tenant_id', 'project_id'],
+        'enabled' => ['enabled'],
+      ],
+    ];
+    
+    $schema->createTable('baas_realtime_project_config', $table_schema);
+    \Drupal::logger('baas_realtime')->info('Created baas_realtime_project_config table');
+  }
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function baas_realtime_uninstall(): void {
+  // 删除配置
+  \Drupal::configFactory()->getEditable('baas_realtime.settings')->delete();
+  
+  // 使用专门的服务删除PostgreSQL触发器
+  try {
+    /** @var \Drupal\baas_realtime\Service\DatabaseTriggerManager $trigger_manager */
+    $trigger_manager = \Drupal::service('baas_realtime.database_trigger_manager');
+    $trigger_manager->dropRealtimeTriggerFunction();
+  } catch (\Exception $e) {
+    \Drupal::logger('baas_realtime')->error('Uninstall hook failed: @error', ['@error' => $e->getMessage()]);
+  }
+}
+
+/**
+ * 创建数据库触发器。
+ */
+function _baas_realtime_create_database_triggers(): void {
+  // 直接使用回退方法，这是最兼容的方式
+  _baas_realtime_create_database_triggers_fallback();
+}
+
+/**
+ * 回退方法：创建简化的触发器函数。
+ */
+function _baas_realtime_create_database_triggers_fallback(): void {
+  $connection = Database::getConnection();
+  
+  try {
+    // 先删除可能存在的函数
+    $connection->query('DROP FUNCTION IF EXISTS notify_realtime_change() CASCADE');
+    
+    // 使用最简单的单语句方法创建函数，确保没有分号
+    $function_sql = "CREATE OR REPLACE FUNCTION notify_realtime_change() RETURNS TRIGGER AS \$func\$ BEGIN PERFORM pg_notify('realtime_changes', json_build_object('table', TG_TABLE_NAME, 'type', TG_OP, 'timestamp', extract(epoch from now()), 'record', CASE WHEN TG_OP = 'DELETE' THEN row_to_json(OLD) ELSE row_to_json(NEW) END)::text); RETURN COALESCE(NEW, OLD); END \$func\$ LANGUAGE plpgsql";
+    $connection->query($function_sql);
+    
+    \Drupal::logger('baas_realtime')->info('Created simplified realtime trigger function successfully');
+    
+  } catch (\Exception $e) {
+    \Drupal::logger('baas_realtime')->error('Fallback method failed: @error', [
+      '@error' => $e->getMessage(),
+    ]);
+    
+    // 最后的手段：记录指导用户手动创建
+    \Drupal::logger('baas_realtime')->warning('Automatic trigger function creation failed. Manual creation required.');
+    \Drupal::logger('baas_realtime')->info('To manually create the function, run: docker exec pg17 psql -U postgres -d db_drubase -c "CREATE OR REPLACE FUNCTION notify_realtime_change() RETURNS TRIGGER AS \\$\\$ BEGIN PERFORM pg_notify(\'realtime_changes\', json_build_object(\'table\', TG_TABLE_NAME, \'type\', TG_OP, \'record\', row_to_json(COALESCE(NEW, OLD)))::text); RETURN COALESCE(NEW, OLD); END; \\$\\$ LANGUAGE plpgsql;"');
+  }
+}
+
+/**
+ * 删除数据库触发器。
+ */
+function _baas_realtime_drop_database_triggers(): void {
+  $connection = Database::getConnection();
+  
+  try {
+    $connection->query('DROP FUNCTION IF EXISTS notify_realtime_change() CASCADE');
+    \Drupal::logger('baas_realtime')->info('Dropped realtime trigger function');
+  } catch (\Exception $e) {
+    \Drupal::logger('baas_realtime')->error('Failed to drop trigger function: @error', [
+      '@error' => $e->getMessage(),
+    ]);
+  }
+}
+
+/**
+ * 为指定表添加实时触发器。
+ */
+function baas_realtime_add_table_trigger(string $table_name): void {
+  $connection = Database::getConnection();
+  
+  $trigger_name = "realtime_trigger_{$table_name}";
+  $trigger_sql = "
+    CREATE TRIGGER {$trigger_name}
+    AFTER INSERT OR UPDATE OR DELETE ON {$table_name}
+    FOR EACH ROW EXECUTE FUNCTION notify_realtime_change();
+  ";
+  
+  try {
+    // 删除已存在的触发器
+    $connection->query("DROP TRIGGER IF EXISTS {$trigger_name} ON {$table_name}");
+    
+    // 创建新触发器
+    $connection->query($trigger_sql);
+    
+    \Drupal::logger('baas_realtime')->info('Added realtime trigger for table: @table', [
+      '@table' => $table_name,
+    ]);
+  } catch (\Exception $e) {
+    \Drupal::logger('baas_realtime')->error('Failed to add trigger for table @table: @error', [
+      '@table' => $table_name,
+      '@error' => $e->getMessage(),
+    ]);
+  }
+}
+
+/**
+ * 为指定表移除实时触发器。
+ */
+function baas_realtime_remove_table_trigger(string $table_name): void {
+  $connection = Database::getConnection();
+  
+  $trigger_name = "realtime_trigger_{$table_name}";
+  
+  try {
+    $connection->query("DROP TRIGGER IF EXISTS {$trigger_name} ON {$table_name}");
+    
+    \Drupal::logger('baas_realtime')->info('Removed realtime trigger for table: @table', [
+      '@table' => $table_name,
+    ]);
+  } catch (\Exception $e) {
+    \Drupal::logger('baas_realtime')->error('Failed to remove trigger for table @table: @error', [
+      '@table' => $table_name,
+      '@error' => $e->getMessage(),
+    ]);
+  }
+}

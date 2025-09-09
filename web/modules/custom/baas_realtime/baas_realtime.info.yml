@@ -1,0 +1,15 @@
+name: 'BaaS Realtime'
+type: module
+description: 'Real-time data synchronization for BaaS platform with WebSocket support'
+core_version_requirement: ^10 || ^11
+package: 'BaaS Platform'
+
+dependencies:
+  - baas_tenant
+  - baas_project
+  - baas_entity
+  - baas_auth
+  - baas_api
+
+configure: baas_realtime.settingsversion: '1.0.0-test'
+version: '1.0.0'

@@ -1,0 +1,147 @@
+/**
+ * @file
+ * BaaS API统计页面样式.
+ */
+
+/* 统计页面容器 */
+.baas-api-stats {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+}
+
+/* 页面标题 */
+.baas-api-stats__header h1 {
+  margin-top: 0;
+  color: #333;
+}
+
+/* 过滤表单区域 */
+.baas-api-stats__filters {
+  background: #f5f5f5;
+  padding: 20px;
+  margin-bottom: 30px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.baas-api-stats__filters .form-item {
+  margin-bottom: 15px;
+}
+
+.baas-api-stats__filters fieldset {
+  border: none;
+  padding: 0;
+  margin: 0 0 15px 0;
+}
+
+.baas-api-stats__filters .fieldset-wrapper {
+  display: flex;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.baas-api-stats__filters .form-actions {
+  margin-top: 15px;
+  display: flex;
+  gap: 10px;
+}
+
+/* 统计卡片区域 */
+.baas-api-stats__summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.summary-card {
+  flex: 1;
+  min-width: 200px;
+  background: #fff;
+  padding: 20px;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+.summary-card__title {
+  font-size: 16px;
+  color: #666;
+  margin-bottom: 10px;
+}
+
+.summary-card__value {
+  font-size: 24px;
+  font-weight: bold;
+  color: #0071b8;
+}
+
+/* 图表区域 */
+.baas-api-stats__chart {
+  height: 400px;
+  background: #fff;
+  padding: 20px;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 30px;
+}
+
+/* 数据表格区域 */
+.baas-api-stats__section {
+  background: #fff;
+  padding: 20px;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 30px;
+}
+
+.baas-api-stats__section h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  font-size: 18px;
+  color: #333;
+}
+
+.baas-api-stats__section table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.baas-api-stats__section th,
+.baas-api-stats__section td {
+  padding: 10px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.baas-api-stats__section th {
+  background: #f5f5f5;
+  font-weight: 600;
+  color: #333;
+}
+
+/* 响应式样式 */
+@media screen and (max-width: 768px) {
+  .baas-api-stats__filters .fieldset-wrapper {
+    flex-direction: column;
+  }
+
+  .baas-api-stats__summary {
+    flex-direction: column;
+  }
+
+  .summary-card {
+    width: 100%;
+  }
+
+  .baas-api-stats__chart {
+    height: 300px;
+  }
+
+  .baas-api-stats__section table {
+    display: block;
+    overflow-x: auto;
+  }
+}

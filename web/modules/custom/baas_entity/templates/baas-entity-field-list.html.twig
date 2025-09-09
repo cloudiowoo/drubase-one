@@ -1,0 +1,28 @@
+{#
+/**
+ * @file
+ * 默认主题实现，显示实体字段列表。
+ *
+ * 可用变量:
+ * - content: 字段列表内容。
+ * - template_info: 模板信息。
+ *
+ * @see \Drupal\baas_entity\Controller\EntityFieldController
+ *
+ * @ingroup themeable
+ */
+#}
+
+<div class="baas-entity-field-list-wrapper">
+	<h2>{{ '实体字段列表'|t }}</h2>
+
+	{% if template_info %}
+		<div class="template-info">
+			{{ template_info }}
+		</div>
+	{% endif %}
+
+	<div class="field-list-content">
+		{{ content }}
+	</div>
+</div>

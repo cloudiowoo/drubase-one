@@ -1,0 +1,324 @@
+/**
+ * API密钥管理界面样式
+ */
+
+/* 页面布局 */
+.api-keys-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.api-keys-header h1 {
+  color: #343a40;
+  margin-bottom: 0.5rem;
+}
+
+.help-text {
+  color: #6c757d;
+  font-size: 1.1rem;
+  margin-bottom: 0;
+}
+
+/* 租户信息 */
+.tenant-info {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 0.25rem;
+  padding: 1rem;
+}
+
+/* API密钥表格 */
+.api-keys-table {
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 0.25rem;
+}
+
+.api-keys-table th {
+  background: #f8f9fa;
+  color: #495057;
+  font-weight: 600;
+  border-bottom: 2px solid #dee2e6;
+}
+
+.api-keys-table td {
+  vertical-align: middle;
+}
+
+/* API密钥显示 */
+.api-key-cell {
+  min-width: 300px;
+}
+
+.api-key-value {
+  background: #f8f9fa;
+  border: 1px solid #ced4da;
+  padding: 0.5rem;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+  border-radius: 0.25rem;
+  margin-bottom: 0.5rem;
+  display: block;
+  word-break: break-all;
+}
+
+.api-key-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.toggle-key-btn,
+.copy-key-btn {
+  font-size: 0.8rem;
+  padding: 0.25rem 0.5rem;
+}
+
+/* 状态徽章 */
+.badge {
+  font-size: 0.8rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.badge-success {
+  background-color: #28a745;
+  color: white;
+}
+
+.badge-danger {
+  background-color: #dc3545;
+  color: white;
+}
+
+/* 空状态 */
+.empty-state {
+  padding: 3rem 1rem;
+  color: #6c757d;
+}
+
+.empty-state i {
+  opacity: 0.5;
+}
+
+/* 操作按钮区域 */
+.api-keys-actions {
+  text-align: center;
+  padding-top: 1rem;
+  border-top: 1px solid #dee2e6;
+}
+
+/* 表单样式 */
+.form-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.form-header h2 {
+  color: #343a40;
+  margin-bottom: 0.5rem;
+}
+
+.form-description {
+  color: #6c757d;
+  font-size: 1rem;
+  margin-bottom: 0;
+}
+
+/* 警告和提醒样式 */
+.alert {
+  border-radius: 0.25rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.alert-success {
+  background-color: #d4edda;
+  border-color: #c3e6cb;
+  color: #155724;
+}
+
+.alert-warning {
+  background-color: #fff3cd;
+  border-color: #ffeaa7;
+  color: #856404;
+}
+
+.alert-warning h5 {
+  color: #856404;
+  margin-bottom: 0.5rem;
+}
+
+/* API密钥显示页面 */
+.api-key-display {
+  margin-top: 0.5rem;
+}
+
+.api-key-display code {
+  font-size: 0.95rem;
+  word-break: break-all;
+  user-select: all;
+}
+
+/* 按钮样式 */
+.btn {
+  border-radius: 0.25rem;
+  font-weight: 500;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+  vertical-align: middle;
+  cursor: pointer;
+  border: 1px solid transparent;
+  padding: 0.375rem 0.75rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+}
+
+.btn-primary {
+  color: #fff;
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+.btn-primary:hover {
+  color: #fff;
+  background-color: #0056b3;
+  border-color: #004085;
+}
+
+.btn-secondary {
+  color: #fff;
+  background-color: #6c757d;
+  border-color: #6c757d;
+}
+
+.btn-secondary:hover {
+  color: #fff;
+  background-color: #545b62;
+  border-color: #4e555b;
+}
+
+.btn-danger {
+  color: #fff;
+  background-color: #dc3545;
+  border-color: #dc3545;
+}
+
+.btn-danger:hover {
+  color: #fff;
+  background-color: #c82333;
+  border-color: #bd2130;
+}
+
+.btn-outline-primary {
+  color: #007bff;
+  background-color: transparent;
+  border-color: #007bff;
+}
+
+.btn-outline-primary:hover {
+  color: #fff;
+  background-color: #007bff;
+  border-color: #007bff;
+}
+
+.btn-sm {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.btn-lg {
+  padding: 0.5rem 1rem;
+  font-size: 1.25rem;
+  line-height: 1.5;
+}
+
+/* 卡片样式 */
+.card {
+  background: #fff;
+  border: 1px solid #dee2e6;
+  border-radius: 0.25rem;
+  margin-bottom: 1rem;
+}
+
+.card-header {
+  background: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+  padding: 0.75rem 1rem;
+  border-radius: 0.25rem 0.25rem 0 0;
+}
+
+.card-body {
+  padding: 1rem;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .api-key-cell {
+    min-width: auto;
+  }
+  
+  .api-key-value {
+    font-size: 0.8rem;
+  }
+  
+  .api-key-buttons {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .toggle-key-btn,
+  .copy-key-btn {
+    font-size: 0.7rem;
+    padding: 0.2rem 0.4rem;
+  }
+  
+  .btn-lg {
+    font-size: 1rem;
+    padding: 0.4rem 0.8rem;
+  }
+}
+
+/* 动画效果 */
+.api-key-value.revealed {
+  background-color: #fff3cd;
+  border-color: #ffeaa7;
+  transition: all 0.3s ease;
+}
+
+.copy-success {
+  background-color: #d4edda !important;
+  border-color: #c3e6cb !important;
+  transition: all 0.3s ease;
+}
+
+/* 工具提示 */
+.tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip .tooltiptext {
+  visibility: hidden;
+  width: 120px;
+  background-color: #555;
+  color: #fff;
+  text-align: center;
+  border-radius: 6px;
+  padding: 5px;
+  position: absolute;
+  z-index: 1;
+  bottom: 125%;
+  left: 50%;
+  margin-left: -60px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
+}

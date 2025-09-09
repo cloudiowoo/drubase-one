@@ -1,0 +1,61 @@
+name: 'Drubase One'
+type: profile
+description: '企业级Backend-as-a-Service平台'
+version: '1.0.0'
+core_version_requirement: ^11
+
+dependencies:
+  # Drupal核心
+  - drupal:system
+  - drupal:user
+  - drupal:node
+  - drupal:field
+  - drupal:text
+  - drupal:options
+  - drupal:datetime
+  - drupal:file
+  
+  # 第三方模块
+  - drupal:admin_toolbar
+  - drupal:gin
+  - drupal:redis
+  
+  # BaaS核心模块
+  - baas_tenant:baas_tenant
+  - baas_auth:baas_auth
+  - baas_entity:baas_entity
+  - baas_project:baas_project
+  - baas_api:baas_api
+  - baas_file:baas_file
+  - baas_realtime:baas_realtime
+  - baas_functions:baas_functions
+
+themes:
+  - gin
+  - gin_toolbar
+
+install:
+  # 基础模块
+  - system
+  - user
+  - node
+  - field
+  - text
+  - options
+  - datetime
+  - file
+  
+  # 管理界面
+  - admin_toolbar
+  - gin
+  - gin_toolbar
+  
+  # BaaS平台模块
+  - baas_tenant
+  - baas_auth
+  - baas_entity
+  - baas_project  
+  - baas_api
+  - baas_file
+  - baas_realtime
+  - baas_functions

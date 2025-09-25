@@ -52,7 +52,7 @@ services:
       - "8996:9000"
       - "9009:9009"
     volumes:
-      - ../:/var/www/webs:cached
+      - ./:/var/www/html:cached
       - ./fpm/8.4/php.ini:/opt/bitnami/php/etc/php.ini
       - ./fpm/8.4/www.conf:/opt/bitnami/php/etc/php-fpm.d/www.conf
       - ./fpm/8.4/log:/var/log
@@ -74,7 +74,7 @@ services:
       # - "443:443"
     volumes:
       - ./nginx/logs:/var/log/nginx
-      - ../:/var/www/webs:cached
+      - ./:/var/www/html:cached
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./nginx/vhosts:/etc/nginx/vhosts
     depends_on:
@@ -84,7 +84,7 @@ services:
       baas_network:
         ipv4_address: 172.20.1.100
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost"]
+      test: ["CMD", "nginx", "-t"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -109,7 +109,7 @@ services:
       - MAX_TIMEOUT=300000
       - DEFAULT_MEMORY_LIMIT=128
       - MAX_MEMORY_LIMIT=512
-      - DATABASE_URL=postgresql://postgres:p@sscode1234!@172.20.1.10:5432/db_drubase
+      - DATABASE_URL=postgresql://postgres:${DB_PASSWORD:-baas_password}@172.20.1.10:5432/drubase
       - REDIS_URL=redis://172.20.1.20:6379
       - JWT_SECRET=baas_functions_jwt_secret_change_in_production
       - API_KEY_HEADER=X-API-Key
@@ -146,7 +146,7 @@ services:
 
   react-native-apps:
     build:
-      context: ../
+      context: ./
       dockerfile: docker/Dockerfile.react-native-apps
     restart: always
     container_name: react-native-apps

@@ -25,7 +25,7 @@ DB_PASSWORD=baas_password
 DB_NAME=baas_platform
 DB_USER=baas_user
 
-# Redis配置  
+# Redis配置
 REDIS_PASSWORD=
 
 # 应用配置
@@ -48,26 +48,26 @@ sleep 10
 
 # 安装依赖
 echo "📦 安装 Composer 依赖..."
-docker-compose -f docker/docker-compose.yml exec -T web composer install --no-dev --optimize-autoloader
+docker-compose -f docker/docker-compose.yml exec -T php8-4-fpm bash -c "cd /var/www/html && composer install --no-dev --optimize-autoloader"
 
 # 安装Drupal
 echo "⚙️  安装 Drupal..."
-docker-compose -f docker/docker-compose.yml exec -T web drush si baas_platform -y \
-    --db-url="pgsql://baas_user:baas_password@pg17:5432/baas_platform" \
+docker-compose -f docker/docker-compose.yml exec -T php8-4-fpm bash -c "cd /var/www/html && vendor/bin/drush si baas_platform -y \
+    --db-url=\"pgsql://postgres:\${DB_PASSWORD:-baas_password}@pg17:5432/drubase\" \
     --account-name=admin \
     --account-pass=admin123 \
     --account-mail=admin@example.com \
-    --site-name="Drubase One"
+    --site-name=\"Drubase One\""
 
 # 清理缓存
 echo "🧹 清理缓存..."
-docker-compose -f docker/docker-compose.yml exec -T web drush cr
+docker-compose -f docker/docker-compose.yml exec -T php8-4-fpm bash -c "cd /var/www/html && vendor/bin/drush cr"
 
 echo ""
 echo "🎉 Drubase One 安装完成！"
 echo ""
 echo "📍 访问地址: http://localhost"
-echo "👤 管理员账号: admin"  
+echo "👤 管理员账号: admin"
 echo "🔑 管理员密码: admin123"
 echo ""
 echo "📚 API文档: http://localhost/admin/config/baas/api/docs"

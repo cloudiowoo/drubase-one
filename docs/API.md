@@ -1,8 +1,8 @@
-# BaaS Platform API 文档
+# Drubase One API 文档
 
 ## 概述
 
-BaaS Platform 提供完整的RESTful API，支持多租户数据管理、认证授权、动态实体等功能。
+Drubase One 提供完整的RESTful API，支持多租户数据管理、认证授权、动态实体等功能。
 
 ## 认证方式
 

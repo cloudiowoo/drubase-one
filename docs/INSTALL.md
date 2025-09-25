@@ -1,4 +1,4 @@
-# BaaS Platform 安装指南
+# Drubase One 安装指南
 
 ## 系统要求
 
@@ -13,8 +13,8 @@
 ### 1. 下载项目
 
 ```bash
-git clone https://github.com/your-username/baas-platform.git
-cd baas-platform
+git clone https://github.com/cloudiowoo/drubase-one.git
+cd drubase-one
 ```
 
 ### 2. 环境配置

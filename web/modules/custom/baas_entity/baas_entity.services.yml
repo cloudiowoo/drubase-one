@@ -26,3 +26,10 @@ services:
   baas_entity.password_service:
     class: Drupal\baas_entity\Service\PasswordService
     arguments: ['@database', '@baas_entity.field_type_manager']
+
+  # 装饰 EntityDefinitionUpdateManager 以忽略 baas 动态实体
+  baas_entity.entity_definition_update_manager:
+    class: Drupal\baas_entity\Service\BaasEntityDefinitionUpdateManager
+    decorates: entity.definition_update_manager
+    decoration_priority: 1000
+    arguments: ['@entity_type.manager', '@entity.last_installed_schema.repository', '@entity_field.manager', '@entity_type.listener', '@field_storage_definition.listener']

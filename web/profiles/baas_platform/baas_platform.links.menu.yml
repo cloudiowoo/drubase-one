@@ -1,0 +1,6 @@
+baas_platform.demo_import:
+  title: 'Import Demo Data'
+  description: 'Import demonstration data for Drubase One'
+  route_name: baas_platform.demo_import
+  parent: system.admin_config_baas
+  weight: 10

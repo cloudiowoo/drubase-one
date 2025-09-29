@@ -9,6 +9,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-baas_password}
       POSTGRES_DB: drubase
       POSTGRES_USER: postgres
+      POSTGRES_INITDB_ARGS: "--auth-host=md5 --auth-local=trust"
     volumes:
       - ./pg/v17/data:/var/lib/postgresql/data:delegated
       - ./pg/v17/log:/var/log/postgresql:delegated
@@ -44,15 +45,15 @@ services:
   php8-4-fpm:
     image: php8.4-fpm-xdebug:latest
     build:
-      context: ./
-      dockerfile: Dockerfile.8.4.xdebug
+      context: ../
+      dockerfile: docker/Dockerfile.8.4.xdebug
     restart: always
     container_name: php8-4-fpm-xdebug
     ports:
       - "8996:9000"
       - "9009:9009"
     volumes:
-      - ./:/var/www/html:cached
+      - ../:/var/www/html:cached
       - ./fpm/8.4/php.ini:/opt/bitnami/php/etc/php.ini
       - ./fpm/8.4/www.conf:/opt/bitnami/php/etc/php-fpm.d/www.conf
       - ./fpm/8.4/log:/var/log
@@ -74,7 +75,7 @@ services:
       # - "443:443"
     volumes:
       - ./nginx/logs:/var/log/nginx
-      - ./:/var/www/html:cached
+      - ../:/var/www/html:cached
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf
       - ./nginx/vhosts:/etc/nginx/vhosts
     depends_on:
@@ -92,8 +93,8 @@ services:
 
   baas-functions:
     build:
-      context: ./nodejs-services/baas-functions
-      dockerfile: Dockerfile
+      context: ../nodejs-services/baas-functions
+      dockerfile: docker/nodejs-services/baas-functions/Dockerfile
     restart: always
     container_name: baas-functions-service
     ports:
@@ -146,7 +147,7 @@ services:
 
   react-native-apps:
     build:
-      context: ./
+      context: ../
       dockerfile: docker/Dockerfile.react-native-apps
     restart: always
     container_name: react-native-apps

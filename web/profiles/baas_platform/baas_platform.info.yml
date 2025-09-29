@@ -1,7 +1,7 @@
-name: 'Drubase One'
+name: "Drubase One"
 type: profile
-description: '企业级Backend-as-a-Service平台'
-version: '1.1.0-beta.2'
+description: "企业级Backend-as-a-Service平台"
+version: "1.0.0"
 core_version_requirement: ^11
 
 dependencies:
@@ -14,11 +14,12 @@ dependencies:
   - drupal:options
   - drupal:datetime
   - drupal:file
+  - drupal:toolbar
 
   # 第三方模块
   - drupal:admin_toolbar
-  - drupal:gin
   - drupal:redis
+  # - drupal:gin_toolbar
 
   # BaaS核心模块
   - baas_tenant:baas_tenant
@@ -32,7 +33,6 @@ dependencies:
 
 themes:
   - gin
-  - gin_toolbar
 
 install:
   # 基础模块
@@ -44,11 +44,10 @@ install:
   - options
   - datetime
   - file
+  - toolbar
 
   # 管理界面
   - admin_toolbar
-  - gin
-  - gin_toolbar
 
   # BaaS平台模块
   - baas_tenant

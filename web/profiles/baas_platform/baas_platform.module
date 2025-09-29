@@ -1,0 +1,10 @@
+<?php
+
+/**
+ * @file
+ * Contains hook implementations for BaaS Platform installation profile.
+ */
+
+// This file is kept for potential future profile-specific hooks.
+// Demo data import is now handled by the baas_platform_demo_data module
+// following the same pattern as Drupal's demo_umami profile.

@@ -14,41 +14,26 @@ use Drupal\baas_platform\GroupsStaticDataImporter;
  * Implements hook_install().
  */
 function baas_platform_install() {
-  // 设置默认主题
+  // 首先设置状态以触发演示数据导入（必须在其他操作之前）
+  \Drupal::state()->set('baas_platform.import_demo_data', TRUE);
+
+  // 设置主题配置
   \Drupal::configFactory()->getEditable('system.theme')
-    ->set('default', 'gin')
-    ->set('admin', 'gin')
+    ->set('default', 'olivero')  // 前台使用 Olivero 主题
+    ->set('admin', 'gin')        // 管理后台使用 Gin 主题
     ->save();
-    
-  // 启用Gin工具栏
-  \Drupal::service('module_installer')->install(['gin_toolbar']);
-  
-  // 创建默认管理员用户
-  $admin_user = User::create([
-    'name' => 'admin',
-    'mail' => 'admin@drubase-one.local',
-    'pass' => 'admin123',
-    'status' => 1,
-    'roles' => ['administrator'],
-  ]);
-  $admin_user->save();
-  
+
   // 创建BaaS特定角色
   _baas_platform_create_roles();
-  
+
   // 初始化BaaS平台
   _baas_platform_initialize();
-  
-  // 检查是否请求导入示例数据
-  $import_demo = \Drupal::state()->get('baas_platform.import_demo_data', FALSE);
-  
-  if ($import_demo) {
-    _baas_platform_import_demo_data();
-    _baas_platform_create_demo_users();
-    \Drupal::messenger()->addMessage(t('Drubase One with Groups Sports demonstration project has been installed successfully!'));
-  } else {
-    \Drupal::messenger()->addMessage(t('Drubase One has been installed successfully!'));
-  }
+
+  // Install the demo data import module after all core modules are installed
+  // This follows the same pattern as demo_umami profile
+  \Drupal::service('module_installer')->install(['baas_platform_demo_data'], TRUE);
+
+  \Drupal::messenger()->addMessage(t('Drubase One with Groups Sports demonstration project has been set up successfully!'));
 }
 
 /**
@@ -56,37 +41,43 @@ function baas_platform_install() {
  */
 function _baas_platform_create_roles() {
   // 租户管理员角色
-  $tenant_admin = Role::create([
-    'id' => 'tenant_admin',
-    'label' => 'Tenant Administrator',
-    'weight' => 3,
-  ]);
-  $tenant_admin->grantPermission('administer tenant');
-  $tenant_admin->grantPermission('create projects');
-  $tenant_admin->grantPermission('manage tenant users');
-  $tenant_admin->save();
+  if (!Role::load('tenant_admin')) {
+    $tenant_admin = Role::create([
+      'id' => 'tenant_admin',
+      'label' => 'Tenant Administrator',
+      'weight' => 3,
+    ]);
+    $tenant_admin->grantPermission('administer tenant');
+    $tenant_admin->grantPermission('create projects');
+    $tenant_admin->grantPermission('manage tenant users');
+    $tenant_admin->save();
+  }
 
-  // 项目管理员角色  
-  $project_admin = Role::create([
-    'id' => 'project_admin',
-    'label' => 'Project Administrator',
-    'weight' => 4,
-  ]);
-  $project_admin->grantPermission('administer project');
-  $project_admin->grantPermission('manage project entities');
-  $project_admin->grantPermission('access project api');
-  $project_admin->save();
+  // 项目管理员角色
+  if (!Role::load('project_admin')) {
+    $project_admin = Role::create([
+      'id' => 'project_admin',
+      'label' => 'Project Administrator',
+      'weight' => 4,
+    ]);
+    $project_admin->grantPermission('administer project');
+    $project_admin->grantPermission('manage project entities');
+    $project_admin->grantPermission('access project api');
+    $project_admin->save();
+  }
 
   // API开发者角色
-  $developer = Role::create([
-    'id' => 'api_developer',
-    'label' => 'API Developer',
-    'weight' => 5,
-  ]);
-  $developer->grantPermission('access api documentation');
-  $developer->grantPermission('create api tokens');
-  $developer->grantPermission('access project api');
-  $developer->save();
+  if (!Role::load('api_developer')) {
+    $developer = Role::create([
+      'id' => 'api_developer',
+      'label' => 'API Developer',
+      'weight' => 5,
+    ]);
+    $developer->grantPermission('access api documentation');
+    $developer->grantPermission('create api tokens');
+    $developer->grantPermission('access project api');
+    $developer->save();
+  }
 }
 
 /**
@@ -96,7 +87,12 @@ function _baas_platform_initialize() {
   // 创建默认租户
   if (\Drupal::moduleHandler()->moduleExists('baas_tenant')) {
     $tenant_service = \Drupal::service('baas_tenant.manager');
-    $tenant_service->createTenant('default', 'Default Tenant', ['status' => 1]);
+    // 使用管理员用户作为默认租户的所有者
+    $admin_user = \Drupal::entityTypeManager()->getStorage('user')->loadByProperties(['name' => 'admin']);
+    $admin_user = reset($admin_user);
+    if ($admin_user) {
+      $tenant_service->createTenant('Default Tenant', (int) $admin_user->id(), ['status' => 1]);
+    }
   }
   
   // 设置默认API配置
@@ -122,6 +118,10 @@ function _baas_platform_initialize() {
 
 /**
  * Import Groups project demonstration data from static files.
+ *
+ * NOTE: This function is deprecated and kept for reference.
+ * Demo data import is now handled by hook_modules_installed() in baas_platform.module
+ * for proper timing after all modules are installed and configured.
  */
 function _baas_platform_import_demo_data() {
   try {
@@ -184,6 +184,10 @@ function _baas_platform_import_demo_data() {
 
 /**
  * Create demonstration users for Groups project.
+ *
+ * NOTE: This function is deprecated and kept for reference.
+ * Demo user creation is now handled by _baas_platform_create_demo_users_delayed()
+ * in baas_platform.module via hook_modules_installed() for proper timing.
  */
 function _baas_platform_create_demo_users() {
   // Groups project demo tenant admin

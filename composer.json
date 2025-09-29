@@ -6,6 +6,12 @@
     "homepage": "https://github.com/cloudiowoo/drubase-one",
     "minimum-stability": "stable",
     "prefer-stable": true,
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://packages.drupal.org/8"
+        }
+    ],
     "require": {
         "php": ">=8.1",
         "composer/installers": "^2.3",
@@ -16,7 +22,8 @@
         "drupal/gin": "^4.0",
         "drupal/gin_toolbar": "^2.0",
         "drupal/redis": "^1.9",
-        "defuse/php-encryption": "^2.4"
+        "defuse/php-encryption": "^2.4",
+        "drush/drush": "^13.3"
     },
     "require-dev": {
         "drupal/core-dev": "^11.1",
@@ -40,11 +47,11 @@
         },
         "installer-paths": {
             "web/core": ["type:drupal-core"],
-            "web/libraries/{}": ["type:drupal-library"],
-            "web/modules/contrib/{}": ["type:drupal-module"],
-            "web/profiles/contrib/{}": ["type:drupal-profile"],
-            "web/themes/contrib/{}": ["type:drupal-theme"],
-            "drush/Commands/contrib/{}": ["type:drupal-drush"]
+            "web/libraries/{$name}": ["type:drupal-library"],
+            "web/modules/contrib/{$name}": ["type:drupal-module"],
+            "web/profiles/contrib/{$name}": ["type:drupal-profile"],
+            "web/themes/contrib/{$name}": ["type:drupal-theme"],
+            "drush/Commands/contrib/{$name}": ["type:drupal-drush"]
         }
     }
 }

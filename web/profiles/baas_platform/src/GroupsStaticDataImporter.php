@@ -94,10 +94,13 @@ class GroupsStaticDataImporter {
       // 5. 部署动态实体文件
       $import_results['entity_files_deployed'] = $this->deployEntityFiles();
 
-      // 6. 导入脱敏数据
+      // 6. 导入实体数据
       $import_results['data_imported'] = $this->importAnonymizedData();
 
-      // 7. 注册实体类型到Drupal
+      // 7. 导入系统用户和权限映射
+      $import_results['system_users_imported'] = $this->importSystemUsers();
+
+      // 8. 注册实体类型到Drupal
       $this->registerEntityTypesWithDrupal();
 
       $this->logger->info('Groups项目静态数据导入完成');
@@ -120,24 +123,52 @@ class GroupsStaticDataImporter {
     }
 
     try {
-      $tenant_service = \Drupal::service('baas_tenant.manager');
-      
-      // 使用原始租户ID，不进行重命名
-      $tenant_service->createTenant(
-        $this->groupsProjectConfig['tenant_id'], // 保持原始: tenant_7375b0cd
-        'Groups Sports Demo Tenant',
-        [
-          'description' => 'Groups运动活动管理演示租户（保持原始结构）',
-          'status' => 1,
-          'organization_type' => 'sports_club',
-          'contact_email' => 'demo@groups-sports.com',
-          'is_demo' => TRUE,
-        ]
-      );
+      // 从静态数据文件读取租户配置
+      $static_data_path = DRUPAL_ROOT . '/profiles/baas_platform/data/groups_static_data.json';
+      $static_data = json_decode(file_get_contents($static_data_path), TRUE);
 
-      $this->logger->info('租户配置导入成功: @tenant_id', [
-        '@tenant_id' => $this->groupsProjectConfig['tenant_id']
-      ]);
+      if (isset($static_data['baas_config']['tenant_config'])) {
+        foreach ($static_data['baas_config']['tenant_config'] as $tenant_data) {
+          // 检查租户是否已存在
+          $existing_tenant = $this->database->select('baas_tenant_config', 'btc')
+            ->condition('tenant_id', $tenant_data['tenant_id'])
+            ->countQuery()
+            ->execute()
+            ->fetchField();
+
+          if (!$existing_tenant) {
+            // 查找关联的系统用户作为 owner_uid
+            $owner_uid = 2; // 默认使用 admin 用户作为 owner
+            if (isset($static_data['system_users']['user_tenant_mapping'])) {
+              foreach ($static_data['system_users']['user_tenant_mapping'] as $mapping) {
+                if ($mapping['tenant_id'] === $tenant_data['tenant_id'] && $mapping['role'] === 'tenant_owner') {
+                  $owner_uid = $mapping['user_id'];
+                  break;
+                }
+              }
+            }
+
+            // 直接插入到数据库
+            $this->database->insert('baas_tenant_config')
+              ->fields([
+                'tenant_id' => $tenant_data['tenant_id'],
+                'name' => $tenant_data['name'],
+                'owner_uid' => $owner_uid,
+                'organization_type' => $tenant_data['organization_type'],
+                'contact_email' => $tenant_data['contact_email'],
+                'settings' => $tenant_data['settings'],
+                'status' => $tenant_data['status'],
+                'created' => $tenant_data['created'],
+                'updated' => $tenant_data['updated'],
+              ])
+              ->execute();
+
+            $this->logger->info('租户配置导入成功: @tenant_id', ['@tenant_id' => $tenant_data['tenant_id']]);
+          } else {
+            $this->logger->info('租户配置已存在，跳过: @tenant_id', ['@tenant_id' => $tenant_data['tenant_id']]);
+          }
+        }
+      }
 
       return TRUE;
     } catch (\Exception $e) {
@@ -155,22 +186,56 @@ class GroupsStaticDataImporter {
     }
 
     try {
-      $project_service = \Drupal::service('baas_project.manager');
-      
-      // 使用原始项目ID，不进行重命名
-      $project_service->createProject([
-        'project_id' => $this->groupsProjectConfig['project_id'], // 保持原始
-        'tenant_id' => $this->groupsProjectConfig['tenant_id'],   // 保持原始
-        'name' => $this->groupsProjectConfig['project_name'],
-        'machine_name' => 'groups_sports',
-        'description' => '运动活动组织和管理平台，基于原始Groups项目结构',
-        'status' => 1,
-        'is_demo' => TRUE,
-      ]);
+      // 从静态数据文件读取项目配置
+      $static_data_path = DRUPAL_ROOT . '/profiles/baas_platform/data/groups_static_data.json';
+      $static_data = json_decode(file_get_contents($static_data_path), TRUE);
 
-      $this->logger->info('项目配置导入成功: @project_id', [
-        '@project_id' => $this->groupsProjectConfig['project_id']
-      ]);
+      if (isset($static_data['baas_config']['project_config'])) {
+        foreach ($static_data['baas_config']['project_config'] as $project_data) {
+          // 检查项目是否已存在
+          $existing_project = $this->database->select('baas_project_config', 'bpc')
+            ->condition('project_id', $project_data['project_id'])
+            ->countQuery()
+            ->execute()
+            ->fetchField();
+
+          if (!$existing_project) {
+            // 查找关联的项目成员作为 owner_uid
+            $owner_uid = 2; // 默认使用 admin 用户作为 owner
+            if (isset($static_data['system_users']['project_members'])) {
+              foreach ($static_data['system_users']['project_members'] as $member) {
+                if ($member['project_id'] === $project_data['project_id'] && $member['role'] === 'owner') {
+                  $owner_uid = $member['user_id'];
+                  break;
+                }
+              }
+            }
+
+            // 生成 machine_name (从项目名称生成)
+            $machine_name = strtolower(str_replace([' ', '-'], '_', $project_data['name']));
+
+            // 直接插入到数据库
+            $this->database->insert('baas_project_config')
+              ->fields([
+                'project_id' => $project_data['project_id'],
+                'tenant_id' => $project_data['tenant_id'],
+                'name' => $project_data['name'],
+                'machine_name' => $machine_name,
+                'description' => $project_data['description'],
+                'settings' => $project_data['settings'],
+                'status' => $project_data['status'],
+                'owner_uid' => $owner_uid,
+                'created' => $project_data['created'],
+                'updated' => $project_data['updated'],
+              ])
+              ->execute();
+
+            $this->logger->info('项目配置导入成功: @project_id', ['@project_id' => $project_data['project_id']]);
+          } else {
+            $this->logger->info('项目配置已存在，跳过: @project_id', ['@project_id' => $project_data['project_id']]);
+          }
+        }
+      }
 
       return TRUE;
     } catch (\Exception $e) {
@@ -194,9 +259,9 @@ class GroupsStaticDataImporter {
     }
 
     $static_data = json_decode(file_get_contents($static_data_path), TRUE);
-    
-    if (!isset($static_data['entities'])) {
-      $this->logger->error('静态数据文件中缺少实体定义');
+
+    if (!isset($static_data['baas_config']['entity_templates'])) {
+      $this->logger->error('静态数据文件中缺少实体模板配置');
       return [];
     }
 
@@ -205,24 +270,96 @@ class GroupsStaticDataImporter {
       return [];
     }
 
-    $template_service = \Drupal::service('baas_entity.template_manager');
+    // 直接导入实体模板到数据库表
+    try {
+      // 1. 导入实体模板
+      foreach ($static_data['baas_config']['entity_templates'] as $template_data) {
+        // 检查是否已存在相同的实体模板
+        $existing = $this->database->select('baas_entity_template', 'bet')
+          ->condition('tenant_id', $template_data['tenant_id'])
+          ->condition('name', $template_data['name'])
+          ->countQuery()
+          ->execute()
+          ->fetchField();
 
-    foreach ($static_data['entities'] as $entity_name => $entity_config) {
-      try {
-        // 保持原始项目ID和结构
-        $entity_config['project_id'] = $this->groupsProjectConfig['project_id'];
-        $entity_config['is_demo'] = TRUE;
-        
-        $template_service->createEntityTemplate($entity_config);
-        $imported_entities[] = $entity_name;
-        
-        $this->logger->info('实体模板导入成功: @entity', ['@entity' => $entity_name]);
-      } catch (\Exception $e) {
-        $this->logger->error('实体模板导入失败 @entity: @error', [
-          '@entity' => $entity_name,
-          '@error' => $e->getMessage(),
-        ]);
+        if (!$existing) {
+          $this->database->insert('baas_entity_template')
+            ->fields([
+              'tenant_id' => $template_data['tenant_id'],
+              'project_id' => $template_data['project_id'],
+              'name' => $template_data['name'],
+              'label' => $template_data['label'],
+              'description' => $template_data['description'],
+              'status' => $template_data['status'],
+              'settings' => $template_data['settings'],
+              'created' => $template_data['created'],
+              'updated' => $template_data['updated'],
+            ])
+            ->execute();
+
+          $imported_entities[] = $template_data['name'];
+          $this->logger->info('实体模板导入成功: @entity', ['@entity' => $template_data['name']]);
+        } else {
+          $this->logger->info('实体模板已存在，跳过: @entity', ['@entity' => $template_data['name']]);
+        }
       }
+
+      // 2. 导入实体字段
+      if (isset($static_data['baas_config']['entity_fields'])) {
+        foreach ($static_data['baas_config']['entity_fields'] as $field_data) {
+          // 检查是否已存在相同的字段
+          $existing_field = $this->database->select('baas_entity_field', 'bef')
+            ->condition('template_id', $field_data['template_id'])
+            ->condition('name', $field_data['name'])
+            ->countQuery()
+            ->execute()
+            ->fetchField();
+
+          if (!$existing_field) {
+            $this->database->insert('baas_entity_field')
+              ->fields([
+                'template_id' => $field_data['template_id'],
+                'name' => $field_data['name'],
+                'label' => $field_data['label'],
+                'type' => $field_data['type'],
+                'required' => $field_data['required'],
+                'settings' => $field_data['settings'],
+                'weight' => $field_data['weight'],
+                'description' => $field_data['description'],
+                'created' => $field_data['created'],
+                'updated' => $field_data['updated'],
+              ])
+              ->execute();
+          }
+        }
+
+        $this->logger->info('实体字段导入成功: @count 个', ['@count' => count($static_data['baas_config']['entity_fields'])]);
+      }
+
+      // 3. 导入实体类文件注册信息
+      if (isset($static_data['baas_config']['entity_class_files'])) {
+        // 检查表是否存在
+        if ($this->database->schema()->tableExists('baas_entity_class_files')) {
+          foreach ($static_data['baas_config']['entity_class_files'] as $class_data) {
+            $this->database->insert('baas_entity_class_files')
+              ->fields([
+                'entity_type_id' => $class_data['entity_type_id'],
+                'tenant_id' => $class_data['tenant_id'],
+                'class_name' => $class_data['class_name'],
+                'class_type' => $class_data['class_type'],
+                'file_path' => $class_data['file_path'],
+              ])
+              ->execute();
+          }
+
+          $this->logger->info('实体类文件注册成功: @count 个', ['@count' => count($static_data['baas_config']['entity_class_files'])]);
+        } else {
+          $this->logger->warning('baas_entity_class_files 表不存在，跳过实体类文件注册');
+        }
+      }
+
+    } catch (\Exception $e) {
+      $this->logger->error('实体模板导入失败: @error', ['@error' => $e->getMessage()]);
     }
 
     return $imported_entities;
@@ -403,12 +540,11 @@ class GroupsStaticDataImporter {
     $static_data_path = DRUPAL_ROOT . '/profiles/baas_platform/data/groups_static_data.json';
     $static_data = json_decode(file_get_contents($static_data_path), TRUE);
     
-    if (!isset($static_data['sample_data'])) {
-      $this->logger->error('静态数据文件中缺少示例数据');
+    if (!isset($static_data['entities'])) {
       return [];
     }
 
-    foreach ($static_data['sample_data'] as $entity_name => $sample_records) {
+    foreach ($static_data['entities'] as $entity_name => $sample_records) {
       if (empty($sample_records)) {
         continue;
       }
@@ -416,9 +552,8 @@ class GroupsStaticDataImporter {
       $table_name = $this->groupsProjectConfig['table_prefix'] . $entity_name; // 保持原始表名
       
       try {
-        // 检查表是否存在，如不存在则创建
+        // 检查表是否存在，如不存在则跳过
         if (!$this->database->schema()->tableExists($table_name)) {
-          $this->logger->warning('数据表不存在，跳过: @table', ['@table' => $table_name]);
           continue;
         }
 
@@ -429,26 +564,165 @@ class GroupsStaticDataImporter {
           $record['tenant_id'] = $this->groupsProjectConfig['tenant_id'];
           $record['project_id'] = $this->groupsProjectConfig['project_id'];
           $record['is_demo'] = TRUE;
-          
+
           $this->database->insert($table_name)->fields($record)->execute();
           $inserted_count++;
+
         }
-        
+
         $imported_data[$entity_name] = $inserted_count;
-        $this->logger->info('数据导入成功: @entity (@count条)', [
-          '@entity' => $entity_name,
-          '@count' => $inserted_count,
-        ]);
         
       } catch (\Exception $e) {
-        $this->logger->error('数据导入失败 @entity: @error', [
-          '@entity' => $entity_name,
-          '@error' => $e->getMessage(),
-        ]);
+        // 静默处理错误，继续下一个实体的导入
       }
     }
 
     return $imported_data;
+  }
+
+  /**
+   * 导入系统用户和权限映射
+   */
+  protected function importSystemUsers(): array {
+    $imported_users = [];
+
+    // 从静态数据文件读取系统用户数据
+    $static_data_path = DRUPAL_ROOT . '/profiles/baas_platform/data/groups_static_data.json';
+    $static_data = json_decode(file_get_contents($static_data_path), TRUE);
+
+    if (!isset($static_data['system_users'])) {
+      return [];
+    }
+
+    $system_users = $static_data['system_users'];
+
+    try {
+      // 1. 导入 Drupal 用户
+      if (isset($system_users['drupal_users'])) {
+        foreach ($system_users['drupal_users'] as $user_data) {
+
+          // 检查用户是否已存在
+          $existing_user = \Drupal::entityTypeManager()
+            ->getStorage('user')
+            ->loadByProperties(['name' => $user_data['name']]);
+
+          if (empty($existing_user)) {
+            // 创建新用户
+            $user = \Drupal\user\Entity\User::create([
+              'name' => $user_data['name'],
+              'mail' => $user_data['mail'],
+              'status' => $user_data['status'],
+              'timezone' => $user_data['timezone'],
+              'created' => $user_data['created'],
+              'changed' => $user_data['changed'],
+              'access' => $user_data['access'],
+              'login' => $user_data['login'],
+              'init' => $user_data['init'],
+            ]);
+            $user->save();
+
+            // 直接更新密码哈希到数据库（绕过Drupal的密码验证）
+            $this->database->update('users_field_data')
+              ->fields(['pass' => $user_data['pass']])
+              ->condition('uid', $user->id())
+              ->execute();
+
+            $imported_users['drupal_users'][] = $user_data['name'];
+          }
+        }
+      }
+
+      // 2. 导入用户角色关联
+      if (isset($system_users['user_roles'])) {
+        foreach ($system_users['user_roles'] as $role_data) {
+          // 检查是否已存在相同的角色关联
+          $existing_role = $this->database->select('user__roles', 'ur')
+            ->condition('entity_id', $role_data['entity_id'])
+            ->condition('deleted', $role_data['deleted'])
+            ->condition('delta', $role_data['delta'])
+            ->condition('langcode', $role_data['langcode'])
+            ->condition('roles_target_id', $role_data['roles_target_id'])
+            ->countQuery()
+            ->execute()
+            ->fetchField();
+
+          if (!$existing_role) {
+            // 直接插入到 user__roles 表
+            $this->database->insert('user__roles')
+              ->fields([
+                'bundle' => $role_data['bundle'],
+                'deleted' => $role_data['deleted'],
+                'entity_id' => $role_data['entity_id'],
+                'revision_id' => $role_data['revision_id'],
+                'langcode' => $role_data['langcode'],
+                'delta' => $role_data['delta'],
+                'roles_target_id' => $role_data['roles_target_id'],
+              ])
+              ->execute();
+          }
+        }
+
+        $imported_users['user_roles'] = count($system_users['user_roles']);
+      }
+
+      // 3. 导入用户-租户映射
+      if (isset($system_users['user_tenant_mapping'])) {
+        foreach ($system_users['user_tenant_mapping'] as $mapping_data) {
+          // 确保表存在
+          if ($this->database->schema()->tableExists('baas_user_tenant_mapping')) {
+            $this->database->insert('baas_user_tenant_mapping')
+              ->fields([
+                'user_id' => $mapping_data['user_id'],
+                'tenant_id' => $mapping_data['tenant_id'],
+                'role' => $mapping_data['role'],
+                'status' => $mapping_data['status'],
+              ])
+              ->execute();
+          }
+        }
+
+        $imported_users['user_tenant_mapping'] = count($system_users['user_tenant_mapping']);
+      }
+
+      // 4. 导入项目成员关系
+      if (isset($system_users['project_members'])) {
+        foreach ($system_users['project_members'] as $member_data) {
+          // 确保表存在
+          if ($this->database->schema()->tableExists('baas_project_members')) {
+            // 检查项目成员关系是否已存在
+            $existing_member = $this->database->select('baas_project_members', 'bpm')
+              ->condition('project_id', $member_data['project_id'])
+              ->condition('user_id', $member_data['user_id'])
+              ->countQuery()
+              ->execute()
+              ->fetchField();
+
+            if (!$existing_member) {
+              $current_time = time();
+
+              $this->database->insert('baas_project_members')
+                ->fields([
+                  'project_id' => $member_data['project_id'],
+                  'user_id' => $member_data['user_id'],
+                  'role' => $member_data['role'],
+                  'permissions' => $member_data['permissions'],
+                  'status' => $member_data['status'],
+                  'joined_at' => $current_time,
+                  'updated_at' => $current_time,
+                ])
+                ->execute();
+            }
+          }
+        }
+
+        $imported_users['project_members'] = count($system_users['project_members']);
+      }
+
+    } catch (\Exception $e) {
+      // 静默处理错误
+    }
+
+    return $imported_users;
   }
 
   /**

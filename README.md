@@ -215,6 +215,6 @@ docker-compose exec db pg_isready
 
 ---
 
-**版本**: 1.1.0-beta.2  
-**更新时间**: 2025-09-25 14:31:53 UTC  
+**版本**: dev  
+**更新时间**: 2025-09-29 13:01:22 UTC  
 **官方网站**: https://baas-platform.com

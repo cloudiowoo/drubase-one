@@ -52,6 +52,13 @@ class EntityGenerator
   protected $tenantManager;
 
   /**
+   * 表名生成器服务（可选）。
+   *
+   * @var \Drupal\baas_project\Service\ProjectTableNameGenerator|null
+   */
+  protected $tableNameGenerator;
+
+  /**
    * 构造函数.
    *
    * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
@@ -77,6 +84,11 @@ class EntityGenerator
     $this->fileSystem = $file_system;
     $this->moduleHandler = $module_handler;
     $this->tenantManager = $tenant_manager;
+
+    // 尝试获取表名生成器服务（如果baas_project模块存在）
+    if (\Drupal::hasService('baas_project.table_name_generator')) {
+      $this->tableNameGenerator = \Drupal::service('baas_project.table_name_generator');
+    }
   }
 
   /**
@@ -130,8 +142,17 @@ class EntityGenerator
       $this->fileSystem->saveData($entity_class_code, $entity_class_path, FileSystemInterface::EXISTS_REPLACE);
       $this->fileSystem->saveData($entity_storage_code, $storage_class_path, FileSystemInterface::EXISTS_REPLACE);
 
-      // 记录文件位置信息
-      $entity_type_id = $template->tenant_id . '_' . $template->name;
+      // 记录文件位置信息 - 使用正确的实体类型ID
+      if ($this->tableNameGenerator && !empty($template->project_id)) {
+        $entity_type_id = $this->tableNameGenerator->generateEntityTypeId(
+          $template->tenant_id,
+          $template->project_id,
+          $template->name
+        );
+      } else {
+        // 回退到旧格式
+        $entity_type_id = $template->tenant_id . '_' . $template->name;
+      }
       $current_time = time();
 
       // 检查baas_entity_class_files表是否存在
@@ -750,7 +771,17 @@ EOT;
   protected function createEntityTable(object $template, array $fields): bool
   {
     try {
-      $table_name = "tenant_{$template->tenant_id}_{$template->name}";
+      // 使用项目表名生成器（如果可用）来生成正确的表名
+      if ($this->tableNameGenerator && !empty($template->project_id)) {
+        $table_name = $this->tableNameGenerator->generateTableName(
+          $template->tenant_id,
+          $template->project_id,
+          $template->name
+        );
+      } else {
+        // 回退到旧格式
+        $table_name = "tenant_{$template->tenant_id}_{$template->name}";
+      }
 
       // 检查表是否已存在
       if ($this->database->schema()->tableExists($table_name)) {

@@ -1,0 +1,256 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * @file
+ * BaaS文件字段模块的主要钩子函数。
+ */
+
+use Drupal\Core\Form\FormStateInterface;
+
+/**
+ * Implements hook_help().
+ */
+function baas_file_help($route_name, $route_match)
+{
+  switch ($route_name) {
+    case 'help.page.baas_file':
+      return '<p>' . t('BaaS文件字段模块为动态实体提供文件和图片字段类型支持。') . '</p>';
+  }
+}
+
+/**
+ * Implements hook_baas_entity_field_types().
+ * 
+ * 注册文件字段类型到baas_entity系统。
+ */
+function baas_file_baas_entity_field_types()
+{
+  return [
+    'file' => [
+      'plugin_id' => 'file',
+      'class' => '\Drupal\baas_file\Plugin\FieldType\FileFieldTypePlugin',
+      'label' => t('文件'),
+      'description' => t('文件上传字段'),
+      'category' => 'media',
+      'weight' => 10,
+    ],
+    'image' => [
+      'plugin_id' => 'image', 
+      'class' => '\Drupal\baas_file\Plugin\FieldType\ImageFieldTypePlugin',
+      'label' => t('图片'),
+      'description' => t('图片上传字段'),
+      'category' => 'media',
+      'weight' => 5,
+    ],
+  ];
+}
+
+/**
+ * Implements hook_file_download().
+ * 
+ * 控制BaaS项目文件的下载权限。
+ */
+function baas_file_file_download($uri)
+{
+  // 只处理BaaS项目文件
+  if (strpos($uri, 'public://baas/') !== 0) {
+    return NULL;
+  }
+
+  // 解析文件路径获取项目ID
+  $path_parts = explode('/', str_replace('public://baas/', '', $uri));
+  if (count($path_parts) < 2) {
+    return -1; // 拒绝访问
+  }
+
+  $tenant_id = $path_parts[0];
+  $project_id = $path_parts[1];
+  
+  // 重构项目ID
+  $full_project_id = $tenant_id . '_project_' . $project_id;
+
+  // 检查文件访问权限
+  $file_access_checker = \Drupal::service('baas_file.access_checker');
+  if (!$file_access_checker->canAccessProjectFiles($full_project_id)) {
+    \Drupal::logger('baas_file')->warning('用户 @user 尝试访问无权限的项目文件: @uri', [
+      '@user' => \Drupal::currentUser()->id(),
+      '@uri' => $uri,
+    ]);
+    return -1; // 拒绝访问
+  }
+
+  // 获取文件实体
+  $file_storage = \Drupal::entityTypeManager()->getStorage('file');
+  $files = $file_storage->loadByProperties(['uri' => $uri]);
+  
+  if (empty($files)) {
+    return -1; // 文件不存在
+  }
+
+  $file = reset($files);
+  
+  // 记录文件访问
+  try {
+    \Drupal::database()->insert('baas_project_file_access')
+      ->fields([
+        'project_id' => $full_project_id,
+        'file_id' => $file->id(),
+        'user_id' => \Drupal::currentUser()->id(),
+        'action' => 'download',
+        'ip_address' => \Drupal::request()->getClientIp(),
+        'user_agent' => \Drupal::request()->headers->get('User-Agent', ''),
+        'timestamp' => time(),
+      ])
+      ->execute();
+  } catch (\Exception $e) {
+    \Drupal::logger('baas_file')->error('记录文件访问失败: @error', ['@error' => $e->getMessage()]);
+  }
+
+  // 返回文件头信息
+  return [
+    'Content-Type' => $file->getMimeType(),
+    'Content-Length' => $file->getSize(),
+    'Content-Disposition' => 'inline; filename="' . $file->getFilename() . '"',
+    'Cache-Control' => 'private, max-age=3600',
+  ];
+}
+
+/**
+ * Implements hook_entity_type_alter().
+ * 
+ * 为文件实体添加项目级访问控制。
+ */
+function baas_file_entity_type_alter(array &$entity_types)
+{
+  if (isset($entity_types['file'])) {
+    // 为文件实体添加自定义访问控制处理器
+    $entity_types['file']->setHandlerClass('access', 'Drupal\baas_file\Access\FileAccessControlHandler');
+  }
+}
+
+/**
+ * Implements hook_form_alter().
+ * 
+ * 修改文件上传表单以适配BaaS项目结构。
+ */
+function baas_file_form_alter(&$form, FormStateInterface $form_state, $form_id)
+{
+  // 处理动态实体表单中的文件字段
+  if (strpos($form_id, 'baas_project_entity_') === 0) {
+    // 为文件字段添加项目上下文
+    $project_id = \Drupal::routeMatch()->getParameter('project_id');
+    if ($project_id) {
+      _baas_file_add_project_context_to_form($form, $project_id);
+    }
+  }
+}
+
+/**
+ * 为表单文件字段添加项目上下文。
+ */
+function _baas_file_add_project_context_to_form(&$form, $project_id)
+{
+  // 遍历表单元素，查找文件字段
+  foreach ($form as $field_name => &$field) {
+    if (isset($field['#type']) && in_array($field['#type'], ['file', 'managed_file'])) {
+      // 设置上传目录为项目特定目录
+      $file_manager = \Drupal::service('baas_file.manager');
+      $upload_location = $file_manager->getProjectFileDirectory($project_id) . '/files';
+      
+      $field['#upload_location'] = $upload_location;
+      $field['#upload_validators']['file_validate_project_access'] = [$project_id];
+    }
+  }
+}
+
+/**
+ * 文件验证回调：检查项目访问权限。
+ */
+function file_validate_project_access($file, $project_id)
+{
+  $errors = [];
+  
+  $file_access_checker = \Drupal::service('baas_file.access_checker');
+  if (!$file_access_checker->canUploadToProject($project_id)) {
+    $errors[] = t('您没有权限上传文件到此项目。');
+  }
+
+  return $errors;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function baas_file_theme($existing, $type, $theme, $path) {
+  return [
+    'baas_file_manager' => [
+      'variables' => [
+        'tenants' => [],
+        'projects' => [],
+        'statistics' => [],
+        'user_permissions' => [],
+      ],
+      'template' => 'baas-file-manager',
+      'path' => $path . '/templates',
+    ],
+    'baas_file_tenant_media_manager' => [
+      'variables' => [
+        'tenant_id' => NULL,
+        'tenant_name' => NULL,
+        'media_list' => [],
+        'statistics' => [],
+        'permissions' => [],
+      ],
+      'template' => 'baas-file-tenant-media-manager',
+      'path' => $path . '/templates',
+    ],
+    'baas_file_project_media_manager' => [
+      'variables' => [
+        'tenant_id' => NULL,
+        'project_id' => NULL,
+        'project_name' => NULL,
+        'media_list' => [],
+        'statistics' => [],
+        'permissions' => [],
+      ],
+      'template' => 'baas-file-project-media-manager',
+      'path' => $path . '/templates',
+    ],
+  ];
+}
+
+/**
+ * Implements hook_cron().
+ * 
+ * 定期清理临时文件和更新使用统计。
+ */
+function baas_file_cron()
+{
+  // 清理临时文件（超过24小时的临时文件）
+  $temp_files = \Drupal::entityTypeManager()->getStorage('file')->loadByProperties([
+    'status' => 0,
+    'changed' => ['<', time() - 86400], // 24小时前
+  ]);
+
+  foreach ($temp_files as $file) {
+    // 检查是否为BaaS项目文件
+    if (strpos($file->getFileUri(), 'public://baas/') === 0) {
+      try {
+        $file->delete();
+        \Drupal::logger('baas_file')->info('已清理临时文件: @filename', [
+          '@filename' => $file->getFilename(),
+        ]);
+      } catch (\Exception $e) {
+        \Drupal::logger('baas_file')->error('清理临时文件失败: @error', [
+          '@error' => $e->getMessage(),
+        ]);
+      }
+    }
+  }
+
+  // 更新文件使用统计
+  $usage_tracker = \Drupal::service('baas_file.usage_tracker');
+  $usage_tracker->updateAllProjectStats();
+}

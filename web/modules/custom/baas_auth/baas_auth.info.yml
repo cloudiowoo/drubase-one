@@ -1,0 +1,14 @@
+name: 'BaaS Authentication'
+description: 'Provides JWT authentication, user management, and permission control for the BaaS platform'
+type: module
+core_version_requirement: ^11
+package: 'BaaS Platform'
+version: '1.1.0-beta.6'
+
+dependencies:
+  - drupal:user
+  - drupal:system
+  - baas_tenant:baas_tenant
+  - baas_api:baas_api
+
+configure: baas_auth.settings

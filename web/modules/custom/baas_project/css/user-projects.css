@@ -1,0 +1,203 @@
+/**
+ * 用户项目管理界面样式
+ */
+
+.empty-state {
+  text-align: center;
+  padding: 2rem;
+  background: #f8f9fa;
+  border: 1px dashed #dee2e6;
+  border-radius: 0.5rem;
+  margin: 1rem 0;
+}
+
+.empty-state h3 {
+  color: #6c757d;
+  margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+  color: #6c757d;
+  margin-bottom: 0.5rem;
+}
+
+.project-table-actions {
+  white-space: nowrap;
+}
+
+.project-status {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.project-status--active {
+  background-color: #d4edda;
+  color: #155724;
+}
+
+.project-status--inactive {
+  background-color: #f8d7da;
+  color: #721c24;
+}
+
+.project-status--default {
+  background-color: #e2e3e5;
+  color: #383d41;
+}
+
+.project-info-table {
+  margin-bottom: 1rem;
+}
+
+.project-info-table td:first-child {
+  font-weight: 600;
+  width: 200px;
+}
+
+.tenant-projects-section {
+  margin-bottom: 2rem;
+}
+
+.tenant-projects-section:last-child {
+  margin-bottom: 0;
+}
+
+/* 新增：项目网格布局样式 */
+.project-header {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.project-header h2 {
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.project-header p {
+  margin-bottom: 0;
+  color: #6c757d;
+}
+
+.project-quick-actions {
+  margin-bottom: 1.5rem;
+}
+
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.project-card {
+  background: #fff;
+  border: 1px solid #dee2e6;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  transition: box-shadow 0.2s ease;
+}
+
+.project-card:hover {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.project-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.project-card-header h3 {
+  margin: 0;
+  font-size: 1.125rem;
+  color: #333;
+}
+
+.project-role {
+  background-color: #e9ecef;
+  color: #495057;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.project-info {
+  margin-bottom: 1rem;
+}
+
+.project-description {
+  margin-bottom: 0.5rem;
+  color: #6c757d;
+  font-size: 0.875rem;
+}
+
+.project-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.project-meta span {
+  font-size: 0.75rem;
+  color: #6c757d;
+}
+
+.tenant-info {
+  font-weight: 500;
+  color: #495057;
+}
+
+.project-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.project-actions .button {
+  font-size: 0.875rem;
+  padding: 0.25rem 0.5rem;
+}
+
+/* 简化项目表单样式 */
+.baas-project-form fieldset {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.baas-project-form .form-item {
+  margin-bottom: 1rem;
+}
+
+.baas-project-form .form-item:last-child {
+  margin-bottom: 0;
+}
+
+.baas-project-form .form-actions {
+  padding-top: 1rem;
+  border-top: 1px solid #dee2e6;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .projects-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .project-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .project-actions {
+    flex-direction: column;
+  }
+}

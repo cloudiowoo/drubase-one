@@ -1,0 +1,42 @@
+baas_api.settings:
+  title: 'API设置'
+  route_name: baas_api.settings
+  description: '配置BaaS API模块的全局设置和资源限制'
+  parent: baas.admin
+  weight: 40
+
+baas_api.statistics:
+  title: 'API统计'
+  route_name: baas_api.statistics
+  description: '查看API使用统计和日志'
+  parent: system.admin_config_services
+  weight: 11
+
+baas_api.stats:
+  title: 'API使用统计'
+  description: '查看API使用统计和报告'
+  parent: system.admin_reports
+  route_name: baas_api.stats
+  weight: -10
+
+baas_api.docs:
+  title: 'API文档'
+  route_name: baas_api.docs
+  description: '查看BaaS API文档'
+  parent: system.admin_config_services
+  weight: 12
+
+baas_api.tokens:
+  title: 'API令牌管理'
+  route_name: baas_api.tokens
+  description: '管理API访问令牌'
+  parent: system.admin_config_services
+  weight: 13
+
+# 用户账户菜单 - API文档
+baas_api.swagger_ui_user:
+  title: 'API文档'
+  description: '查看和测试BaaS平台API接口'
+  menu_name: account
+  route_name: baas_api.swagger_ui_standalone
+  weight: 15

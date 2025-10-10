@@ -1,0 +1,29 @@
+/**
+ * BaaS租户管理工具栏样式
+ */
+
+.toolbar-icon-baas-tenant:before {
+  background-image: url("data:image/svg+xml,%3csvg width='16' height='16' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M2 3h12v2H2V3zm0 4h12v2H2V7zm0 4h7v2H2v-2z' fill='%23ffffff'/%3e%3c/svg%3e");
+}
+
+.toolbar-tray-vertical .toolbar-icon-baas-tenant:before {
+  background-image: url("data:image/svg+xml,%3csvg width='16' height='16' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M2 3h12v2H2V3zm0 4h12v2H2V7zm0 4h7v2H2v-2z' fill='%23565656'/%3e%3c/svg%3e");
+}
+
+.toolbar-bar .toolbar-icon-baas-tenant.is-active:before,
+.toolbar-bar .toolbar-icon-baas-tenant:active:before,
+.toolbar-bar .toolbar-icon-baas-tenant:hover:before {
+  background-image: url("data:image/svg+xml,%3csvg width='16' height='16' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M2 3h12v2H2V3zm0 4h12v2H2V7zm0 4h7v2H2v-2z' fill='%23ffffff'/%3e%3c/svg%3e");
+}
+
+.toolbar-menu .menu-item a {
+  padding: 0.5rem 1rem;
+  display: block;
+  text-decoration: none;
+  color: #333;
+}
+
+.toolbar-menu .menu-item a:hover {
+  background-color: #f5f5f5;
+  color: #0073aa;
+}

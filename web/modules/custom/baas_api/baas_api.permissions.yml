@@ -1,0 +1,18 @@
+administer baas api:
+  title: '管理BaaS API'
+  description: '允许更改BaaS API模块的设置'
+  restrict access: true
+
+access baas api docs:
+  title: '访问API文档'
+  description: '允许访问API文档页面'
+
+view baas api stats:
+  title: '查看API使用统计'
+  description: '允许查看API使用统计数据'
+  restrict access: true
+
+use baas api advanced features:
+  title: '使用BaaS API高级功能'
+  description: '允许使用API高级功能，如批量操作和函数调用'
+  restrict access: TRUE

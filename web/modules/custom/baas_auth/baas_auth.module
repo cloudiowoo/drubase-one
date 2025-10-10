@@ -1,0 +1,73 @@
+<?php
+
+/**
+ * @file
+ * Contains baas_auth.module.
+ */
+
+use Drupal\Core\Routing\RouteMatchInterface;
+
+/**
+ * Implements hook_help().
+ */
+function baas_auth_help($route_name, RouteMatchInterface $route_match)
+{
+  switch ($route_name) {
+    // Main module help for the baas_auth module.
+    case 'help.page.baas_auth':
+      $output = '';
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('BaaS Authentication module provides JWT authentication, user management, and permission control for the BaaS platform.') . '</p>';
+      $output .= '<h3>' . t('Features') . '</h3>';
+      $output .= '<ul>';
+      $output .= '<li>' . t('JWT token authentication') . '</li>';
+      $output .= '<li>' . t('Tenant-level user management') . '</li>';
+      $output .= '<li>' . t('Role-based access control (RBAC)') . '</li>';
+      $output .= '<li>' . t('API key authentication') . '</li>';
+      $output .= '<li>' . t('Session management') . '</li>';
+      $output .= '<li>' . t('Security policies and audit logging') . '</li>';
+      $output .= '</ul>';
+      return $output;
+
+    default:
+  }
+}
+
+/**
+ * Implements hook_theme().
+ */
+function baas_auth_theme()
+{
+  return [
+    'baas_auth_user_profile' => [
+      'variables' => ['user' => NULL, 'tenant_id' => NULL],
+    ],
+    'baas_auth_api_key_list' => [
+      'variables' => ['api_keys' => [], 'tenant_id' => NULL],
+    ],
+  ];
+}
+
+/**
+ * Implements hook_user_login().
+ */
+function baas_auth_user_login($account)
+{
+  // Log user login for security auditing
+  \Drupal::logger('baas_auth')->info('User @username logged in from @ip', [
+    '@username' => $account->getDisplayName(),
+    '@ip' => \Drupal::request()->getClientIp(),
+  ]);
+}
+
+/**
+ * Implements hook_user_logout().
+ */
+function baas_auth_user_logout($account)
+{
+  // Log user logout for security auditing
+  \Drupal::logger('baas_auth')->info('User @username logged out from @ip', [
+    '@username' => $account->getDisplayName(),
+    '@ip' => \Drupal::request()->getClientIp(),
+  ]);
+}

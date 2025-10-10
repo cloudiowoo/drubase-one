@@ -1,0 +1,47 @@
+swagger_ui:
+  version: 5.3.1
+  css:
+    theme:
+      css/swagger-ui.css: {}
+  js:
+    js/swagger-ui-bundle.js: {}
+    js/swagger-ui-standalone-preset.js: {}
+    js/swagger-ui-init.js: {}
+  dependencies:
+    - core/drupal
+    - core/drupalSettings
+
+api_docs:
+  version: 1.0.0
+  css:
+    theme:
+      css/baas_api_docs.css: {}
+  js:
+    js/baas_api_docs.js: {}
+  dependencies:
+    - core/drupal
+    - core/drupalSettings
+
+graphql_ui:
+  version: 1.0.0
+  css:
+    theme:
+      css/baas_api_graphql.css: {}
+  js:
+    js/baas_api_graphql.js: {}
+  dependencies:
+    - core/jquery
+    - core/drupal
+    - core/drupalSettings
+
+stats:
+  version: 1.0.0
+  css:
+    theme:
+      css/baas_api_stats.css: {}
+  js:
+    js/baas_api_stats.js: {}
+  dependencies:
+    - core/jquery
+    - core/drupal
+    - core/drupalSettings

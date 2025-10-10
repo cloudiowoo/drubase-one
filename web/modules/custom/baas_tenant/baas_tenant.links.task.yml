@@ -1,0 +1,6 @@
+# 用户账户页面选项卡 - API密钥管理
+baas_tenant.user_api_keys_tab:
+  route_name: baas_tenant.user_api_keys
+  title: 'API密钥'
+  base_route: user.page
+  weight: 25

@@ -1,0 +1,221 @@
+# API使用统计
+baas_api.stats:
+  path: '/admin/reports/baas/api-stats'
+  defaults:
+    _controller: '\Drupal\baas_api\Controller\ApiStatsController::getStats'
+    _title: 'API使用统计'
+  requirements:
+    _permission: 'access baas api docs'
+
+baas_api.stats_clear:
+  path: '/admin/reports/baas/api-stats/clear'
+  defaults:
+    _controller: '\Drupal\baas_api\Controller\ApiStatsController::clearStats'
+    _title: '清空API统计'
+  requirements:
+    _permission: 'administer baas api'
+  methods: [POST]
+
+baas_api.tokens:
+  path: '/admin/config/baas/api/tokens'
+  defaults:
+    _form: '\Drupal\baas_api\Form\ApiTokenForm'
+    _title: 'API令牌管理'
+  requirements:
+    _permission: 'administer baas api'
+
+baas_api.token_revoke:
+  path: '/admin/config/baas/api/token/{tenant_id}/{token_hash}/revoke'
+  defaults:
+    _controller: '\Drupal\baas_api\Controller\ApiTokenController::revokeToken'
+    _title: '撤销API令牌'
+  requirements:
+    _permission: 'administer baas api'
+
+
+
+# 注意：实体相关API已迁移到baas_entity模块
+# 实体模板和数据管理请使用baas_entity模块提供的API端点
+
+# 向后兼容的租户API路由（重定向到网关）- 需要在通用路由之前定义
+baas_api.tenant_api_v1:
+  path: '/api/v1/{tenant_id}/{path}'
+  defaults:
+    _controller: '\Drupal\baas_api\Controller\GatewayController::route'
+    _title: '租户API（兼容）'
+  methods: [GET, POST, PUT, PATCH, DELETE]
+  requirements:
+    _access: 'TRUE'
+    tenant_id: '[a-zA-Z0-9_-]+'
+    path: '.+'
+  options:
+    no_cache: TRUE
+    parameters:
+      tenant_id:
+        type: 'string'
+      path:
+        type: 'string'
+
+# API网关 - 统一的API入口点
+baas_api.gateway:
+  path: '/api/v1/{path}'
+  defaults:
+    _controller: '\Drupal\baas_api\Controller\GatewayController::route'
+    _title: 'BaaS API Gateway'
+    path: ''
+  requirements:
+    _access: 'TRUE'
+    path: '.*'
+  options:
+    no_cache: TRUE
+    parameters:
+      path:
+        type: 'string'
+
+# 域名方式访问API
+baas_api.domain_api_v1:
+  path: '/api/domain/{path}'
+  defaults:
+    _controller: '\Drupal\baas_api\Controller\ApiController::handleDomainRequest'
+    _title: '租户域名API'
+    path: ''
+  requirements:
+    _access: 'TRUE'
+    path: '.*'
+  options:
+    no_cache: TRUE
+    # 扩展点：子域名API访问
+    # 未来将支持通过子域名直接访问API，如：tenant.domain.com/api/v1/resource
+    # 这需要在服务器配置中设置通配符域名解析到同一应用
+    # 同时需要修改handleDomainRequest方法以直接处理请求而非重定向
+    parameters:
+      path:
+        type: 'string'
+
+baas_api.settings:
+  path: '/admin/config/baas/api/settings'
+  defaults:
+    _form: '\Drupal\baas_api\Form\ApiSettingsForm'
+    _title: 'API设置'
+  requirements:
+    _permission: 'administer baas api'
+
+# API文档路由（需要权限）
+baas_api.docs:
+  path: '/api/docs'
+  defaults:
+    _controller: '\Drupal\baas_api\Controller\ApiDocsController::getApiDocs'
+    _title: 'API文档'
+  requirements:
+    _permission: 'access baas api docs'
+
+# 认证用户的API文档路由（需要API Key或JWT认证）
+baas_api.docs_public:
+  path: '/openapi.json'
+  defaults:
+    _controller: '\Drupal\baas_api\Controller\ApiDocsController::getApiDocs'
+    _title: 'API文档'
+    _format: 'json'
+  requirements:
+    _access: 'TRUE'
+    _format: 'json'
+  options:
+    no_cache: TRUE
+    _auth: ['api_key', 'jwt']
+
+baas_api.docs_html:
+  path: '/admin/api/docs/html'
+  defaults:
+    _controller: '\Drupal\baas_api\Controller\ApiDocsController::getApiDocsHtml'
+    _title: 'API文档'
+  requirements:
+    _permission: 'access baas api docs'
+
+baas_api.docs_swagger:
+  path: '/api/swagger-ui'
+  defaults:
+    _controller: '\Drupal\baas_api\Controller\ApiDocsController::getApiDocsSwagger'
+    _title: 'BaaS API文档 (Swagger UI)'
+  requirements:
+    _permission: 'access baas api docs'
+  options:
+    no_cache: TRUE
+
+# 独立的Swagger UI页面（无权限验证）
+baas_api.swagger_ui_standalone:
+  path: '/swagger-ui'
+  defaults:
+    _controller: '\Drupal\baas_api\Controller\ApiDocsController::getApiDocsSwagger'
+    _title: 'BaaS API文档'
+  requirements:
+    _user_is_logged_in: 'TRUE'
+  options:
+    no_cache: TRUE
+
+# 租户特定的API文档
+baas_api.tenant_docs:
+  path: '/api/tenant/{tenant_id}/docs'
+  defaults:
+    _controller: '\Drupal\baas_api\Controller\ApiDocsController::getTenantApiDocs'
+    _title: '租户API文档'
+  requirements:
+    _tenant_access: 'TRUE'
+  options:
+    no_cache: TRUE
+
+# 租户GraphQL模式文档
+baas_api.tenant_graphql_schema:
+  path: '/api/tenant/{tenant_id}/graphql/schema'
+  defaults:
+    _controller: '\Drupal\baas_api\Controller\ApiDocsController::getTenantGraphQLSchema'
+    _title: '租户GraphQL模式'
+  requirements:
+    _tenant_access: 'TRUE'
+  options:
+    no_cache: TRUE
+
+# 下载API文档
+baas_api.download_docs:
+  path: '/api/docs/download'
+  defaults:
+    _controller: '\Drupal\baas_api\Controller\ApiDocsController::downloadApiDocs'
+    _title: '下载API文档'
+  requirements:
+    _permission: 'access baas api docs'
+
+# 下载租户API文档
+baas_api.download_tenant_docs:
+  path: '/api/tenant/{tenant_id}/docs/download'
+  defaults:
+    _controller: '\Drupal\baas_api\Controller\ApiDocsController::downloadApiDocs'
+    _title: '下载租户API文档'
+  requirements:
+    _tenant_access: 'TRUE'
+
+# 下载租户GraphQL模式
+baas_api.download_tenant_graphql_schema:
+  path: '/api/tenant/{tenant_id}/graphql/schema/download'
+  defaults:
+    _controller: '\Drupal\baas_api\Controller\ApiDocsController::downloadGraphQLSchema'
+    _title: '下载租户GraphQL模式'
+  requirements:
+    _tenant_access: 'TRUE'
+
+# API健康检查
+baas_api.health:
+  path: '/api/health'
+  defaults:
+    _controller: '\Drupal\baas_api\Controller\ApiHealthController::checkHealth'
+    _title: 'API健康状态'
+  requirements:
+    _public_api_endpoint: 'TRUE'
+  options:
+    no_cache: TRUE
+
+# 注意：以下实体CRUD路由已迁移到baas_entity模块
+# 请使用baas_entity模块提供的API端点：
+# GET    /api/v1/{tenant_id}/entity/{entity_type}     -> baas_entity模块
+# GET    /api/v1/{tenant_id}/entity/{entity_type}/{id} -> baas_entity模块
+# POST   /api/v1/{tenant_id}/entity/{entity_type}     -> baas_entity模块
+# PUT    /api/v1/{tenant_id}/entity/{entity_type}/{id} -> baas_entity模块
+# DELETE /api/v1/{tenant_id}/entity/{entity_type}/{id} -> baas_entity模块

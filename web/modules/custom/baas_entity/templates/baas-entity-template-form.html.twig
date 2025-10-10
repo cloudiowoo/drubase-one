@@ -1,0 +1,31 @@
+{#
+/**
+ * @file
+ * 默认主题实现，显示实体模板表单。
+ *
+ * 可用变量:
+ * - form: 实体模板表单。
+ *
+ * @see \Drupal\baas_entity\Form\EntityTemplateForm
+ *
+ * @ingroup themeable
+ */
+#}
+
+<div class="baas-entity-template-form-wrapper">
+	<h2>{{ '实体模板'|t }}</h2>
+
+	{% if form.template_info is defined %}
+		<div class="template-info">
+			{{ form.template_info }}
+		</div>
+	{% endif %}
+
+	<div class="form-content">
+		{{ form|without('template_info', 'actions') }}
+	</div>
+
+	<div class="form-actions">
+		{{ form.actions }}
+	</div>
+</div>

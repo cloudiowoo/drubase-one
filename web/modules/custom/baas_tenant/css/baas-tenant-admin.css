@@ -1,0 +1,53 @@
+/**
+ * BaaS租户管理页面样式
+ */
+
+.baas-tenant-actions {
+  margin: 1rem 0;
+}
+
+.baas-tenant-actions .button {
+  margin-right: 0.5rem;
+}
+
+.baas-tenant-table {
+  margin-top: 1rem;
+}
+
+.baas-tenant-status--active {
+  color: #28a745;
+  font-weight: bold;
+}
+
+.baas-tenant-status--inactive {
+  color: #dc3545;
+  font-weight: bold;
+}
+
+.baas-tenant-role--owner {
+  color: #007bff;
+  font-weight: bold;
+}
+
+.baas-tenant-role--admin {
+  color: #6f42c1;
+}
+
+.baas-tenant-info {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 0.25rem;
+  margin: 1rem 0;
+}
+
+.baas-tenant-settings {
+  margin-top: 1rem;
+}
+
+.baas-tenant-form {
+  max-width: 600px;
+}
+
+.baas-tenant-form .form-item {
+  margin-bottom: 1rem;
+}

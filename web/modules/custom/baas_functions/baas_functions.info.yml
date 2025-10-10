@@ -1,0 +1,32 @@
+name: 'BaaS Functions'
+type: module
+description: 'BaaS Functions module - Project-level function management with Node.js execution runtime'
+core_version_requirement: ^11
+package: 'BaaS Platform'
+version: '1.1.0-beta.6'
+
+dependencies:
+  - baas_tenant
+  - baas_project
+  - baas_entity
+  - baas_api
+  - baas_auth
+
+configure: baas_functions.settings
+
+# Module lifecycle
+lifecycle: stable
+
+# Permissions
+permissions:
+  - 'administer baas functions'
+  - 'access baas functions'
+  - 'create project functions'
+  - 'edit project functions'
+  - 'delete project functions'
+  - 'execute project functions'
+  - 'view function logs'
+  - 'manage project env vars'
+
+# Schema version
+schema_version: 8002

@@ -1,0 +1,55 @@
+# BaaS API设置配置
+# 
+# 此配置文件定义了BaaS API模块的全局设置，包括资源限制特性标志
+
+# 资源限制功能的特性标志
+# 所有新的限制功能都使用特性标志控制，默认关闭以确保向后兼容性
+enable_resource_limits: false      # 总开关：启用资源限制检查
+enable_api_rate_limits: false      # API限流检查
+enable_storage_limits: false       # 存储限制检查
+enable_entity_limits: false        # 实体数量限制检查
+
+# 资源限制功能分阶段推广配置
+resource_limits_rollout:
+  phase: 'disabled'                 # 阶段：disabled -> testing -> partial -> full
+  test_projects: []                 # 测试项目ID列表（在testing阶段启用）
+  excluded_projects: []             # 排除的项目ID列表（永不启用限制）
+  rollout_percentage: 0             # 分阶段启用百分比（partial阶段使用）
+
+# 默认资源限制配置
+# 这些是全局默认值，项目和租户可以覆盖
+default_limits:
+  api_calls_per_hour: 10000         # 每小时API调用次数
+  storage_mb: 1024                  # 存储空间限制（MB）
+  entity_instances: 10000           # 实体实例数量
+  entity_templates: 100             # 实体模板数量
+  file_uploads: 1000                # 文件上传数量
+  webhook_calls: 10000              # Webhook调用次数
+
+# 限制检查配置
+limit_check_settings:
+  cache_ttl: 300                    # 限制检查结果缓存时间（秒）
+  error_tolerance: true             # 遇到错误时是否允许继续（向后兼容）
+  warning_thresholds:               # 使用量警告阈值
+    - 75                           # 75% 时发出警告
+    - 90                           # 90% 时发出严重警告
+
+# 性能和监控配置
+performance:
+  max_check_time_ms: 10             # 限制检查最大耗时（毫秒）
+  enable_metrics: true              # 启用性能指标收集
+  log_level: 'warning'              # 限制相关日志级别
+
+# API限流配置
+rate_limiting:
+  window_size: 3600                 # 时间窗口大小（秒）
+  burst_multiplier: 1.5             # 突发请求倍数
+  cleanup_interval: 3600            # 清理间隔（秒）
+
+# 错误响应配置
+error_responses:
+  include_details: false            # 错误响应中是否包含详细信息
+  custom_messages:
+    api_calls: 'API call limit exceeded. Please try again later.'
+    storage: 'Storage limit exceeded. Please upgrade your plan.'
+    entities: 'Entity limit exceeded. Please contact support.'

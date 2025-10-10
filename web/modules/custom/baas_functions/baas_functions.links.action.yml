@@ -1,0 +1,15 @@
+# BaaS Functions action links
+
+# 项目级函数管理操作链接
+baas_functions.project_function.create:
+  route_name: baas_functions.project_manager
+  title: '创建函数'
+  appears_on:
+    - baas_functions.project_manager
+
+# 用户前台操作链接
+baas_functions.user_create_function:
+  route_name: baas_functions.user_create_select
+  title: '创建新函数'
+  appears_on:
+    - baas_functions.user_dashboard

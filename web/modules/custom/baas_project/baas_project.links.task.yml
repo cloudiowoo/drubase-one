@@ -1,0 +1,6 @@
+# 用户账户页面选项卡
+baas_project.user_projects_tab:
+  route_name: baas_project.user_list
+  title: '我的项目'
+  base_route: user.page
+  weight: 20

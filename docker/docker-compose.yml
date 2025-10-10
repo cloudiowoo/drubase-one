@@ -1,0 +1,194 @@
+services:
+  pg17:
+    image: postgres:17
+    restart: always
+    container_name: pg17
+    ports:
+      - "5430:5432"
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-baas_password}
+      POSTGRES_DB: drubase
+      POSTGRES_USER: postgres
+      POSTGRES_INITDB_ARGS: "--auth-host=md5 --auth-local=trust"
+    volumes:
+      - ./pg/v17/data:/var/lib/postgresql/data:delegated
+      - ./pg/v17/log:/var/log/postgresql:delegated
+    command: postgres -c logging_collector=on -c log_destination=stderr -c log_directory=/var/log/postgresql
+    networks:
+      baas_network:
+        ipv4_address: 172.20.1.10
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d drubase"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  redis:
+    image: redis:latest
+    restart: always
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis/data:/data:delegated
+    networks:
+      baas_network:
+        ipv4_address: 172.20.1.20
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  php8-4-fpm:
+    image: php8.4-fpm-xdebug:latest
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile.8.4.xdebug
+    restart: always
+    container_name: php8-4-fpm-xdebug
+    ports:
+      - "8996:9000"
+      - "9009:9009"
+    volumes:
+      - ../:/var/www/html:cached
+      - ./fpm/8.4/php.ini:/opt/bitnami/php/etc/php.ini
+      - ./fpm/8.4/www.conf:/opt/bitnami/php/etc/php-fpm.d/www.conf
+      - ./fpm/8.4/log:/var/log
+    depends_on:
+      - pg17
+      - redis
+    networks:
+      baas_network:
+        ipv4_address: 172.20.1.30
+    extra_hosts:
+      - "${BAAS_DOMAIN:-local.drubase.com}:172.20.1.100"
+
+  nginx:
+    image: nginx:latest
+    restart: always
+    container_name: nginx
+    ports:
+      - "80:80"
+      # - "443:443"
+    volumes:
+      - ./nginx/logs:/var/log/nginx
+      - ../:/var/www/html:cached
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/vhosts:/etc/nginx/vhosts
+    depends_on:
+      - php8-4-fpm
+      - baas-functions
+    networks:
+      baas_network:
+        ipv4_address: 172.20.1.100
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  baas-functions:
+    build:
+      context: ../nodejs-services/baas-functions
+      dockerfile: docker/nodejs-services/baas-functions/Dockerfile
+    restart: always
+    container_name: baas-functions-service
+    ports:
+      - "3001:3001"
+      - "4000:4000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - LOG_LEVEL=info
+      - DRUPAL_API_URL=http://${BAAS_DOMAIN:-local.drubase.com}
+      - ALLOWED_ORIGINS=http://localhost,http://127.0.0.1,http://${BAAS_DOMAIN:-local.drubase.com},http://172.20.1.100
+      - DEFAULT_TIMEOUT=30000
+      - MAX_TIMEOUT=300000
+      - DEFAULT_MEMORY_LIMIT=128
+      - MAX_MEMORY_LIMIT=512
+      - DATABASE_URL=postgresql://postgres:${DB_PASSWORD:-baas_password}@172.20.1.10:5432/drubase
+      - REDIS_URL=redis://172.20.1.20:6379
+      - JWT_SECRET=baas_functions_jwt_secret_change_in_production
+      - API_KEY_HEADER=X-API-Key
+      - ENABLE_REALTIME=true
+      - REALTIME_PORT=4000
+    volumes:
+      - ./nodejs-services/baas-functions/logs:/app/logs
+      - /etc/localtime:/etc/localtime:ro
+      # 开发模式：挂载源代码目录以便热重载
+      - ./nodejs-services/baas-functions/src:/app/src
+      - ./nodejs-services/baas-functions/server.js:/app/server.js
+      - ./nodejs-services/baas-functions/package.json:/app/package.json
+    depends_on:
+      - pg17
+      - redis
+    extra_hosts:
+      - "${BAAS_DOMAIN:-local.drubase.com}:172.20.1.100"
+    networks:
+      baas_network:
+        ipv4_address: 172.20.1.40
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+        reservations:
+          memory: 256M
+          cpus: "0.25"
+    security_opt:
+      - no-new-privileges:true
+
+  react-native-apps:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile.react-native-apps.release
+    restart: always
+    container_name: react-native-apps
+    ports:
+      - "3000:80"
+    environment:
+      - NODE_ENV=production
+      - REACT_APP_API_URL=http://localhost/api
+      - REACT_APP_WS_URL=ws://localhost:4000
+    volumes:
+      # 映射运行时配置文件到宿主机，允许动态修改而无需重新构建
+      - ../apps/groups/config/runtime-config.js:/etc/nginx/runtime-config/runtime-config.js:ro
+      # 映射nginx配置
+      - ./nginx/vhosts/apps-nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - nginx
+      - baas-functions
+    networks:
+      baas_network:
+        ipv4_address: 172.20.1.50
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.25"
+        reservations:
+          memory: 128M
+          cpus: "0.1"
+    security_opt:
+      - no-new-privileges:true
+
+networks:
+  baas_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.1.0/24

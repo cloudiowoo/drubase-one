@@ -1,0 +1,70 @@
+services:
+  # 项目文件管理服务
+  baas_file.manager:
+    class: Drupal\baas_file\Service\ProjectFileManager
+    arguments:
+      - '@database'
+      - '@entity_type.manager'
+      - '@file_system'
+      - '@current_user'
+      - '@baas_project.manager'
+      - '@logger.factory'
+      - '@event_dispatcher'
+      - '@config.factory'
+      - '@baas_project.resource_limit_manager'
+    tags:
+      - { name: 'baas_service' }
+
+  # 文件权限检查服务
+  baas_file.access_checker:
+    class: Drupal\baas_file\Service\FileAccessChecker
+    arguments:
+      - '@baas_project.manager'
+      - '@baas_project.member_manager'
+      - '@baas_auth.unified_permission_checker'
+      - '@current_user'
+      - '@entity_type.manager'
+    tags:
+      - { name: 'baas_service' }
+
+  # 文件使用统计服务
+  baas_file.usage_tracker:
+    class: Drupal\baas_file\Service\FileUsageTracker
+    arguments:
+      - '@database'
+      - '@entity_type.manager'
+      - '@cache.default'
+      - '@event_dispatcher'
+      - '@logger.factory'
+    tags:
+      - { name: 'baas_service' }
+
+  # 文件存储引擎管理器
+  baas_file.storage_manager:
+    class: Drupal\baas_file\Service\FileStorageManager
+    arguments:
+      - '@config.factory'
+      - '@file_system'
+      - '@logger.factory'
+    tags:
+      - { name: 'baas_service' }
+
+  # 文件验证服务
+  baas_file.validator:
+    class: Drupal\baas_file\Service\FileValidator
+    arguments:
+      - '@config.factory'
+      - '@logger.factory'
+    tags:
+      - { name: 'baas_service' }
+
+  # 文件事件订阅器
+  baas_file.event_subscriber:
+    class: Drupal\baas_file\EventSubscriber\FileEventSubscriber
+    arguments:
+      - '@baas_file.usage_tracker'
+      - '@baas_file.access_checker'
+      - '@logger.factory'
+    tags:
+      - { name: 'event_subscriber' }
+

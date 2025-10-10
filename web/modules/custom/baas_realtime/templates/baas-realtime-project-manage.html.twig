@@ -1,0 +1,107 @@
+{#
+/**
+ * @file
+ * 项目实时功能管理页面模板
+ *
+ * Available variables:
+ * - project: 项目信息
+ * - config: 实时配置
+ * - entities: 可用实体列表
+ */
+#}
+
+<div class="baas-realtime-project-manage">
+  <div class="project-header">
+    <h2>{{ project.name }} - 实时功能管理</h2>
+    <p class="project-description">
+      管理项目中哪些实体启用实时数据同步功能。启用后，该实体的数据变更将实时推送给订阅的客户端。
+    </p>
+  </div>
+
+  <div class="realtime-status-card">
+    <div class="card-header">
+      <h3>实时功能状态</h3>
+      <div class="status-indicator {{ config.enabled ? 'enabled' : 'disabled' }}">
+        <span class="status-dot"></span>
+        <span class="status-text">{{ config.enabled ? '已启用' : '已禁用' }}</span>
+      </div>
+    </div>
+    <div class="card-body">
+      {% if config.enabled %}
+        <p>已为 <strong>{{ config.enabled_entities|length }}</strong> 个实体启用实时功能</p>
+      {% else %}
+        <p>当前项目未启用实时功能</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="entities-management">
+    <div class="section-header">
+      <h3>实体管理</h3>
+      <p>选择需要启用实时功能的实体：</p>
+    </div>
+
+    {% if entities %}
+      <div class="entities-grid">
+        {% for entity in entities %}
+          <div class="entity-card" data-entity="{{ entity.name }}">
+            <div class="entity-header">
+              <h4>{{ entity.display_name }}</h4>
+              <div class="entity-toggle">
+                <label class="toggle-switch">
+                  <input type="checkbox" 
+                         class="entity-checkbox" 
+                         data-entity="{{ entity.name }}"
+                         data-table="{{ entity.table_name }}"
+                         {{ entity.has_trigger ? 'checked' : '' }}>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+            <div class="entity-body">
+              <p class="entity-description">{{ entity.description ?: '暂无描述' }}</p>
+              <div class="entity-meta">
+                <span class="table-name">表名: {{ entity.table_name }}</span>
+                <span class="trigger-status {{ entity.has_trigger ? 'active' : 'inactive' }}">
+                  触发器: {{ entity.has_trigger ? '已创建' : '未创建' }}
+                </span>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="no-entities">
+        <p>当前项目没有可用的实体。请先创建实体模板。</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="actions-section">
+    <div class="bulk-actions">
+      <button type="button" class="btn btn-secondary" id="select-all">全选</button>
+      <button type="button" class="btn btn-secondary" id="select-none">全不选</button>
+    </div>
+    <div class="main-actions">
+      <button type="button" class="btn btn-primary" id="save-config">保存配置</button>
+      <button type="button" class="btn btn-secondary" id="refresh-status">刷新状态</button>
+    </div>
+  </div>
+
+  <div class="realtime-info">
+    <h3>实时功能说明</h3>
+    <ul>
+      <li><strong>数据同步</strong>: 启用后，实体的增删改操作将实时推送给订阅的客户端</li>
+      <li><strong>权限控制</strong>: 只有有权限访问实体的用户才能接收到实时更新</li>
+      <li><strong>性能影响</strong>: 启用实时功能会略微增加数据库写操作的负载</li>
+      <li><strong>WebSocket连接</strong>: 客户端需要建立WebSocket连接以接收实时更新</li>
+    </ul>
+  </div>
+</div>
+
+<div id="loading-overlay" class="loading-overlay" style="display: none;">
+  <div class="loading-spinner">
+    <div class="spinner"></div>
+    <p>正在处理...</p>
+  </div>
+</div>

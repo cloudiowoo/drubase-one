@@ -1,0 +1,11 @@
+name: 'BaaS API'
+type: module
+description: '提供BaaS平台API层和接口管理功能'
+package: 'BaaS Platform'
+core_version_requirement: ^11
+dependencies:
+  - baas_tenant:baas_tenant
+  - baas_entity:baas_entity
+  - drupal:rest
+  - drupal:serialization
+version: '1.1.0-beta.6'

@@ -1,0 +1,100 @@
+# BaaS 租户权限定义
+# 系统级管理权限
+administer baas tenants:
+  title: '管理BaaS租户系统'
+  description: '允许管理BaaS平台上的所有租户（系统管理员权限）'
+  restrict access: TRUE
+
+# 租户管理核心权限
+access baas tenant management:
+  title: '访问BaaS租户管理'
+  description: '允许访问租户管理界面和功能'
+
+manage own tenant:
+  title: '管理自己的租户'
+  description: '允许管理自己拥有的租户（包括创建、编辑、删除）'
+
+# 基础权限
+create own tenant:
+  title: '创建自己的租户'
+  description: '允许注册用户创建属于自己的租户'
+
+view own tenant:
+  title: '查看自己的租户'
+  description: '允许查看自己拥有或参与的租户信息'
+
+edit own tenant:
+  title: '编辑自己的租户'
+  description: '允许编辑自己拥有的租户设置'
+
+delete own tenant:
+  title: '删除自己的租户'
+  description: '允许删除自己拥有的租户'
+
+# 项目管理权限
+create tenant projects:
+  title: '创建租户项目'
+  description: '允许在租户下创建新项目'
+
+manage tenant projects:
+  title: '管理租户项目'
+  description: '允许管理租户下的所有项目'
+
+view tenant usage:
+  title: '查看租户使用统计'
+  description: '允许查看租户的资源使用情况和统计数据'
+
+access tenant settings:
+  title: '访问租户设置'
+  description: '允许访问和修改租户的配置设置'
+
+# 租户资源限制管理权限 - 已移除
+# 统一使用系统级API限流配置：/admin/config/baas/api/settings
+
+# 租户成员管理权限
+manage tenant members:
+  title: '管理租户成员'
+  description: '允许租户所有者管理租户成员（邀请、移除、修改角色）'
+
+view tenant members:
+  title: '查看租户成员'
+  description: '允许查看租户成员列表'
+
+# API 和资源权限
+manage tenant api keys:
+  title: '管理租户API密钥'
+  description: '允许管理租户的API密钥'
+
+access tenant resources:
+  title: '访问租户资源'
+  description: '允许访问租户的数据和资源'
+
+# 高级权限（通常只给租户所有者）
+transfer tenant ownership:
+  title: '转移租户所有权'
+  description: '允许将租户所有权转移给其他用户'
+
+# 查看权限（较低权限）
+view any tenant:
+  title: '查看任意租户'
+  description: '允许查看任意租户的基本信息（不包括敏感数据）'
+  restrict access: TRUE
+
+# 遗留权限（保持向后兼容）
+view baas tenants:
+  title: '查看BaaS租户（遗留）'
+  description: '遗留权限，建议使用新的权限体系'
+
+administer tenant:
+  title: '管理所有租户（遗留）'
+  description: '遗留权限，建议使用 administer baas tenants'
+  restrict access: TRUE
+
+access any tenant:
+  title: '访问任何租户（遗留）'
+  description: '遗留权限，建议使用新的权限体系'
+  restrict access: TRUE
+
+access own tenant:
+  title: '访问自己的租户（遗留）'
+  description: '遗留权限，建议使用 access tenant resources'

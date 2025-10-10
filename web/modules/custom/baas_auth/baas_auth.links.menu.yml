@@ -1,0 +1,9 @@
+# BaaS认证模块菜单链接
+
+# 认证配置菜单 - 添加到BaaS主管理菜单下
+baas_auth.admin:
+  title: '认证配置'
+  description: 'JWT令牌、安全和权限配置管理'
+  parent: baas.admin
+  route_name: baas_auth.settings
+  weight: 20

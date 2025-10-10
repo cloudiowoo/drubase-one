@@ -1,0 +1,19 @@
+# BaaS API缓存配置
+ttl: 300                    # 默认5分钟TTL
+max_age: 86400             # 最大24小时
+vary_headers:              # 缓存键变化的头信息
+  - Authorization
+  - X-API-Key
+  - Accept
+  - Content-Type
+cache_methods:              # 可缓存的HTTP方法
+  - GET
+  - HEAD
+cacheable_status_codes:     # 可缓存的状态码
+  - 200
+  - 201
+  - 204
+  - 301
+  - 302
+  - 304
+  - 404

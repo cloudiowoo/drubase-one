@@ -1,0 +1,30 @@
+jwt:
+  secret: 'your-secret-key-here-please-change-in-production'
+  algorithm: 'HS256'
+  expire: 3600
+  refresh_expire: 2592000
+  issuer: 'baas-platform'
+  audience: 'baas-clients'
+  api_key_default_ttl: 2592000
+
+security:
+  max_login_attempts: 5
+  lockout_duration: 900
+  session_timeout: 86400
+  api_key_length: 32
+  password_min_length: 8
+  require_special_chars: true
+
+permissions:
+  default_roles:
+    - 'authenticated'
+  admin_roles:
+    - 'administrator'
+    - 'super_admin'
+  cache_ttl: 3600
+  tenant_isolation: true
+
+logging:
+  enable_security_logs: true
+  log_level: 'info'
+  log_retention_days: 90

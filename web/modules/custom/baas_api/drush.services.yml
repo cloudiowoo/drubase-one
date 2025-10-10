@@ -1,0 +1,6 @@
+services:
+  baas_api.commands:
+    class: \Drupal\baas_api\Commands\BaasApiCommands
+    arguments: ['@baas_api.docs_generator', '@baas_tenant.manager']
+    tags:
+      - { name: drush.command }

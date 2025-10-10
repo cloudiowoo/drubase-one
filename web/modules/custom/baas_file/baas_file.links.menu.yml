@@ -1,0 +1,33 @@
+# BaaS文件管理菜单
+
+# 文件设置菜单项
+baas_file.settings:
+  title: '文件管理设置'
+  route_name: baas_file.settings
+  description: '配置BaaS文件管理模块的全局设置和存储限制'
+  parent: baas.admin
+  weight: 35
+
+# 文件管理菜单项
+baas_file.admin:
+  title: '文件管理'
+  description: 'BaaS文件和媒体资源管理'
+  parent: baas.admin
+  route_name: baas_file.file_manager
+  weight: 30
+
+# 用户账户菜单 - 我的文件
+baas_file.user_files_menu:
+  title: '我的文件'
+  description: '管理我的项目文件和媒体资源'
+  menu_name: account
+  route_name: baas_file.file_manager
+  weight: 20
+
+# 主工具栏快捷方式
+baas_file.toolbar:
+  title: '文件管理器'
+  description: '快速访问BaaS文件管理器'
+  menu_name: tools
+  route_name: baas_file.file_manager
+  weight: 10

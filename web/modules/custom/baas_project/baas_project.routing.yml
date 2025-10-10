@@ -1,0 +1,1208 @@
+# 项目管理路由配置
+
+# 管理员项目管理界面
+baas_project.admin_list:
+  path: '/admin/baas/projects'
+  defaults:
+    _controller: 'Drupal\baas_project\Controller\AdminProjectController::listProjects'
+    _title: '项目管理'
+  requirements:
+    _permission: 'administer baas project'
+
+# 用户项目管理界面
+baas_project.user_list:
+  path: '/user/projects'
+  defaults:
+    _controller: 'Drupal\baas_project\Controller\UserProjectController::userProjectList'
+    _title: '我的项目'
+  requirements:
+    _permission: 'view baas project'
+
+# 简化的项目创建路由（不需要tenant_id）
+baas_project.user_create_simple:
+  path: '/user/projects/create'
+  defaults:
+    _form: 'Drupal\baas_project\Form\SimpleProjectForm'
+    _title: '创建项目'
+  requirements:
+    _permission: 'create baas project'
+
+# 简化的项目编辑路由
+baas_project.user_edit_simple:
+  path: '/user/projects/{project_id}/edit'
+  defaults:
+    _form: 'Drupal\baas_project\Form\SimpleProjectForm'
+    _title: '编辑项目'
+  requirements:
+    _permission: 'edit baas project'
+  options:
+    parameters:
+      project_id:
+        type: string
+
+baas_project.user_tenant_projects:
+  path: '/user/tenants/{tenant_id}/projects'
+  defaults:
+    _controller: 'Drupal\baas_project\Controller\UserProjectController::tenantProjectList'
+    _title: '项目管理'
+  requirements:
+    _permission: 'view baas project'
+  options:
+    parameters:
+      tenant_id:
+        type: string
+
+baas_project.user_create:
+  path: '/user/tenants/{tenant_id}/projects/add'
+  defaults:
+    _form: 'Drupal\baas_project\Form\UserProjectForm'
+    _title: '创建项目'
+  requirements:
+    _permission: 'create baas project'
+  options:
+    parameters:
+      tenant_id:
+        type: string
+
+baas_project.user_view:
+  path: '/user/tenants/{tenant_id}/projects/{project_id}'
+  defaults:
+    _controller: 'Drupal\baas_project\Controller\UserProjectController::viewProject'
+    _title: '项目详情'
+  requirements:
+    _permission: 'view baas project'
+  options:
+    parameters:
+      tenant_id:
+        type: string
+      project_id:
+        type: string
+
+baas_project.user_edit:
+  path: '/user/tenants/{tenant_id}/projects/{project_id}/edit'
+  defaults:
+    _form: 'Drupal\baas_project\Form\UserProjectForm'
+    _title: '编辑项目'
+  requirements:
+    _permission: 'edit baas project'
+  options:
+    parameters:
+      tenant_id:
+        type: string
+      project_id:
+        type: string
+
+baas_project.user_members:
+  path: '/user/tenants/{tenant_id}/projects/{project_id}/members'
+  defaults:
+    _form: 'Drupal\baas_project\Form\UserProjectMemberForm'
+    _title: '项目成员管理'
+  requirements:
+    _permission: 'manage baas project members'
+  options:
+    parameters:
+      tenant_id:
+        type: string
+      project_id:
+        type: string
+
+baas_project.user_delete:
+  path: '/user/tenants/{tenant_id}/projects/{project_id}/delete'
+  defaults:
+    _form: 'Drupal\baas_project\Form\UserProjectDeleteForm'
+    _title: '删除项目'
+  requirements:
+    _permission: 'delete baas project'
+  options:
+    parameters:
+      tenant_id:
+        type: string
+      project_id:
+        type: string
+
+# 项目CRUD操作
+baas_project.create:
+  path: '/api/v1/projects'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectController::createProject'
+  methods: [POST]
+  requirements:
+    _custom_access: '\Drupal\baas_project\Access\ProjectAccessChecker::accessCreateProject'
+  options:
+    _auth: ['jwt', 'api_key']
+    _tenant_required: true
+
+baas_project.list:
+  path: '/api/v1/projects'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectController::listProjects'
+  methods: [GET, OPTIONS]
+  requirements:
+    _user_is_logged_in: 'TRUE'
+  options:
+    _auth: ['jwt', 'api_key']
+    _tenant_required: true
+
+baas_project.get:
+  path: '/api/v1/projects/{project_id}'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectController::getProject'
+  methods: [GET, OPTIONS]
+  requirements:
+    _custom_access: '\Drupal\baas_project\Access\ProjectAccessChecker::accessView'
+    project_id: '[a-zA-Z0-9_-]+'
+  options:
+    _auth: ['jwt', 'api_key']
+    _project_required: true
+    parameters:
+      project_id:
+        type: string
+
+baas_project.update:
+  path: '/api/v1/projects/{project_id}'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectController::updateProject'
+  methods: [PUT, PATCH]
+  requirements:
+    _custom_access: '\Drupal\baas_project\Access\ProjectAccessChecker::accessEdit'
+    project_id: '[a-zA-Z0-9_-]+'
+  options:
+    _auth: ['jwt', 'api_key']
+    _project_required: true
+    parameters:
+      project_id:
+        type: string
+
+baas_project.delete:
+  path: '/api/v1/projects/{project_id}'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectController::deleteProject'
+  methods: [DELETE]
+  requirements:
+    _custom_access: '\Drupal\baas_project\Access\ProjectAccessChecker::accessDelete'
+    project_id: '[a-zA-Z0-9_-]+'
+  options:
+    _auth: ['jwt', 'api_key']
+    _project_required: true
+    parameters:
+      project_id:
+        type: string
+
+# 项目成员管理
+baas_project.members.list:
+  path: '/api/v1/projects/{project_id}/members'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectController::getProjectMembers'
+  methods: [GET, OPTIONS]
+  requirements:
+    _custom_access: '\Drupal\baas_project\Access\ProjectAccessChecker::accessView'
+    project_id: '[a-zA-Z0-9_-]+'
+  options:
+    _auth: ['jwt', 'api_key']
+    _project_required: true
+    parameters:
+      project_id:
+        type: string
+
+baas_project.members.add:
+  path: '/api/v1/projects/{project_id}/members'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectController::addProjectMember'
+  methods: [POST]
+  requirements:
+    _custom_access: '\Drupal\baas_project\Access\ProjectAccessChecker::accessManageMembers'
+    project_id: '[a-zA-Z0-9_-]+'
+  options:
+    _auth: ['jwt', 'api_key']
+    _project_required: true
+    parameters:
+      project_id:
+        type: string
+
+baas_project.members.update:
+  path: '/api/v1/projects/{project_id}/members/{user_id}'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectController::updateProjectMember'
+  methods: [PUT, PATCH]
+  requirements:
+    _custom_access: '\Drupal\baas_project\Access\ProjectAccessChecker::accessManageMembers'
+    project_id: '[a-zA-Z0-9_-]+'
+    user_id: '\d+'
+  options:
+    _auth: ['jwt', 'api_key']
+    _project_required: true
+    parameters:
+      project_id:
+        type: string
+      user_id:
+        type: integer
+
+baas_project.members.remove:
+  path: '/api/v1/projects/{project_id}/members/{user_id}'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectController::removeProjectMember'
+  methods: [DELETE]
+  requirements:
+    _custom_access: '\Drupal\baas_project\Access\ProjectAccessChecker::accessManageMembers'
+    project_id: '[a-zA-Z0-9_-]+'
+    user_id: '\d+'
+  options:
+    _auth: ['jwt', 'api_key']
+    _project_required: true
+    parameters:
+      project_id:
+        type: string
+      user_id:
+        type: integer
+
+# 项目所有权转移
+baas_project.transfer_ownership:
+  path: '/api/v1/projects/{project_id}/transfer-ownership'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectController::transferOwnership'
+  methods: [POST]
+  requirements:
+    _custom_access: '\Drupal\baas_project\Access\ProjectAccessChecker::accessTransferOwnership'
+    project_id: '[a-zA-Z0-9_-]+'
+  options:
+    _auth: ['jwt', 'api_key']
+    _project_required: true
+    parameters:
+      project_id:
+        type: string
+
+# 项目使用统计
+baas_project.usage:
+  path: '/api/v1/projects/{project_id}/usage'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectController::getProjectUsage'
+  methods: [GET, OPTIONS]
+  requirements:
+    _custom_access: '\Drupal\baas_project\Access\ProjectAccessChecker::accessView'
+    project_id: '[a-zA-Z0-9_-]+'
+  options:
+    _auth: ['jwt', 'api_key']
+    _project_required: true
+    parameters:
+      project_id:
+        type: string
+
+# 项目实体模板管理API
+baas_project.entity_templates:
+  path: '/api/v1/projects/{project_id}/templates'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectEntityApiController::listTemplates'
+  methods: [GET, OPTIONS]
+  requirements:
+    _custom_access: '\Drupal\baas_project\Access\ProjectAccessChecker::accessView'
+    project_id: '[a-zA-Z0-9_-]+'
+  options:
+    _auth: ['jwt', 'api_key']
+    _project_required: true
+    parameters:
+      project_id:
+        type: string
+
+baas_project.entity_template:
+  path: '/api/v1/projects/{project_id}/templates/{template_name}'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectEntityApiController::getTemplate'
+  methods: [GET, OPTIONS]
+  requirements:
+    _custom_access: '\Drupal\baas_project\Access\ProjectAccessChecker::accessView'
+    project_id: '[a-zA-Z0-9_-]+'
+  options:
+    _auth: ['jwt', 'api_key']
+    _project_required: true
+    parameters:
+      project_id:
+        type: string
+      template_name:
+        type: string
+
+# 项目实体数据管理API
+baas_project.entities_list:
+  path: '/api/v1/projects/{project_id}/entities/{entity_name}'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectEntityApiController::listEntities'
+  methods: [GET, OPTIONS]
+  requirements:
+    _custom_access: '\Drupal\baas_project\Access\ProjectAccessChecker::accessView'
+    project_id: '[a-zA-Z0-9_-]+'
+  options:
+    _auth: ['jwt', 'api_key']
+    _project_required: true
+    parameters:
+      project_id:
+        type: string
+      entity_name:
+        type: string
+
+baas_project.entity_get:
+  path: '/api/v1/projects/{project_id}/entities/{entity_name}/{id}'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectEntityApiController::getEntity'
+  methods: [GET, OPTIONS]
+  requirements:
+    _custom_access: '\Drupal\baas_project\Access\ProjectAccessChecker::accessView'
+    project_id: '[a-zA-Z0-9_-]+'
+  options:
+    _auth: ['jwt', 'api_key']
+    _project_required: true
+    parameters:
+      project_id:
+        type: string
+      entity_name:
+        type: string
+      id:
+        type: string
+
+baas_project.entity_create:
+  path: '/api/v1/projects/{project_id}/entities/{entity_name}'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectEntityApiController::createEntity'
+  methods: [POST]
+  requirements:
+    _custom_access: '\Drupal\baas_project\Access\ProjectAccessChecker::accessEdit'
+    project_id: '[a-zA-Z0-9_-]+'
+  options:
+    _auth: ['jwt', 'api_key']
+    _project_required: true
+    parameters:
+      project_id:
+        type: string
+      entity_name:
+        type: string
+
+baas_project.entity_update:
+  path: '/api/v1/projects/{project_id}/entities/{entity_name}/{id}'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectEntityApiController::updateEntity'
+  methods: [PUT, PATCH, POST]
+  requirements:
+    _custom_access: '\Drupal\baas_project\Access\ProjectAccessChecker::accessEdit'
+    project_id: '[a-zA-Z0-9_-]+'
+  options:
+    _auth: ['jwt', 'api_key']
+    _project_required: true
+    parameters:
+      project_id:
+        type: string
+      entity_name:
+        type: string
+      id:
+        type: string
+
+baas_project.entity_delete:
+  path: '/api/v1/projects/{project_id}/entities/{entity_name}/{id}'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectEntityApiController::deleteEntity'
+  methods: [DELETE]
+  requirements:
+    _custom_access: '\Drupal\baas_project\Access\ProjectAccessChecker::accessEdit'
+    project_id: '[a-zA-Z0-9_-]+'
+  options:
+    _auth: ['jwt', 'api_key']
+    _project_required: true
+    parameters:
+      project_id:
+        type: string
+      entity_name:
+        type: string
+      id:
+        type: string
+
+# 租户级项目实体模板管理API（需要在文件末尾添加）
+baas_project.tenant_entity_templates:
+  path: '/api/v1/{tenant_id}/projects/{project_id}/templates'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectEntityApiController::listTemplates'
+  methods: [GET, OPTIONS]
+  requirements:
+    _custom_access: '\Drupal\baas_project\Access\ProjectAccessChecker::accessView'
+    tenant_id: '[a-zA-Z0-9_-]+'
+    project_id: '[a-zA-Z0-9_-]+'
+  options:
+    _auth: ['jwt', 'api_key']
+    _project_required: true
+    parameters:
+      tenant_id:
+        type: string
+      project_id:
+        type: string
+
+baas_project.tenant_entity_template:
+  path: '/api/v1/{tenant_id}/projects/{project_id}/templates/{template_name}'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectEntityApiController::getTemplate'
+  methods: [GET, OPTIONS]
+  requirements:
+    _custom_access: '\Drupal\baas_project\Access\ProjectAccessChecker::accessView'
+    tenant_id: '[a-zA-Z0-9_-]+'
+    project_id: '[a-zA-Z0-9_-]+'
+  options:
+    _auth: ['jwt', 'api_key']
+    _project_required: true
+    parameters:
+      tenant_id:
+        type: string
+      project_id:
+        type: string
+      template_name:
+        type: string
+
+# 最简单的multipart测试端点（无需认证）
+baas_project.simple_multipart_test:
+  path: '/test/multipart'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectEntityApiController::simpleMultipartTest'
+  methods: [POST, PUT]
+  requirements:
+    _access: 'TRUE'
+
+# 简单的配置检查端点（无需认证）
+baas_project.simple_config_check:
+  path: '/test/config'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectEntityApiController::simpleConfigCheck'
+  methods: [GET, OPTIONS]
+  requirements:
+    _access: 'TRUE'
+
+# 文件上传测试端点
+baas_project.test_file_upload:
+  path: '/api/v1/test/file-upload'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectEntityApiController::testFileUpload'
+  methods: [POST, PUT]
+  requirements:
+    _access: 'TRUE'
+  options:
+    _auth: ['jwt', 'api_key']
+
+# 直接的文件上传端点（绕过Gateway）
+baas_project.direct_entity_update_with_files:
+  path: '/api/direct/tenant/{tenant_id}/projects/{project_id}/entities/{entity_name}/{id}'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectEntityApiController::updateEntity'
+  methods: [PUT, PATCH]
+  requirements:
+    _access: 'TRUE'
+  options:
+    _auth: ['jwt', 'api_key']
+
+
+# PHP配置检查端点
+baas_project.test_php_config:
+  path: '/api/v1/test/php-config'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectEntityApiController::testPhpConfig'
+  methods: [GET, OPTIONS]
+  requirements:
+    _access: 'TRUE'
+  options:
+    _auth: ['jwt', 'api_key']
+
+# 租户级项目实体数据管理API
+baas_project.tenant_entities_list:
+  path: '/api/v1/{tenant_id}/projects/{project_id}/entities/{entity_name}'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectEntityApiController::listEntities'
+  methods: [GET]
+  requirements:
+    _custom_access: '\Drupal\baas_project\Access\ProjectAccessChecker::accessView'
+    tenant_id: '[a-zA-Z0-9_-]+'
+    project_id: '[a-zA-Z0-9_-]+'
+  options:
+    _auth: ['jwt', 'api_key']
+    _project_required: true
+    parameters:
+      tenant_id:
+        type: string
+      project_id:
+        type: string
+      entity_name:
+        type: string
+
+# CORS预检处理路由
+baas_project.tenant_entities_list_options:
+  path: '/api/v1/{tenant_id}/projects/{project_id}/entities/{entity_name}'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectEntityApiController::handleOptions'
+  methods: [OPTIONS]
+  requirements:
+    _access: 'TRUE'
+    tenant_id: '[a-zA-Z0-9_-]+'
+    project_id: '[a-zA-Z0-9_-]+'
+  parameters:
+    tenant_id:
+      type: string
+    project_id:
+      type: string
+    entity_name:
+      type: string
+
+baas_project.tenant_entity_get:
+  path: '/api/v1/{tenant_id}/projects/{project_id}/entities/{entity_name}/{id}'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectEntityApiController::getEntity'
+  methods: [GET, OPTIONS]
+  requirements:
+    _custom_access: '\Drupal\baas_project\Access\ProjectAccessChecker::accessView'
+    tenant_id: '[a-zA-Z0-9_-]+'
+    project_id: '[a-zA-Z0-9_-]+'
+  options:
+    _auth: ['jwt', 'api_key']
+    _project_required: true
+    parameters:
+      tenant_id:
+        type: string
+      project_id:
+        type: string
+      entity_name:
+        type: string
+      id:
+        type: string
+
+# 注释：此路由与baas_entity模块的api_project_entities路由重复，已移除以避免冲突
+# baas_project.tenant_entity_create:
+#   path: '/api/v1/{tenant_id}/projects/{project_id}/entities/{entity_name}'
+#   defaults:
+#     _controller: '\Drupal\baas_project\Controller\ProjectEntityApiController::createEntity'
+#   methods: [POST]
+#   requirements:
+#     _custom_access: '\Drupal\baas_project\Access\ProjectAccessChecker::accessEdit'
+#     tenant_id: '[a-zA-Z0-9_-]+'
+#     project_id: '[a-zA-Z0-9_-]+'
+#   options:
+#     _auth: ['jwt', 'api_key']
+#     _project_required: true
+#     parameters:
+#       tenant_id:
+#         type: string
+#       project_id:
+#         type: string
+#       entity_name:
+#         type: string
+
+baas_project.tenant_entity_update:
+  path: '/api/v1/{tenant_id}/projects/{project_id}/entities/{entity_name}/{id}'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectEntityApiController::updateEntity'
+  methods: [PUT, PATCH, POST]
+  requirements:
+    _custom_access: '\Drupal\baas_project\Access\ProjectAccessChecker::accessEdit'
+    tenant_id: '[a-zA-Z0-9_-]+'
+    project_id: '[a-zA-Z0-9_-]+'
+  options:
+    _auth: ['jwt', 'api_key']
+    _project_required: true
+    parameters:
+      tenant_id:
+        type: string
+      project_id:
+        type: string
+      entity_name:
+        type: string
+      id:
+        type: string
+
+baas_project.tenant_entity_delete:
+  path: '/api/v1/{tenant_id}/projects/{project_id}/entities/{entity_name}/{id}'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectEntityApiController::deleteEntity'
+  methods: [DELETE]
+  requirements:
+    _custom_access: '\Drupal\baas_project\Access\ProjectAccessChecker::accessEdit'
+    tenant_id: '[a-zA-Z0-9_-]+'
+    project_id: '[a-zA-Z0-9_-]+'
+  options:
+    _auth: ['jwt', 'api_key']
+    _project_required: true
+    parameters:
+      tenant_id:
+        type: string
+      project_id:
+        type: string
+      entity_name:
+        type: string
+      id:
+        type: string
+
+# 租户级项目实体数据创建API（支持文件上传）
+baas_project.tenant_entity_create_with_files:
+  path: '/api/v1/{tenant_id}/projects/{project_id}/entities/{entity_name}/create'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectEntityApiController::createEntity'
+  methods: [POST]
+  requirements:
+    _custom_access: '\Drupal\baas_project\Access\ProjectAccessChecker::accessEdit'
+    tenant_id: '[a-zA-Z0-9_-]+'
+    project_id: '[a-zA-Z0-9_-]+'
+  options:
+    _auth: ['jwt', 'api_key']
+    _project_required: true
+    parameters:
+      tenant_id:
+        type: string
+      project_id:
+        type: string
+      entity_name:
+        type: string
+
+# 项目实体管理路由
+baas_project.entities:
+  path: '/user/tenants/{tenant_id}/projects/{project_id}/entities'
+  defaults:
+    _controller: 'Drupal\baas_project\Controller\ProjectEntityController::projectEntities'
+    _title: '项目实体管理'
+  requirements:
+    _permission: 'access baas project content'
+  options:
+    parameters:
+      tenant_id:
+        type: string
+      project_id:
+        type: string
+
+baas_project.entity_schema:
+  path: '/user/tenants/{tenant_id}/projects/{project_id}/entities/schema'
+  defaults:
+    _controller: 'Drupal\baas_project\Controller\ProjectEntityController::entitySchemaView'
+    _title: '实体关系图'
+  requirements:
+    _permission: 'access baas project content'
+  options:
+    parameters:
+      tenant_id:
+        type: string
+      project_id:
+        type: string
+
+baas_project.entity_data:
+  path: '/user/tenants/{tenant_id}/projects/{project_id}/entities/{entity_name}/data'
+  defaults:
+    _controller: 'Drupal\baas_project\Controller\ProjectEntityController::entityDataManagement'
+    _title: '实体数据管理'
+  requirements:
+    _permission: 'access baas project content'
+  options:
+    parameters:
+      tenant_id:
+        type: string
+      project_id:
+        type: string
+      entity_name:
+        type: string
+
+baas_project.entity_data_add:
+  path: '/user/tenants/{tenant_id}/projects/{project_id}/entities/{entity_name}/data/add'
+  defaults:
+    _form: 'Drupal\baas_project\Form\ProjectEntityDataForm'
+    _title: '添加数据'
+  requirements:
+    _permission: 'create baas project content'
+  options:
+    parameters:
+      tenant_id:
+        type: string
+      project_id:
+        type: string
+      entity_name:
+        type: string
+
+baas_project.entity_data_view:
+  path: '/user/tenants/{tenant_id}/projects/{project_id}/entities/{entity_name}/data/{data_id}'
+  defaults:
+    _controller: 'Drupal\baas_project\Controller\ProjectEntityDataViewController::viewEntityData'
+    _title: '查看数据'
+  requirements:
+    _permission: 'access baas project content'
+  options:
+    parameters:
+      tenant_id:
+        type: string
+      project_id:
+        type: string
+      entity_name:
+        type: string
+      data_id:
+        type: string
+
+baas_project.entity_data_edit:
+  path: '/user/tenants/{tenant_id}/projects/{project_id}/entities/{entity_name}/data/{data_id}/edit'
+  defaults:
+    _form: 'Drupal\baas_project\Form\ProjectEntityDataForm'
+    _title: '编辑数据'
+  requirements:
+    _permission: 'edit baas project content'
+  options:
+    parameters:
+      tenant_id:
+        type: string
+      project_id:
+        type: string
+      entity_name:
+        type: string
+      data_id:
+        type: string
+
+baas_project.entity_data_delete:
+  path: '/user/tenants/{tenant_id}/projects/{project_id}/entities/{entity_name}/data/{data_id}/delete'
+  defaults:
+    _form: 'Drupal\baas_project\Form\ProjectEntityDataDeleteForm'
+    _title: '删除数据'
+  requirements:
+    _permission: 'delete baas project content'
+  options:
+    parameters:
+      tenant_id:
+        type: string
+      project_id:
+        type: string
+      entity_name:
+        type: string
+      data_id:
+        type: string
+
+# 实体名称长度限制API
+baas_project.entity_name_length_limit:
+  path: '/api/v1/{tenant_id}/projects/{project_id}/entity-name-length-limit'
+  defaults:
+    _controller: 'Drupal\baas_project\Controller\ProjectEntityController::getEntityNameLengthLimit'
+  methods: [GET, OPTIONS]
+  requirements:
+    _permission: 'view baas project'
+    tenant_id: '[a-zA-Z0-9_-]+'
+    project_id: '[a-zA-Z0-9_-]+'
+  options:
+    parameters:
+      tenant_id:
+        type: string
+      project_id:
+        type: string
+
+# 实体模板管理路由
+baas_project.entity_template_create:
+  path: '/user/tenants/{tenant_id}/projects/{project_id}/entities/create'
+  defaults:
+    _form: 'Drupal\baas_project\Form\ProjectEntityTemplateForm'
+    _title: '创建实体'
+  requirements:
+    _permission: 'create baas project content'
+  options:
+    parameters:
+      tenant_id:
+        type: string
+      project_id:
+        type: string
+
+baas_project.entity_template_edit:
+  path: '/user/tenants/{tenant_id}/projects/{project_id}/entities/{template_id}/edit'
+  defaults:
+    _form: 'Drupal\baas_project\Form\ProjectEntityTemplateForm'
+    _title: '编辑实体'
+  requirements:
+    _permission: 'edit baas project content'
+  options:
+    parameters:
+      tenant_id:
+        type: string
+      project_id:
+        type: string
+      template_id:
+        type: string
+
+baas_project.entity_template_delete:
+  path: '/user/tenants/{tenant_id}/projects/{project_id}/entities/{template_id}/delete'
+  defaults:
+    _form: 'Drupal\baas_project\Form\ProjectEntityTemplateDeleteForm'
+    _title: '删除实体'
+  requirements:
+    _permission: 'delete baas project content'
+  options:
+    parameters:
+      tenant_id:
+        type: string
+      project_id:
+        type: string
+      template_id:
+        type: string
+
+# 实体字段管理路由
+baas_project.entity_field_add:
+  path: '/user/tenants/{tenant_id}/projects/{project_id}/entities/{template_id}/fields/add'
+  defaults:
+    _form: 'Drupal\baas_project\Form\ProjectEntityFieldForm'
+    _title: '添加字段'
+  requirements:
+    _permission: 'edit baas project content'
+  options:
+    parameters:
+      tenant_id:
+        type: string
+      project_id:
+        type: string
+      template_id:
+        type: string
+
+baas_project.entity_field_edit:
+  path: '/user/tenants/{tenant_id}/projects/{project_id}/entities/{template_id}/fields/{field_id}/edit'
+  defaults:
+    _form: 'Drupal\baas_project\Form\ProjectEntityFieldForm'
+    _title: '编辑字段'
+  requirements:
+    _permission: 'edit baas project content'
+  options:
+    parameters:
+      tenant_id:
+        type: string
+      project_id:
+        type: string
+      template_id:
+        type: string
+      field_id:
+        type: string
+
+baas_project.entity_field_delete:
+  path: '/user/tenants/{tenant_id}/projects/{project_id}/entities/{template_id}/fields/{field_id}/delete'
+  defaults:
+    _form: 'Drupal\baas_project\Form\ProjectEntityFieldDeleteForm'
+    _title: '删除字段'
+  requirements:
+    _permission: 'delete baas project content'
+  options:
+    parameters:
+      tenant_id:
+        type: string
+      project_id:
+        type: string
+      template_id:
+        type: string
+      field_id:
+        type: string
+
+# 管理路由
+baas_project.admin.list:
+  path: '/admin/baas/project'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectAdminController::list'
+    _title: '项目管理'
+  requirements:
+    _permission: 'view baas project'
+  options:
+    _admin_route: true
+
+baas_project.admin.all_projects:
+  path: '/admin/baas/project/all'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectAdminController::allProjects'
+    _title: '所有项目'
+  requirements:
+    _permission: 'view baas project'
+  options:
+    _admin_route: true
+
+baas_project.admin.migrate:
+  path: '/admin/baas/project/migrate'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectAdminController::migrate'
+    _title: 'Project Migration'
+  requirements:
+    _permission: 'administer baas project'
+  options:
+    _admin_route: true
+
+baas_project.admin.rollback:
+  path: '/admin/baas/project/rollback'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectAdminController::rollback'
+    _title: 'Project Migration Rollback'
+  requirements:
+    _permission: 'administer baas project'
+  options:
+    _admin_route: true
+
+baas_project.admin.status:
+  path: '/admin/baas/project/status'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectAdminController::status'
+    _title: 'Project System Status'
+  requirements:
+    _permission: 'administer baas project'
+  options:
+    _admin_route: true
+
+# 项目实体生成器路由
+baas_project.entity_generation_status:
+  path: '/admin/baas/project/entity-generation'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectEntityGeneratorController::generationStatus'
+    _title: '项目实体生成状态'
+  requirements:
+    _permission: 'administer baas project'
+  options:
+    _admin_route: true
+
+baas_project.generate_all_entities:
+  path: '/admin/baas/project/generate-all-entities'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectEntityGeneratorController::generateAllProjectEntities'
+  requirements:
+    _permission: 'administer baas project'
+  options:
+    _admin_route: true
+
+baas_project.generate_entity:
+  path: '/admin/baas/project/generate-entity/{template_id}'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectEntityGeneratorController::generateProjectEntity'
+  requirements:
+    _permission: 'administer baas project'
+    template_id: '\d+'
+  options:
+    _admin_route: true
+    parameters:
+      template_id:
+        type: string
+
+# UUID修复路由
+baas_project.fix_uuid:
+  path: '/admin/baas/project/fix-uuid'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\UuidFixController::fixUuidFields'
+    _title: '修复UUID字段'
+  requirements:
+    _permission: 'administer baas project'
+  options:
+    _admin_route: true
+
+# 调试路由
+baas_project.debug_table:
+  path: '/debug/baas-table-data'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\DebugController::debugTableData'
+    _title: '调试表数据'
+  requirements:
+    _access: 'TRUE'
+
+baas_project.debug_entity_list:
+  path: '/debug/baas-entity-list'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\DebugController::testEntityDataList'
+    _title: '测试实体数据列表'
+  requirements:
+    _access: 'TRUE'
+
+baas_project.debug_user_permissions:
+  path: '/debug/user-permissions'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\DebugController::checkUserPermissions'
+    _title: '检查用户权限'
+  requirements:
+    _access: 'TRUE'
+
+baas_project.debug_table_sync:
+  path: '/debug/table-sync'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\DebugController::checkEntityTableSync'
+    _title: '检查表结构同步'
+  requirements:
+    _access: 'TRUE'
+
+baas_project.cleanup_orphan_fields:
+  path: '/debug/cleanup-orphan-fields'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\DebugController::cleanupOrphanFields'
+    _title: '清理孤立字段'
+  requirements:
+    _access: 'TRUE'
+
+baas_project.test_field_deletion:
+  path: '/debug/test-field-deletion'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\DebugController::testFieldDeletion'
+    _title: '测试字段删除'
+  requirements:
+    _access: 'TRUE'
+
+baas_project.test_usage_stats:
+  path: '/debug/test-usage-stats'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\DebugController::testUsageStats'
+    _title: '测试统计功能'
+  requirements:
+    _access: 'TRUE'
+
+# 项目资源限制配置路由
+baas_project.resource_limits:
+  path: '/user/tenants/{tenant_id}/projects/{project_id}/resource-limits'
+  defaults:
+    _form: 'Drupal\baas_project\Form\ResourceLimitsForm'
+    _title: '资源限制配置'
+  requirements:
+    _permission: 'manage baas project resource limits'
+  options:
+    parameters:
+      tenant_id:
+        type: string
+      project_id:
+        type: string
+
+# 简化版项目资源限制配置路由（不需要tenant_id）
+baas_project.resource_limits_simple:
+  path: '/user/projects/{project_id}/resource-limits'
+  defaults:
+    _form: 'Drupal\baas_project\Form\ResourceLimitsForm'
+    _title: '资源限制配置'
+  requirements:
+    _permission: 'manage baas project resource limits'
+  options:
+    parameters:
+      project_id:
+        type: string
+
+# BaaS项目用户认证路由
+baas_project.api.user_register:
+  path: '/api/tenant/{tenant_id}/project/{project_id}/register'
+  methods: ['POST']
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectUserAuthController::register'
+  requirements:
+    _access: 'TRUE'
+  options:
+    no_cache: true
+
+baas_project.api.user_authenticate:
+  path: '/api/tenant/{tenant_id}/project/{project_id}/authenticate'
+  methods: ['POST']
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectUserAuthController::authenticate'
+  requirements:
+    _access: 'TRUE'
+  options:
+    no_cache: true
+
+baas_project.api.user_change_password:
+  path: '/api/tenant/{tenant_id}/project/{project_id}/users/{user_id}/change-password'
+  methods: ['PUT']
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectUserAuthController::changePassword'
+  requirements:
+    _access_check_project: 'edit'
+  options:
+    no_cache: true
+
+baas_project.api.user_reset_password:
+  path: '/api/tenant/{tenant_id}/project/{project_id}/reset-password'
+  methods: ['POST']
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectUserAuthController::resetPassword'
+  requirements:
+    _access: 'TRUE'
+  options:
+    no_cache: true
+
+# 使用统计和监控API路由
+baas_project.stats.project_usage:
+  path: '/api/v1/{tenant_id}/projects/{project_id}/stats'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\UsageStatsController::getProjectUsageStats'
+  methods: [GET, OPTIONS]
+  requirements:
+    _custom_access: '\Drupal\baas_project\Access\ProjectAccessChecker::accessView'
+    tenant_id: '[a-zA-Z0-9_-]+'
+    project_id: '[a-zA-Z0-9_-]+'
+  options:
+    _auth: ['jwt', 'api_key']
+    _project_required: true
+    parameters:
+      tenant_id:
+        type: string
+      project_id:
+        type: string
+
+baas_project.stats.tenant_usage:
+  path: '/api/v1/{tenant_id}/stats'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\UsageStatsController::getTenantUsageStats'
+  methods: [GET, OPTIONS]
+  requirements:
+    _custom_access: '\Drupal\baas_tenant\Access\TenantAccessChecker::accessView'
+    tenant_id: '[a-zA-Z0-9_-]+'
+  options:
+    _auth: ['jwt', 'api_key']
+    _tenant_required: true
+    parameters:
+      tenant_id:
+        type: string
+
+baas_project.stats.project_warnings:
+  path: '/api/v1/{tenant_id}/projects/{project_id}/warnings'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\UsageStatsController::getUsageWarnings'
+  methods: [GET, OPTIONS]
+  requirements:
+    _custom_access: '\Drupal\baas_project\Access\ProjectAccessChecker::accessView'
+    tenant_id: '[a-zA-Z0-9_-]+'
+    project_id: '[a-zA-Z0-9_-]+'
+  options:
+    _auth: ['jwt', 'api_key']
+    _project_required: true
+    parameters:
+      tenant_id:
+        type: string
+      project_id:
+        type: string
+
+# CORS预检处理 - 统计API
+baas_project.stats.project_usage_options:
+  path: '/api/v1/{tenant_id}/projects/{project_id}/stats'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectEntityApiController::handleOptions'
+  methods: [OPTIONS]
+  requirements:
+    _access: 'TRUE'
+    tenant_id: '[a-zA-Z0-9_-]+'
+    project_id: '[a-zA-Z0-9_-]+'
+  parameters:
+    tenant_id:
+      type: string
+    project_id:
+      type: string
+
+baas_project.stats.tenant_usage_options:
+  path: '/api/v1/{tenant_id}/stats'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectEntityApiController::handleOptions'
+  methods: [OPTIONS]
+  requirements:
+    _access: 'TRUE'
+    tenant_id: '[a-zA-Z0-9_-]+'
+  parameters:
+    tenant_id:
+      type: string
+
+baas_project.stats.project_warnings_options:
+  path: '/api/v1/{tenant_id}/projects/{project_id}/warnings'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\ProjectEntityApiController::handleOptions'
+  methods: [OPTIONS]
+  requirements:
+    _access: 'TRUE'
+    tenant_id: '[a-zA-Z0-9_-]+'
+    project_id: '[a-zA-Z0-9_-]+'
+  parameters:
+    tenant_id:
+      type: string
+    project_id:
+      type: string
+
+# 测试统计API功能路由（无需认证）
+baas_project.stats.test:
+  path: '/api/v1/stats/test'
+  defaults:
+    _controller: '\Drupal\baas_project\Controller\UsageStatsController::testStats'
+  methods: [GET, OPTIONS]
+  requirements:
+    _access: 'TRUE'

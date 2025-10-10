@@ -1,0 +1,19 @@
+name: 'BaaS文件字段'
+description: 'Backend-as-a-Service动态实体文件字段类型扩展，为项目实体提供file/image字段类型支持'
+type: module
+core_version_requirement: ^11
+package: 'BaaS Platform'
+
+dependencies:
+  - drupal:system (>=11.0)
+  - drupal:file (>=11.0)
+  - drupal:image (>=11.0)
+  - baas_entity:baas_entity (>=1.0)
+  - baas_project:baas_project (>=1.0)
+  - baas_auth:baas_auth (>=1.0)
+
+configure: baas_file.settings
+
+version: '1.1.0-beta.6'
+project: 'baas_file'
+datestamp: 1737619200

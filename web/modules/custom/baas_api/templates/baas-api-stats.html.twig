@@ -1,0 +1,626 @@
+{#
+/**
+ * @file
+ * Template for API统计页面.
+ *
+ * 可用变量:
+ * - filter_form: 过滤表单.
+ * - stats: 统计数据.
+ * - chart_data: 图表数据.
+ */
+#}
+
+<div class="baas-api-stats">
+	<div class="baas-api-stats__header">
+		<h1>{{ 'API使用统计'|t }}</h1>
+		<div class="baas-api-stats__actions">
+			<button type="button" class="button button--danger" id="clear-stats-btn">
+				{{ '清空统计数据'|t }}
+			</button>
+		</div>
+	</div>
+
+	<div class="baas-api-stats__filters">
+		{{ filter_form }}
+	</div>
+
+	<div class="baas-api-stats__overview">
+		<div class="baas-api-stats__summary">
+			<div class="summary-card">
+				<div class="summary-card__title">{{ '总请求数'|t }}</div>
+				<div class="summary-card__value">{{ stats.total_requests|number_format }}</div>
+			</div>
+
+			<div class="summary-card">
+				<div class="summary-card__title">{{ '平均响应时间'|t }}</div>
+				<div class="summary-card__value">{{ stats.avg_response_time|number_format(2) }}
+					ms</div>
+			</div>
+
+			<div class="summary-card">
+				<div class="summary-card__title">{{ '错误请求数'|t }}</div>
+				<div class="summary-card__value">{{ stats.error_count|number_format }}</div>
+			</div>
+
+			<div class="summary-card">
+				<div class="summary-card__title">{{ '成功率'|t }}</div>
+				<div class="summary-card__value">
+					{% if stats.total_requests > 0 %}
+						{{ ((stats.total_requests - stats.error_count) / stats.total_requests * 100)|number_format(2) }}%
+					{% else %}
+						0%
+					{% endif %}
+				</div>
+			</div>
+			
+			<div class="summary-card rate-limit-card">
+				<div class="summary-card__title">{{ '限流触发次数'|t }}</div>
+				<div class="summary-card__value">{{ stats.rate_limit.total_rate_limited|number_format }}</div>
+				<div class="summary-card__subtitle">
+					{{ '全局: '|t }}{{ stats.rate_limit.global_rate_limited|number_format }}
+					{{ ' / 项目: '|t }}{{ stats.rate_limit.project_rate_limited|number_format }}
+				</div>
+			</div>
+		</div>
+
+		<div class="baas-api-stats__chart">
+			<canvas id="api-requests-chart"></canvas>
+		</div>
+	</div>
+
+	<div class="baas-api-stats__details">
+		<div class="baas-api-stats__section">
+			<h2>{{ 'HTTP方法分布'|t }}</h2>
+			<table>
+				<thead>
+					<tr>
+						<th>{{ '方法'|t }}</th>
+						<th>{{ '请求数'|t }}</th>
+						<th>{{ '百分比'|t }}</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for method, count in stats.by_method %}
+						<tr>
+							<td>{{ method }}</td>
+							<td>{{ count|number_format }}</td>
+							<td>
+								{% if stats.total_requests > 0 %}
+									{{ (count / stats.total_requests * 100)|number_format(2) }}%
+								{% else %}
+									0%
+								{% endif %}
+							</td>
+						</tr>
+					{% else %}
+						<tr>
+							<td colspan="3">{{ '没有数据'|t }}</td>
+						</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+
+		<div class="baas-api-stats__section">
+			<h2>{{ '常用API端点'|t }}</h2>
+			<table>
+				<thead>
+					<tr>
+						<th>{{ '端点'|t }}</th>
+						<th>{{ '请求数'|t }}</th>
+						<th>{{ '百分比'|t }}</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for endpoint, count in stats.by_endpoint %}
+						<tr>
+							<td>{{ endpoint }}</td>
+							<td>{{ count|number_format }}</td>
+							<td>
+								{% if stats.total_requests > 0 %}
+									{{ (count / stats.total_requests * 100)|number_format(2) }}%
+								{% else %}
+									0%
+								{% endif %}
+							</td>
+						</tr>
+					{% else %}
+						<tr>
+							<td colspan="3">{{ '没有数据'|t }}</td>
+						</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+
+		<div class="baas-api-stats__section">
+			<h2>{{ '状态码分布'|t }}</h2>
+			<table>
+				<thead>
+					<tr>
+						<th>{{ '状态码'|t }}</th>
+						<th>{{ '请求数'|t }}</th>
+						<th>{{ '百分比'|t }}</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for status, count in stats.by_status %}
+						<tr>
+							<td>{{ status }}</td>
+							<td>{{ count|number_format }}</td>
+							<td>
+								{% if stats.total_requests > 0 %}
+									{{ (count / stats.total_requests * 100)|number_format(2) }}%
+								{% else %}
+									0%
+								{% endif %}
+							</td>
+						</tr>
+					{% else %}
+						<tr>
+							<td colspan="3">{{ '没有数据'|t }}</td>
+						</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+
+		<div class="baas-api-stats__section">
+			<h2>{{ '租户使用情况'|t }}</h2>
+			<table>
+				<thead>
+					<tr>
+						<th>{{ '租户ID'|t }}</th>
+						<th>{{ '请求数'|t }}</th>
+						<th>{{ '百分比'|t }}</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% for tenant_id, count in stats.by_tenant %}
+						<tr>
+							<td>{{ tenant_id }}</td>
+							<td>{{ count|number_format }}</td>
+							<td>
+								{% if stats.total_requests > 0 %}
+									{{ (count / stats.total_requests * 100)|number_format(2) }}%
+								{% else %}
+									0%
+								{% endif %}
+							</td>
+						</tr>
+					{% else %}
+						<tr>
+							<td colspan="3">{{ '没有数据'|t }}</td>
+						</tr>
+					{% endfor %}
+				</tbody>
+			</table>
+		</div>
+
+		<div class="baas-api-stats__section">
+			<h2>{{ '限流统计详情'|t }}</h2>
+			
+			{% if stats.rate_limit.rate_limit_by_type %}
+				<div class="rate-limit-summary">
+					<h3>{{ '按模块分类'|t }}</h3>
+					<table>
+						<thead>
+							<tr>
+								<th>{{ '模块'|t }}</th>
+								<th>{{ '触发次数'|t }}</th>
+								<th>{{ '占比'|t }}</th>
+							</tr>
+						</thead>
+						<tbody>
+							{% for type, count in stats.rate_limit.rate_limit_by_type %}
+								<tr>
+									<td>
+										{% if type == 'global' %}
+											{{ '全局限流'|t }}
+										{% elseif type == 'project' %}
+											{{ '项目限流'|t }}
+										{% elseif type == 'gateway' %}
+											{{ 'Gateway限流'|t }}
+										{% else %}
+											{{ type }}
+										{% endif %}
+									</td>
+									<td>{{ count|number_format }}</td>
+									<td>
+										{% if stats.rate_limit.total_rate_limited > 0 %}
+											{{ (count / stats.rate_limit.total_rate_limited * 100)|number_format(2) }}%
+										{% else %}
+											0%
+										{% endif %}
+									</td>
+								</tr>
+							{% endfor %}
+						</tbody>
+					</table>
+				</div>
+			{% endif %}
+
+			{% if stats.rate_limit.recent_rate_limits %}
+				<div class="recent-rate-limits">
+					<h3>{{ '最近限流记录'|t }}</h3>
+					<div class="rate-limit-logs">
+						{% for log in stats.rate_limit.recent_rate_limits %}
+							<div class="rate-limit-log-entry severity-{{ log.severity }}">
+								<div class="log-time">{{ log.formatted_time }}</div>
+								<div class="log-type">
+									{% if log.type == 'global' %}
+										{{ '全局'|t }}
+									{% elseif log.type == 'project' %}
+										{{ '项目'|t }}
+									{% elseif log.type == 'gateway' %}
+										{{ 'Gateway'|t }}
+									{% else %}
+										{{ log.type }}
+									{% endif %}
+								</div>
+								<div class="log-message">{{ log.message }}</div>
+							</div>
+						{% endfor %}
+					</div>
+				</div>
+			{% else %}
+				<p class="no-rate-limits">{{ '在指定时间范围内没有限流记录'|t }}</p>
+			{% endif %}
+		</div>
+	</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+<script>
+	(function () {
+document.addEventListener('DOMContentLoaded', function () {
+// 图表初始化
+if (drupalSettings && drupalSettings.baas_api && drupalSettings.baas_api.chart_data) {
+var data = drupalSettings.baas_api.chart_data;
+var ctx = document.getElementById('api-requests-chart').getContext('2d');
+
+new Chart(ctx, {
+type: 'line',
+data: {
+labels: data.labels,
+datasets: data.datasets
+},
+options: {
+responsive: true,
+maintainAspectRatio: false,
+plugins: {
+title: {
+display: true,
+text: Drupal.t('API请求历史趋势')
+},
+legend: {
+position: 'top'
+}
+},
+scales: {
+y: {
+beginAtZero: true,
+title: {
+display: true,
+text: Drupal.t('请求数量')
+}
+},
+x: {
+title: {
+display: true,
+text: Drupal.t('日期')
+}
+}
+}
+}
+});
+}
+
+// 清空统计数据功能
+var clearBtn = document.getElementById('clear-stats-btn');
+if (clearBtn) {
+clearBtn.addEventListener('click', function() {
+if (confirm(Drupal.t('确定要清空所有API统计数据吗？此操作不可撤销！'))) {
+// 显示加载状态
+clearBtn.disabled = true;
+clearBtn.textContent = Drupal.t('清空中...');
+
+// 发送AJAX请求
+fetch('/admin/reports/baas/api-stats/clear', {
+method: 'POST',
+headers: {
+'Content-Type': 'application/json',
+'X-Requested-With': 'XMLHttpRequest'
+}
+})
+.then(function(response) {
+return response.json();
+})
+.then(function(data) {
+if (data.success) {
+alert(data.message);
+location.reload(); // 刷新页面显示清空后的统计
+} else {
+alert(Drupal.t('清空失败: ') + data.message);
+}
+})
+.catch(function(error) {
+alert(Drupal.t('清空失败: ') + error.message);
+})
+.finally(function() {
+// 恢复按钮状态
+clearBtn.disabled = false;
+clearBtn.textContent = Drupal.t('清空统计数据');
+});
+}
+});
+}
+});
+})();
+</script>
+
+<style>
+	.baas-api-stats {
+		max-width: 1200px;
+		margin: 0 auto;
+		padding: 20px;
+		font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+	}
+
+	.baas-api-stats__header {
+		margin-bottom: 20px;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
+
+	.baas-api-stats__header h1 {
+		margin: 0;
+	}
+
+	.baas-api-stats__actions {
+		display: flex;
+		gap: 10px;
+	}
+
+	.button--danger {
+		background-color: #dc3545;
+		border-color: #dc3545;
+		color: #ffffff !important;
+		padding: 8px 16px;
+		border: 1px solid;
+		border-radius: 4px;
+		cursor: pointer;
+		font-size: 14px;
+		font-weight: 500;
+		text-decoration: none;
+		transition: all 0.2s ease-in-out;
+		display: inline-block;
+		text-align: center;
+		vertical-align: middle;
+		user-select: none;
+		line-height: 1.5;
+	}
+
+	.button--danger:hover {
+		background-color: #c82333;
+		border-color: #bd2130;
+		color: #ffffff !important;
+		text-decoration: none;
+		transform: translateY(-1px);
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+	}
+
+	.button--danger:active {
+		background-color: #bd2130;
+		border-color: #b21f2d;
+		transform: translateY(0);
+		box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+	}
+
+	.button--danger:disabled {
+		background-color: #6c757d;
+		border-color: #6c757d;
+		color: #ffffff !important;
+		cursor: not-allowed;
+		opacity: 0.7;
+		transform: none;
+		box-shadow: none;
+	}
+
+	.button--danger:focus {
+		outline: 0;
+		box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.25);
+	}
+
+	.baas-api-stats__filters {
+		background: #f5f5f5;
+		padding: 20px;
+		margin-bottom: 30px;
+		border: 1px solid #ddd;
+		border-radius: 4px;
+	}
+
+	.baas-api-stats__filters .form-actions {
+		margin-top: 15px;
+	}
+
+	.baas-api-stats__summary {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 20px;
+		margin-bottom: 30px;
+	}
+
+	.summary-card {
+		flex: 1;
+		min-width: 200px;
+		background: #fff;
+		padding: 20px;
+		border-radius: 4px;
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+		text-align: center;
+	}
+
+	.summary-card__title {
+		font-size: 16px;
+		color: #666;
+		margin-bottom: 10px;
+	}
+
+	.summary-card__value {
+		font-size: 24px;
+		font-weight: bold;
+		color: #0071b8;
+	}
+
+	.summary-card__subtitle {
+		font-size: 12px;
+		color: #888;
+		margin-top: 8px;
+		font-weight: normal;
+	}
+
+	.rate-limit-card .summary-card__value {
+		color: #d9534f;
+	}
+
+	.baas-api-stats__chart {
+		height: 400px;
+		background: #fff;
+		padding: 20px;
+		border-radius: 4px;
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+		margin-bottom: 30px;
+	}
+
+	.baas-api-stats__section {
+		background: #fff;
+		padding: 20px;
+		border-radius: 4px;
+		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+		margin-bottom: 30px;
+	}
+
+	.baas-api-stats__section h2 {
+		margin-top: 0;
+		margin-bottom: 20px;
+		color: #333;
+	}
+
+	.baas-api-stats__section table {
+		width: 100%;
+		border-collapse: collapse;
+	}
+
+	.baas-api-stats__section th,
+	.baas-api-stats__section td {
+		padding: 10px;
+		text-align: left;
+		border-bottom: 1px solid #ddd;
+	}
+
+	.baas-api-stats__section th {
+		background: #f5f5f5;
+		font-weight: 600;
+	}
+
+	/* 限流统计样式 */
+	.rate-limit-summary {
+		margin-bottom: 30px;
+	}
+
+	.rate-limit-summary h3 {
+		color: #333;
+		margin-bottom: 15px;
+		font-size: 18px;
+	}
+
+	.recent-rate-limits h3 {
+		color: #333;
+		margin-bottom: 15px;
+		font-size: 18px;
+	}
+
+	.rate-limit-logs {
+		max-height: 400px;
+		overflow-y: auto;
+		border: 1px solid #e0e0e0;
+		border-radius: 4px;
+	}
+
+	.rate-limit-log-entry {
+		display: flex;
+		padding: 12px 16px;
+		border-bottom: 1px solid #f0f0f0;
+		align-items: flex-start;
+		gap: 12px;
+		background: #fff;
+	}
+
+	.rate-limit-log-entry:last-child {
+		border-bottom: none;
+	}
+
+	.rate-limit-log-entry.severity-3 {
+		background: #fff3cd;
+		border-left: 4px solid #ffc107;
+	}
+
+	.rate-limit-log-entry.severity-4 {
+		background: #f8d7da;
+		border-left: 4px solid #dc3545;
+	}
+
+	.log-time {
+		flex-shrink: 0;
+		font-size: 12px;
+		color: #666;
+		width: 120px;
+	}
+
+	.log-type {
+		flex-shrink: 0;
+		font-size: 12px;
+		background: #e9ecef;
+		padding: 2px 8px;
+		border-radius: 12px;
+		color: #495057;
+		font-weight: 500;
+		width: 60px;
+		text-align: center;
+	}
+
+	.log-message {
+		flex: 1;
+		font-size: 13px;
+		color: #333;
+		line-height: 1.4;
+	}
+
+	.no-rate-limits {
+		text-align: center;
+		color: #666;
+		font-style: italic;
+		padding: 40px 20px;
+	}
+
+	@media screen and(max-width: 768px) {
+		.baas-api-stats__summary {
+			flex-direction: column;
+		}
+
+		.summary-card {
+			width: 100%;
+		}
+
+		.baas-api-stats__chart {
+			height: 300px;
+		}
+
+		.baas-api-stats__section table {
+			display: block;
+			overflow-x: auto;
+		}
+	}
+</style>

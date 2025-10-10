@@ -1,0 +1,79 @@
+name: "Drubase One"
+type: profile
+description: "企业级Backend-as-a-Service平台"
+version: "1.0.0"
+core_version_requirement: ^11
+
+dependencies:
+  # Drupal核心
+  - drupal:system
+  - drupal:user
+  - drupal:node
+  - drupal:field
+  - drupal:text
+  - drupal:options
+  - drupal:datetime
+  - drupal:file
+  - drupal:toolbar
+  - drupal:dblog
+  - drupal:syslog
+  - drupal:block
+  - drupal:block_content
+  - drupal:path
+  - drupal:menu_ui
+  - drupal:page_cache
+  - drupal:dynamic_page_cache
+  - drupal:field_ui
+  - drupal:help
+  - drupal:config
+  - drupal:contextual
+  - drupal:menu_link_content
+  - drupal:taxonomy
+  - drupal:big_pipe
+
+
+  # 第三方模块
+  - drupal:admin_toolbar
+  - drupal:redis
+  # - drupal:gin_toolbar
+
+  # BaaS基础模块（按依赖顺序）
+  - baas_tenant:baas_tenant
+
+themes:
+  - olivero
+  - gin
+
+install:
+  # 基础模块
+  - system
+  - user
+  - node
+  - field
+  - text
+  - options
+  - datetime
+  - file
+  - toolbar
+  - dblog
+  - syslog
+  - block
+  - block_content
+  - path
+  - menu_ui
+  - page_cache
+  - dynamic_page_cache
+  - field_ui
+  - help
+  - config
+  - contextual
+  - menu_link_content
+  - taxonomy
+  - big_pipe
+
+
+  # 管理界面
+  - admin_toolbar
+
+  # BaaS基础模块（其他模块在hook_install中按依赖顺序启用）
+  - baas_tenant

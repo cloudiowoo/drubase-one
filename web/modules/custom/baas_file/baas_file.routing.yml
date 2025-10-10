@@ -1,0 +1,241 @@
+# BaaS 文件管理模块路由配置
+
+# 文件设置表单
+baas_file.settings:
+  path: '/admin/config/baas/file/settings'
+  defaults:
+    _form: '\Drupal\baas_file\Form\FileSettingsForm'
+    _title: '文件管理设置'
+  requirements:
+    _permission: 'administer baas file'
+
+# 统一文件管理入口
+baas_file.file_manager:
+  path: '/baas/files'
+  defaults:
+    _controller: '\Drupal\baas_file\Controller\UnifiedFileController::fileManager'
+    _title: 'BaaS文件管理'
+  requirements:
+    _user_is_logged_in: 'TRUE'
+
+# 测试路由
+baas_file.test:
+  path: '/baas/files/test'
+  defaults:
+    _controller: '\Drupal\baas_file\Controller\UnifiedFileController::test'
+    _title: '文件管理测试'
+  requirements:
+    _permission: 'access content'
+
+# 租户媒体管理界面
+baas_file.tenant_media_manager:
+  path: '/tenant/{tenant_id}/media'
+  defaults:
+    _controller: '\Drupal\baas_file\Controller\TenantMediaController::mediaManager'
+    _title: '租户媒体文件管理'
+  requirements:
+    _custom_access: '\Drupal\baas_file\Controller\TenantMediaController::access'
+    tenant_id: '[a-zA-Z0-9_]+'
+  options:
+    parameters:
+      tenant_id:
+        type: string
+
+# 项目媒体管理界面
+baas_file.project_media_manager:
+  path: '/tenant/{tenant_id}/project/{project_id}/media'
+  defaults:
+    _controller: '\Drupal\baas_file\Controller\ProjectMediaController::mediaManager'
+    _title: '项目媒体文件'
+  requirements:
+    _custom_access: '\Drupal\baas_file\Controller\ProjectMediaController::access'
+    tenant_id: '[a-zA-Z0-9_]+'
+    project_id: '[a-zA-Z0-9_]+'
+  options:
+    parameters:
+      tenant_id:
+        type: string
+      project_id:
+        type: string
+
+# 系统管理员全局媒体管理
+baas_file.admin_media_manager:
+  path: '/admin/baas/media'
+  defaults:
+    _controller: '\Drupal\baas_file\Controller\AdminMediaController::mediaManager'
+    _title: '全局媒体文件管理'
+  requirements:
+    _permission: 'administer baas file'
+
+# API 路由组
+
+# 租户媒体文件列表API
+baas_file.api.tenant_media_list:
+  path: '/api/v1/{tenant_id}/media'
+  defaults:
+    _controller: '\Drupal\baas_file\Controller\MediaApiController::getTenantMediaList'
+  methods: [GET]
+  requirements:
+    _custom_access: '\Drupal\baas_file\Controller\MediaApiController::accessTenantMedia'
+    tenant_id: '[a-zA-Z0-9_]+'
+
+# 项目媒体文件列表API (支持session认证) - 使用不同路径避免BaaS API中间件
+baas_file.api.project_media_list:
+  path: '/file-manager/api/{tenant_id}/projects/{project_id}/media'
+  defaults:
+    _controller: '\Drupal\baas_file\Controller\FileManagerApiController::getProjectMediaList'
+  methods: [GET]
+  requirements:
+    _permission: 'access content'
+    tenant_id: '[a-zA-Z0-9_]+'
+    project_id: '[a-zA-Z0-9_]+'
+
+# 文件详情API (支持session认证)
+baas_file.api.project_file_detail:
+  path: '/file-manager/api/{tenant_id}/projects/{project_id}/files/{file_id}'
+  defaults:
+    _controller: '\Drupal\baas_file\Controller\FileManagerApiController::getFileDetail'
+  methods: [GET]
+  requirements:
+    _permission: 'access content'
+    tenant_id: '[a-zA-Z0-9_]+'
+    project_id: '[a-zA-Z0-9_]+'
+    file_id: '\d+'
+  options:
+    parameters:
+      tenant_id:
+        type: string
+      project_id:
+        type: string
+      file_id:
+        type: integer
+
+# 文件删除API (支持session认证)
+baas_file.api.project_file_delete:
+  path: '/file-manager/api/{tenant_id}/projects/{project_id}/files/{file_id}'
+  defaults:
+    _controller: '\Drupal\baas_file\Controller\FileManagerApiController::deleteFile'
+  methods: [DELETE]
+  requirements:
+    _permission: 'access content'
+    tenant_id: '[a-zA-Z0-9_]+'
+    project_id: '[a-zA-Z0-9_]+'
+    file_id: '\d+'
+  options:
+    parameters:
+      tenant_id:
+        type: string
+      project_id:
+        type: string
+      file_id:
+        type: integer
+
+# 文件上传API (支持session认证)
+baas_file.api.project_file_upload:
+  path: '/file-manager/api/{tenant_id}/projects/{project_id}/entities/file_upload/create'
+  defaults:
+    _controller: '\Drupal\baas_file\Controller\FileManagerApiController::uploadFile'
+  methods: [POST]
+  requirements:
+    _permission: 'access content'
+    tenant_id: '[a-zA-Z0-9_]+'
+    project_id: '[a-zA-Z0-9_]+'
+  options:
+    parameters:
+      tenant_id:
+        type: string
+      project_id:
+        type: string
+
+# 媒体文件详情API
+baas_file.api.media_detail:
+  path: '/api/v1/{tenant_id}/media/{file_id}'
+  defaults:
+    _controller: '\Drupal\baas_file\Controller\MediaApiController::getMediaDetail'
+  methods: [GET]
+  requirements:
+    _custom_access: '\Drupal\baas_file\Controller\MediaApiController::accessMediaFile'
+    tenant_id: '[a-zA-Z0-9_]+'
+    file_id: '\d+'
+
+# 媒体文件上传API
+baas_file.api.media_upload:
+  path: '/api/v1/{tenant_id}/project/{project_id}/media/upload'
+  defaults:
+    _controller: '\Drupal\baas_file\Controller\MediaApiController::uploadMedia'
+  methods: [POST]
+  requirements:
+    _custom_access: '\Drupal\baas_file\Controller\MediaApiController::accessProjectMedia'
+    tenant_id: '[a-zA-Z0-9_]+'
+    project_id: '[a-zA-Z0-9_]+'
+
+# 媒体文件删除API
+baas_file.api.media_delete:
+  path: '/api/v1/{tenant_id}/media/{file_id}'
+  defaults:
+    _controller: '\Drupal\baas_file\Controller\MediaApiController::deleteMedia'
+  methods: [DELETE]
+  requirements:
+    _custom_access: '\Drupal\baas_file\Controller\MediaApiController::accessMediaFile'
+    tenant_id: '[a-zA-Z0-9_]+'
+    file_id: '\d+'
+
+# 媒体文件使用统计API
+baas_file.api.media_stats:
+  path: '/api/v1/{tenant_id}/media/stats'
+  defaults:
+    _controller: '\Drupal\baas_file\Controller\MediaApiController::getMediaStats'
+  methods: [GET]
+  requirements:
+    _custom_access: '\Drupal\baas_file\Controller\MediaApiController::accessTenantMedia'
+    tenant_id: '[a-zA-Z0-9_]+'
+
+# 管理员全局媒体统计API
+baas_file.api.admin_media_stats:
+  path: '/api/v1/admin/media/stats'
+  defaults:
+    _controller: '\Drupal\baas_file\Controller\MediaApiController::getGlobalMediaStats'
+  methods: [GET]
+  requirements:
+    _permission: 'administer baas file'
+
+# 获取文件信息API
+baas_file.api_file_info:
+  path: '/api/v1/{tenant_id}/projects/{project_id}/files/{file_id}'
+  defaults:
+    _controller: '\Drupal\baas_file\Controller\FileApiController::getFileInfo'
+  methods: [GET]
+  requirements:
+    _custom_access: '\Drupal\baas_project\Access\ProjectAccessChecker::accessView'
+    tenant_id: '[a-zA-Z0-9_-]+'
+    project_id: '[a-zA-Z0-9_-]+'
+    file_id: '\d+'
+  options:
+    _auth: ['jwt', 'api_key']
+    _project_required: true
+    parameters:
+      tenant_id:
+        type: string
+      project_id:
+        type: string
+      file_id:
+        type: integer
+
+# 获取项目文件统计API
+baas_file.api_project_file_usage:
+  path: '/api/v1/{tenant_id}/projects/{project_id}/files/usage'
+  defaults:
+    _controller: '\Drupal\baas_file\Controller\FileApiController::getProjectFileUsage'
+  methods: [GET]
+  requirements:
+    _custom_access: '\Drupal\baas_project\Access\ProjectAccessChecker::accessView'
+    tenant_id: '[a-zA-Z0-9_-]+'
+    project_id: '[a-zA-Z0-9_-]+'
+  options:
+    _auth: ['jwt', 'api_key']
+    _project_required: true
+    parameters:
+      tenant_id:
+        type: string
+      project_id:
+        type: string

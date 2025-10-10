@@ -1,0 +1,424 @@
+<?php
+
+/**
+ * @file
+ * 提供动态实体创建和管理功能。
+ */
+
+/**
+ * 实现 hook_entity_type_build().
+ *
+ * 用于动态注册租户的实体类型。
+ */
+function baas_entity_entity_type_build(array &$entity_types) {
+  // 防止清除缓存出现无限递归
+  static $calling = FALSE;
+
+  if ($calling) {
+    \Drupal::logger('baas_entity')->notice('检测到递归调用，跳过实体类型注册');
+    return;
+  }
+
+  $calling = TRUE;
+
+  try {
+    // 黑名单：跳过已知的孤立实体类型
+    $blacklisted_entity_types = [
+      'baas_1f4289_web1',
+      'baas_1f4289_profile',
+      'baas_00403b_activities',
+      'baas_00403b_positions', 
+      'baas_00403b_system_config',
+      'baas_00403b_teams',
+      'baas_00403b_user_activities',
+      'baas_00403b_users',
+      'baas_tc80ce3_p3124c3_system_config',
+      'baas_tc80ce3_pb459f6_profile',
+      'baas_tc80ce3_pb459f6_web1',
+    ];
+    
+    // 从服务中获取所有动态实体类型并注册
+    $entity_registry = \Drupal::service('baas_entity.entity_registry');
+    $entity_registry->registerEntityTypes($entity_types);
+    
+    // 移除黑名单中的实体类型
+    foreach ($blacklisted_entity_types as $blacklisted) {
+      if (isset($entity_types[$blacklisted])) {
+        unset($entity_types[$blacklisted]);
+        \Drupal::logger('baas_entity')->notice('移除孤立实体类型: @type', [
+          '@type' => $blacklisted,
+        ]);
+      }
+    }
+
+    // 记录实体类型信息以便诊断
+    $registry_types = $entity_registry->getRegisteredEntityTypes();
+    if (!empty($registry_types)) {
+      \Drupal::logger('baas_entity')->notice('注册实体类型: @count 个', [
+        '@count' => count($registry_types),
+      ]);
+    }
+  }
+  finally {
+    $calling = FALSE;
+  }
+}
+
+/**
+ * 实现 hook_theme().
+ */
+function baas_entity_theme() {
+  return [
+    'baas_entity_template_form' => [
+      'render element' => 'form',
+      'template' => 'baas-entity-template-form',
+    ],
+    'baas_entity_field_form' => [
+      'render element' => 'form',
+      'template' => 'baas-entity-field-form',
+    ],
+    'baas_entity_template_delete_form' => [
+      'render element' => 'form',
+      'template' => 'baas-entity-template-delete-form',
+    ],
+    'baas_entity_field_delete_form' => [
+      'render element' => 'form',
+      'template' => 'baas-entity-field-delete-form',
+    ],
+    'baas_entity_template_list' => [
+      'variables' => ['content' => NULL],
+      'template' => 'baas-entity-template-list',
+    ],
+    'baas_entity_field_list' => [
+      'variables' => ['content' => NULL, 'template_info' => NULL],
+      'template' => 'baas-entity-field-list',
+    ],
+  ];
+}
+
+/**
+ * 实现 hook_user_login().
+ *
+ * 用于调试权限问题。
+ */
+function baas_entity_user_login($account) {
+  // 注册一个用于追踪用户权限的回调
+  \Drupal::service('messenger')->addStatus('登录用户ID: ' . $account->id() . ', 角色: ' . implode(', ', $account->getRoles()));
+}
+
+/**
+ * 实现 hook_entity_access().
+ */
+function baas_entity_entity_access($entity, $operation, $account) {
+  // 只处理动态实体
+  $entity_type_id = $entity->getEntityTypeId();
+  if (strpos($entity_type_id, 'user_') !== 0 || strpos($entity_type_id, '_') === FALSE) {
+    return NULL;
+  }
+  
+  // 如果baas_project模块存在，使用项目权限检查器
+  if (\Drupal::moduleHandler()->moduleExists('baas_project')) {
+    try {
+      $entity_access_checker = \Drupal::service('baas_project.entity_access_checker');
+      if ($entity_access_checker) {
+        return $entity_access_checker->checkEntityAccess($entity, $operation, $account);
+      }
+    } catch (\Exception $e) {
+      \Drupal::logger('baas_entity')->warning('无法使用项目权限检查器: @error', ['@error' => $e->getMessage()]);
+    }
+  }
+  
+  // 检查是否为动态实体类型
+  if (strpos($entity_type_id, '_') !== FALSE) {
+    \Drupal::logger('baas_entity')->notice('实体访问检查: @type, 操作: @op, 用户: @uid', [
+      '@type' => $entity_type_id,
+      '@op' => $operation,
+      '@uid' => $account->id(),
+    ]);
+  }
+
+  return NULL;
+}
+
+/**
+ * Implements hook_baas_project_installed().
+ * 
+ * 当baas_project模块安装时，为实体模板表添加project_id字段。
+ */
+function baas_entity_baas_project_installed() {
+  $database = \Drupal::database();
+  $schema = $database->schema();
+  
+  // 为baas_entity_template表添加project_id字段
+  if ($schema->tableExists('baas_entity_template') && !$schema->fieldExists('baas_entity_template', 'project_id')) {
+    $field_spec = [
+      'type' => 'varchar',
+      'length' => 64,
+      'description' => 'The project ID this template belongs to.',
+      'not null' => FALSE,
+    ];
+    
+    $schema->addField('baas_entity_template', 'project_id', $field_spec);
+    
+    // 添加索引
+    $schema->addIndex('baas_entity_template', 'idx_project_id', ['project_id'], []);
+    
+    \Drupal::logger('baas_entity')->notice('Added project_id field to baas_entity_template table.');
+  }
+  
+  // 为baas_entity_field表添加project_id字段
+  if ($schema->tableExists('baas_entity_field') && !$schema->fieldExists('baas_entity_field', 'project_id')) {
+    $field_spec = [
+      'type' => 'varchar',
+      'length' => 64,
+      'description' => 'The project ID this field belongs to (denormalized for performance).',
+      'not null' => FALSE,
+    ];
+    
+    $schema->addField('baas_entity_field', 'project_id', $field_spec);
+    
+    // 添加索引
+    $schema->addIndex('baas_entity_field', 'idx_project_id', ['project_id'], []);
+    
+    \Drupal::logger('baas_entity')->notice('Added project_id field to baas_entity_field table.');
+  }
+}
+
+/**
+ * Implements hook_entity_type_alter().
+ * 
+ * 为动态实体类型设置访问控制处理器。
+ */
+function baas_entity_entity_type_alter(array &$entity_types) {
+  // 为所有动态实体类型设置访问控制处理器
+  foreach ($entity_types as $entity_type_id => $entity_type) {
+    // 检查是否是动态实体类型
+    if (strpos($entity_type_id, 'user_') === 0 && strpos($entity_type_id, '_') !== FALSE) {
+      $entity_type->setAccessClass('Drupal\baas_entity\Access\DynamicEntityAccessControlHandler');
+    }
+  }
+}
+
+// 确保在模块初始化时注册自定义类加载器
+spl_autoload_register('baas_entity_dynamic_entity_loader');
+
+/**
+ * 自定义类加载器，用于加载动态生成的实体类。
+ *
+ * @param string $class
+ *   完整类名。
+ *
+ * @return bool
+ *   是否成功加载类。
+ */
+function baas_entity_dynamic_entity_loader($class) {
+  // 检查是否是动态生成的实体类
+  if (strpos($class, 'Drupal\\baas_entity\\Entity\\Dynamic\\') === 0 ||
+      strpos($class, 'Drupal\\baas_entity\\Form\\Dynamic\\') === 0 ||
+      strpos($class, 'Drupal\\baas_entity\\Controller\\Dynamic\\') === 0 ||
+      strpos($class, 'Drupal\\baas_entity\\Storage\\Dynamic\\') === 0) {
+
+    // 提取类名和类型
+    $class_name = '';
+    $class_type = '';
+
+    if (strpos($class, 'Entity\\Dynamic\\') !== FALSE) {
+      $class_name = substr($class, strlen('Drupal\\baas_entity\\Entity\\Dynamic\\'));
+      $class_type = 'Entity';
+    }
+    elseif (strpos($class, 'Storage\\Dynamic\\') !== FALSE) {
+      $class_name = substr($class, strlen('Drupal\\baas_entity\\Storage\\Dynamic\\'));
+      $class_type = 'Storage';
+    }
+    elseif (strpos($class, 'Form\\Dynamic\\') !== FALSE) {
+      $class_name = substr($class, strlen('Drupal\\baas_entity\\Form\\Dynamic\\'));
+      $class_type = 'Form';
+    }
+    elseif (strpos($class, 'Controller\\Dynamic\\') !== FALSE) {
+      $class_name = substr($class, strlen('Drupal\\baas_entity\\Controller\\Dynamic\\'));
+      $class_type = 'ListBuilder';
+    }
+
+    // 记录调试信息
+    \Drupal::logger('baas_entity')->notice('尝试加载动态类: @class, 类型: @type', [
+      '@class' => $class_name,
+      '@type' => $class_type,
+    ]);
+
+    // 1. 首先尝试从记录表中查找文件路径
+    $database = \Drupal::database();
+
+    if ($database->schema()->tableExists('baas_entity_class_files')) {
+      $file_record = $database->select('baas_entity_class_files', 'f')
+        ->fields('f', ['file_path', 'tenant_id'])
+        ->condition('class_name', $class_name)
+        ->condition('class_type', $class_type)
+        ->execute()
+        ->fetchAssoc();
+
+      if ($file_record) {
+        $file_path = 'public://' . $file_record['file_path'];
+        $real_path = \Drupal::service('file_system')->realpath($file_path);
+
+        \Drupal::logger('baas_entity')->notice('从数据库记录加载类文件: @path', [
+          '@path' => $real_path,
+        ]);
+
+        if (file_exists($real_path)) {
+          require_once $real_path;
+          return TRUE;
+        }
+      }
+    }
+
+    // 2. 尝试提取租户ID和实体名称
+    $tenant_id = '';
+    $entity_name = '';
+
+    // 检查是否为项目级实体（包含"Project"关键字）
+    if (strpos($class_name, 'Project') !== false) {
+      // 让baas_project模块处理项目级实体
+      return FALSE;
+    }
+
+    // 提取租户ID和实体名称的通用函数
+    $extract_tenant_and_entity = function($class_name) {
+      // 尝试从类名提取租户ID和实体名称
+      $matches = [];
+      // 例如从 Test1test13d21ec0bTest1mo_ban 提取 test1_3d21ec0b 和 test1mo_ban
+      if (preg_match('/([A-Z][a-z0-9]+)([A-Z][a-z0-9]+)/', $class_name, $matches)) {
+        $parts = preg_split('/(?=[A-Z])/', $class_name);
+        $parts = array_filter($parts);
+        $parts = array_values($parts); // 重新索引数组
+
+        // 尝试各种可能的组合以找到有效的租户ID
+        foreach ($parts as $i => $part) {
+          $tenant_candidate = '';
+          $entity_candidate = '';
+
+          // 构建可能的租户ID
+          for ($j = 0; $j <= $i; $j++) {
+            if (isset($parts[$j]) && !empty($parts[$j])) {
+              $tenant_candidate .= strtolower($parts[$j]);
+            }
+          }
+
+          // 构建可能的实体名称
+          for ($j = $i + 1; $j < count($parts); $j++) {
+            if (isset($parts[$j]) && !empty($parts[$j])) {
+              $entity_candidate .= strtolower($parts[$j]);
+            }
+          }
+
+          // 如果找到有效的租户ID和实体名称组合
+          if (!empty($tenant_candidate) && !empty($entity_candidate)) {
+            $templates = \Drupal::database()->select('baas_entity_template', 't')
+              ->fields('t', ['tenant_id', 'name'])
+              ->condition('tenant_id', '%' . $tenant_candidate . '%', 'LIKE')
+              ->condition('name', '%' . $entity_candidate . '%', 'LIKE')
+              ->execute()
+              ->fetchAll();
+
+            if (!empty($templates)) {
+              return [
+                'tenant_id' => $templates[0]->tenant_id,
+                'entity_name' => $templates[0]->name,
+              ];
+            }
+          }
+        }
+      }
+
+      return ['tenant_id' => '', 'entity_name' => ''];
+    };
+
+    $info = $extract_tenant_and_entity($class_name);
+    $tenant_id = $info['tenant_id'];
+    $entity_name = $info['entity_name'];
+
+    // 如果未能提取到租户ID和实体名称，则从数据库获取所有模板进行尝试
+    if (empty($tenant_id) || empty($entity_name)) {
+      $templates = $database->select('baas_entity_template', 't')
+        ->fields('t', ['tenant_id', 'name'])
+        ->condition('status', 1)
+        ->execute()
+        ->fetchAll();
+
+      foreach ($templates as $template) {
+        // 生成可能的类名
+        $name_parts = explode('_', $template->name);
+        $name_parts = array_map('ucfirst', $name_parts);
+        $class_base = implode('', $name_parts);
+
+        $tenant_parts = explode('_', $template->tenant_id);
+        $tenant_parts = array_map('ucfirst', $tenant_parts);
+        $tenant_prefix = implode('', $tenant_parts);
+
+        $generated_class = $tenant_prefix . $class_base;
+
+        // 根据类型构建完整的类名
+        $full_class_name = '';
+        switch ($class_type) {
+          case 'Entity':
+            $full_class_name = $generated_class;
+            break;
+          case 'Storage':
+            $full_class_name = $generated_class . 'Storage';
+            break;
+          case 'Form':
+            $full_class_name = $generated_class . 'Form';
+            break;
+          case 'ListBuilder':
+            $full_class_name = $generated_class . 'ListBuilder';
+            break;
+        }
+
+        // 检查是否匹配
+        if ($class_name == $full_class_name) {
+          $tenant_id = $template->tenant_id;
+          $entity_name = $template->name;
+          break;
+        }
+      }
+    }
+
+    // 3. 如果成功提取到租户ID和实体名称，尝试从公共文件目录查找
+    if (!empty($tenant_id)) {
+      \Drupal::logger('baas_entity')->notice('提取到租户ID: @tenant, 实体名称: @entity, 类名: @class', [
+        '@tenant' => $tenant_id,
+        '@entity' => $entity_name,
+        '@class' => $class_name,
+      ]);
+
+      // 尝试从公共文件目录加载
+      $file_path = 'public://dynamic_entities/' . $tenant_id . '/' . $class_type . '/' . $class_name . '.php';
+      $real_path = \Drupal::service('file_system')->realpath($file_path);
+
+      if (file_exists($real_path)) {
+        \Drupal::logger('baas_entity')->notice('从公共文件目录加载类文件: @path', [
+          '@path' => $real_path,
+        ]);
+        require_once $real_path;
+        return TRUE;
+      }
+
+      // 4. 尝试从旧路径加载（兼容旧文件）
+      $module_path = \Drupal::service('extension.list.module')->getPath('baas_entity');
+      $old_path = $module_path . '/src/' . $class_type . '/Dynamic/' . $class_name . '.php';
+
+      if (file_exists($old_path)) {
+        \Drupal::logger('baas_entity')->notice('从旧路径加载类文件: @path', [
+          '@path' => $old_path,
+        ]);
+        require_once $old_path;
+        return TRUE;
+      }
+    }
+
+    \Drupal::logger('baas_entity')->error('未能找到类文件: @class', [
+      '@class' => $class,
+    ]);
+  }
+
+  return FALSE;
+}

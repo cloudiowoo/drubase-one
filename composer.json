@@ -1,0 +1,57 @@
+{
+    "name": "baas/platform",
+    "description": "Drubase One - Enterprise Backend-as-a-Service Platform",
+    "type": "project",
+    "license": "MIT",
+    "homepage": "https://github.com/cloudiowoo/drubase-one",
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://packages.drupal.org/8"
+        }
+    ],
+    "require": {
+        "php": ">=8.1",
+        "composer/installers": "^2.3",
+        "drupal/core-composer-scaffold": "^11.1",
+        "drupal/core-project-message": "^11.1",
+        "drupal/core-recommended": "^11.1",
+        "drupal/admin_toolbar": "^3.5",
+        "drupal/gin": "^4.0",
+        "drupal/gin_toolbar": "^2.0",
+        "drupal/redis": "^1.9",
+        "firebase/php-jwt": "^6.11",
+        "drush/drush": "^13.3"
+    },
+    "require-dev": {
+        "drupal/core-dev": "^11.1",
+        "drupal/devel": "^5.3"
+    },
+    "conflict": {
+        "drupal/drupal": "*"
+    },
+    "config": {
+        "allow-plugins": {
+            "composer/installers": true,
+            "drupal/core-composer-scaffold": true,
+            "drupal/core-project-message": true
+        }
+    },
+    "extra": {
+        "drupal-scaffold": {
+            "locations": {
+                "web-root": "web/"
+            }
+        },
+        "installer-paths": {
+            "web/core": ["type:drupal-core"],
+            "web/libraries/{$name}": ["type:drupal-library"],
+            "web/modules/contrib/{$name}": ["type:drupal-module"],
+            "web/profiles/contrib/{$name}": ["type:drupal-profile"],
+            "web/themes/contrib/{$name}": ["type:drupal-theme"],
+            "drush/Commands/contrib/{$name}": ["type:drupal-drush"]
+        }
+    }
+}

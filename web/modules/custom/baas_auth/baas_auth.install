@@ -1,0 +1,546 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the baas_auth module.
+ */
+
+use Drupal\Core\Database\Database;
+
+/**
+ * Implements hook_schema().
+ */
+function baas_auth_schema()
+{
+  $schema = [];
+
+  // 注意：baas_auth_tenant_users 表已废弃
+  // 用户体系已统一到 Drupal 标准 users 表
+  // 用户-租户关系通过 baas_user_tenant_mapping 表管理
+
+  // API密钥表
+  $schema['baas_auth_api_keys'] = [
+    'description' => 'Stores API keys for BaaS authentication.',
+    'fields' => [
+      'id' => [
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique API key ID.',
+      ],
+      'api_key' => [
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'description' => 'The API key string.',
+      ],
+      'tenant_id' => [
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'description' => 'The tenant ID this API key belongs to.',
+      ],
+      'user_id' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'description' => 'The user ID associated with this API key.',
+      ],
+      'name' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'The name of the API key.',
+      ],
+      'permissions' => [
+        'type' => 'text',
+        'description' => 'JSON array of permissions for this API key.',
+      ],
+      'last_used' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'description' => 'Timestamp when the API key was last used.',
+      ],
+      'expires_at' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'description' => 'Timestamp when the API key expires.',
+      ],
+      'status' => [
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 1,
+        'description' => 'API key status: 1 = active, 0 = inactive.',
+      ],
+      'created' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Timestamp when the API key was created.',
+      ],
+    ],
+    'primary key' => ['id'],
+    'unique keys' => [
+      'api_key' => ['api_key'],
+    ],
+    'indexes' => [
+      'idx_tenant_id' => ['tenant_id'],
+      'idx_user_id' => ['user_id'],
+      'idx_status' => ['status'],
+      'idx_expires_at' => ['expires_at'],
+    ],
+  ];
+
+  // JWT黑名单表
+  $schema['baas_auth_jwt_blacklist'] = [
+    'description' => 'Stores blacklisted JWT tokens.',
+    'fields' => [
+      'token_jti' => [
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'description' => 'The JWT token ID (jti claim).',
+      ],
+      'user_id' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'The user ID associated with this token.',
+      ],
+      'tenant_id' => [
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'description' => 'The tenant ID associated with this token.',
+      ],
+      'expires_at' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Timestamp when the token expires.',
+      ],
+      'created' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Timestamp when the token was blacklisted.',
+      ],
+    ],
+    'primary key' => ['token_jti'],
+    'indexes' => [
+      'idx_expires_at' => ['expires_at'],
+      'idx_user_id' => ['user_id'],
+      'idx_tenant_id' => ['tenant_id'],
+    ],
+  ];
+
+  // 用户会话表
+  $schema['baas_auth_user_sessions'] = [
+    'description' => 'Stores user session information.',
+    'fields' => [
+      'id' => [
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique session ID.',
+      ],
+      'session_id' => [
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'description' => 'The session identifier.',
+      ],
+      'user_id' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'The user ID associated with this session.',
+      ],
+      'tenant_id' => [
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'description' => 'The tenant ID associated with this session.',
+      ],
+      'ip_address' => [
+        'type' => 'varchar',
+        'length' => 45,
+        'description' => 'The IP address of the session.',
+      ],
+      'user_agent' => [
+        'type' => 'text',
+        'description' => 'The user agent string.',
+      ],
+      'last_activity' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Timestamp of last activity.',
+      ],
+      'expires_at' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Timestamp when the session expires.',
+      ],
+      'created' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Timestamp when the session was created.',
+      ],
+    ],
+    'primary key' => ['id'],
+    'unique keys' => [
+      'session_id' => ['session_id'],
+    ],
+    'indexes' => [
+      'idx_user_id' => ['user_id'],
+      'idx_tenant_id' => ['tenant_id'],
+      'idx_expires_at' => ['expires_at'],
+      'idx_last_activity' => ['last_activity'],
+    ],
+  ];
+
+  // 用户角色表
+  $schema['baas_auth_user_roles'] = [
+    'description' => 'Stores user role assignments.',
+    'fields' => [
+      'id' => [
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique role assignment ID.',
+      ],
+      'user_id' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'The user ID.',
+      ],
+      'tenant_id' => [
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'description' => 'The tenant ID.',
+      ],
+      'role_name' => [
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'description' => 'The role name.',
+      ],
+      'assigned_by' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'description' => 'The user ID who assigned this role.',
+      ],
+      'created' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Timestamp when the role was assigned.',
+      ],
+    ],
+    'primary key' => ['id'],
+    'unique keys' => [
+      'user_tenant_role' => ['user_id', 'tenant_id', 'role_name'],
+    ],
+    'indexes' => [
+      'idx_user_tenant' => ['user_id', 'tenant_id'],
+      'idx_role_name' => ['role_name'],
+    ],
+  ];
+
+  // 权限表
+  $schema['baas_auth_permissions'] = [
+    'description' => 'Stores role permissions.',
+    'fields' => [
+      'id' => [
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique permission ID.',
+      ],
+      'role_name' => [
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'description' => 'The role name.',
+      ],
+      'resource' => [
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'description' => 'The resource name.',
+      ],
+      'operation' => [
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'description' => 'The operation name (create, read, update, delete).',
+      ],
+      'tenant_id' => [
+        'type' => 'varchar',
+        'length' => 64,
+        'description' => 'Optional tenant ID for tenant-specific permissions.',
+      ],
+      'created' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Timestamp when the permission was created.',
+      ],
+    ],
+    'primary key' => ['id'],
+    'unique keys' => [
+      'role_resource_operation_tenant' => ['role_name', 'resource', 'operation', 'tenant_id'],
+    ],
+    'indexes' => [
+      'idx_role_resource' => ['role_name', 'resource'],
+      'idx_tenant_id' => ['tenant_id'],
+    ],
+  ];
+
+  // 用户-租户关联表
+  $schema['baas_user_tenant_mapping'] = [
+    'description' => 'Stores user-tenant relationship mappings.',
+    'fields' => [
+      'id' => [
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique mapping ID.',
+      ],
+      'user_id' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'The Drupal user ID (users_field_data.uid).',
+      ],
+      'tenant_id' => [
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'description' => 'The tenant ID (baas_tenant_config.tenant_id).',
+      ],
+      'role' => [
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => 'tenant_user',
+        'description' => 'The user role within this tenant.',
+      ],
+      'is_owner' => [
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Whether this user is the tenant owner (1=yes, 0=no).',
+      ],
+      'status' => [
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 1,
+        'description' => 'Status: 1=active, 0=inactive.',
+      ],
+      'created' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Timestamp when the mapping was created.',
+      ],
+      'updated' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Timestamp when the mapping was last updated.',
+      ],
+    ],
+    'primary key' => ['id'],
+    'unique keys' => [
+      'user_tenant' => ['user_id', 'tenant_id'],
+    ],
+    'indexes' => [
+      'idx_user_id' => ['user_id'],
+      'idx_tenant_id' => ['tenant_id'],
+      'idx_role' => ['role'],
+      'idx_is_owner' => ['is_owner'],
+      'idx_status' => ['status'],
+    ],
+  ];
+
+  return $schema;
+}
+
+/**
+ * Implements hook_install().
+ */
+function baas_auth_install()
+{
+  // 插入默认权限数据
+  $database = Database::getConnection();
+
+  // 默认角色权限
+  $default_permissions = [
+    // 租户管理员权限
+    ['tenant_admin', 'entity', 'create'],
+    ['tenant_admin', 'entity', 'read'],
+    ['tenant_admin', 'entity', 'update'],
+    ['tenant_admin', 'entity', 'delete'],
+    ['tenant_admin', 'user', 'manage'],
+    ['tenant_admin', 'api_key', 'manage'],
+    ['tenant_admin', 'permission', 'assign'],
+    ['tenant_admin', 'session', 'manage'],
+    ['tenant_admin', 'security_log', 'view'],
+
+    // 租户用户权限
+    ['tenant_user', 'entity', 'read'],
+    ['tenant_user', 'entity', 'create'],
+    ['tenant_user', 'entity', 'update'],
+    ['tenant_user', 'session', 'view'],
+
+    // API客户端权限
+    ['api_client', 'entity', 'read'],
+    ['api_client', 'entity', 'create'],
+  ];
+
+  foreach ($default_permissions as $permission) {
+    $database->insert('baas_auth_permissions')
+      ->fields([
+        'role_name' => $permission[0],
+        'resource' => $permission[1],
+        'operation' => $permission[2],
+        'created' => time(),
+      ])
+      ->execute();
+  }
+
+  // 记录安装日志
+  \Drupal::logger('baas_auth')->info('BaaS Authentication module installed successfully.');
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function baas_auth_uninstall()
+{
+  // 清理配置
+  \Drupal::configFactory()->getEditable('baas_auth.jwt')->delete();
+  \Drupal::configFactory()->getEditable('baas_auth.security')->delete();
+  \Drupal::configFactory()->getEditable('baas_auth.permissions')->delete();
+  \Drupal::configFactory()->getEditable('baas_auth.default_roles')->delete();
+
+  // 记录卸载日志
+  \Drupal::logger('baas_auth')->info('BaaS Authentication module uninstalled successfully.');
+}
+
+
+/**
+ * 创建租户邀请表 (Update 9002).
+ */
+function baas_auth_update_9002()
+{
+  $database = \Drupal::database();
+  $schema = $database->schema();
+
+  // 定义租户邀请表
+  $table_name = 'baas_tenant_invitations';
+  $table_schema = [
+    'description' => 'Stores tenant invitation records.',
+    'fields' => [
+      'id' => [
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique invitation ID.',
+      ],
+      'tenant_id' => [
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'description' => 'The tenant ID that is sending the invitation.',
+      ],
+      'inviter_user_id' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'The Drupal user ID who sent the invitation.',
+      ],
+      'invitee_email' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'The email address of the invited user.',
+      ],
+      'invitee_user_id' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'description' => 'The Drupal user ID of invitee (if they have an account).',
+      ],
+      'invitation_token' => [
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'description' => 'Unique token for the invitation.',
+      ],
+      'invited_role' => [
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => 'tenant_user',
+        'description' => 'The role to assign when invitation is accepted.',
+      ],
+      'status' => [
+        'type' => 'varchar',
+        'length' => 20,
+        'not null' => TRUE,
+        'default' => 'pending',
+        'description' => 'Invitation status: pending, accepted, rejected, expired.',
+      ],
+      'message' => [
+        'type' => 'text',
+        'description' => 'Optional invitation message.',
+      ],
+      'expires_at' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Timestamp when the invitation expires.',
+      ],
+      'accepted_at' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'description' => 'Timestamp when the invitation was accepted.',
+      ],
+      'created' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Timestamp when the invitation was created.',
+      ],
+      'updated' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Timestamp when the invitation was last updated.',
+      ],
+    ],
+    'primary key' => ['id'],
+    'unique keys' => [
+      'invitation_token' => ['invitation_token'],
+    ],
+    'indexes' => [
+      'idx_tenant_id' => ['tenant_id'],
+      'idx_inviter_user_id' => ['inviter_user_id'],
+      'idx_invitee_email' => ['invitee_email'],
+      'idx_invitee_user_id' => ['invitee_user_id'],
+      'idx_status' => ['status'],
+      'idx_expires_at' => ['expires_at'],
+      'idx_tenant_email' => ['tenant_id', 'invitee_email'],
+    ],
+  ];
+
+  // 创建表
+  if (!$schema->tableExists($table_name)) {
+    $schema->createTable($table_name, $table_schema);
+    \Drupal::logger('baas_auth')->info('Created table: @table', ['@table' => $table_name]);
+  }
+
+  return t('Tenant invitation table created successfully.');
+}

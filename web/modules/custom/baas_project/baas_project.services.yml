@@ -1,0 +1,224 @@
+services:
+  # 项目管理服务
+  baas_project.manager:
+    class: Drupal\baas_project\ProjectManager
+    arguments:
+      - '@database'
+      - '@config.factory'
+      - '@logger.factory'
+      - '@event_dispatcher'
+      - '@cache.default'
+      - '@current_user'
+    tags:
+      - { name: 'baas_service' }
+
+  # 项目解析器服务
+  baas_project.resolver:
+    class: Drupal\baas_project\ProjectResolver
+    arguments:
+      - '@database'
+      - '@cache.default'
+      - '@current_user'
+      - '@request_stack'
+      - '@logger.factory'
+    tags:
+      - { name: 'baas_service' }
+
+  # 项目成员管理服务
+  baas_project.member_manager:
+    class: Drupal\baas_project\ProjectMemberManager
+    arguments:
+      - '@database'
+      - '@baas_project.manager'
+      - '@event_dispatcher'
+      - '@logger.factory'
+      - '@entity_type.manager'
+      - '@current_user'
+      - '@cache.default'
+    tags:
+      - { name: 'baas_service' }
+
+  # 项目使用统计服务
+  baas_project.usage_tracker:
+    class: Drupal\baas_project\ProjectUsageTracker
+    arguments:
+      - '@database'
+      - '@cache.default'
+      - '@config.factory'
+      - '@event_dispatcher'
+      - '@logger.factory'
+    tags:
+      - { name: 'baas_service' }
+
+  # 资源限制管理服务
+  baas_project.resource_limit_manager:
+    class: Drupal\baas_project\Service\ResourceLimitManager
+    arguments:
+      - '@database'
+      - '@config.factory'
+      - '@logger.factory'
+      - '@cache.default'
+      - '@baas_project.manager'
+      - '@baas_tenant.manager'
+    tags:
+      - { name: 'baas_service' }
+
+  # 项目级限流服务
+  baas_project.project_rate_limit_service:
+    class: Drupal\baas_project\Service\ProjectRateLimitService
+    arguments: 
+      - '@baas_api.rate_limiter'
+      - '@baas_project.manager'
+      - '@baas_project.resource_limit_manager'
+      - '@logger.factory'
+    tags:
+      - { name: 'baas_service' }
+
+  # 项目数据迁移服务
+  baas_project.migration:
+    class: Drupal\baas_project\ProjectMigrationService
+    arguments:
+      - '@database'
+      - '@baas_project.manager'
+      - '@logger.factory'
+      - '@event_dispatcher'
+    tags:
+      - { name: 'baas_service' }
+
+  # 项目事件订阅器
+  baas_project.event_subscriber:
+    class: Drupal\baas_project\EventSubscriber\ProjectEventSubscriber
+    arguments:
+      - '@database'
+      - '@current_user'
+      - '@entity_type.manager'
+      - '@plugin.manager.mail'
+      - '@baas_project.usage_tracker'
+      - '@baas_project.member_manager'
+      - '@logger.factory'
+    tags:
+      - { name: 'event_subscriber' }
+
+  # 租户项目事件订阅器 - 监听租户创建事件
+  baas_project.tenant_project_subscriber:
+    class: Drupal\baas_project\EventSubscriber\TenantProjectSubscriber
+    arguments:
+      - '@baas_project.manager'
+      - '@logger.factory'
+    tags:
+      - { name: 'event_subscriber' }
+
+  # 项目路由增强器
+  baas_project.route_enhancer:
+    class: Drupal\baas_project\Routing\ProjectRouteEnhancer
+    arguments:
+      - '@baas_project.resolver'
+    tags:
+      - { name: 'route_enhancer', priority: 100 }
+
+  # 项目访问检查器
+  baas_project.access_checker:
+    class: Drupal\baas_project\Access\ProjectAccessChecker
+    arguments:
+      - '@baas_project.resolver'
+      - '@baas_project.member_manager'
+    tags:
+      - { name: 'access_check', applies_to: '_project_access' }
+
+  # 项目权限事件订阅器 - 自动处理角色变更时的权限映射
+  baas_project.permission_subscriber:
+    class: Drupal\baas_project\EventSubscriber\ProjectPermissionSubscriber
+    arguments:
+      - '@entity_type.manager'
+      - '@logger.factory'
+    tags:
+      - { name: 'event_subscriber' }
+
+  # 实体访问权限检查器 - 控制实体操作的项目角色权限
+  baas_project.entity_access_checker:
+    class: Drupal\baas_project\Access\EntityAccessChecker
+    arguments:
+      - '@database'
+      - '@baas_project.manager'
+    tags:
+      - { name: 'baas_service' }
+
+  # 项目实体生成器服务 - 生成项目级动态实体类文件
+  baas_project.entity_generator:
+    class: Drupal\baas_project\Service\ProjectEntityGenerator
+    arguments:
+      - '@database'
+      - '@file_system'
+      - '@module_handler'
+      - '@baas_project.manager'
+      - '@baas_project.table_name_generator'
+    tags:
+      - { name: 'baas_service' }
+
+  # 项目实体注册服务 - 向Drupal注册项目级动态实体类型
+  baas_project.entity_registry:
+    class: Drupal\baas_project\Service\ProjectEntityRegistry
+    arguments:
+      - '@database'
+      - '@baas_project.table_name_generator'
+    tags:
+      - { name: 'baas_service' }
+
+  # 项目表名生成器服务 - 生成精简的项目实体表名
+  baas_project.table_name_generator:
+    class: Drupal\baas_project\Service\ProjectTableNameGenerator
+    arguments:
+      - '@database'
+    tags:
+      - { name: 'baas_service' }
+
+  # 项目实体清理服务 - 清理删除的项目实体相关文件和数据
+  baas_project.entity_cleanup:
+    class: Drupal\baas_project\Service\ProjectEntityCleanupService
+    arguments:
+      - '@database'
+      - '@file_system'
+      - '@baas_project.table_name_generator'
+    tags:
+      - { name: 'baas_service' }
+
+  # 项目实体模板管理服务 - 遵循Drupal Entity流转规范的实体模板管理
+  baas_project.entity_template_manager:
+    class: Drupal\baas_project\Service\ProjectEntityTemplateManager
+    arguments:
+      - '@database'
+      - '@entity_type.manager'
+      - '@cache.default'
+      - '@module_handler'
+      - '@current_user'
+      - '@file_system'
+      - '@baas_project.entity_generator'
+      - '@baas_project.table_name_generator'
+    tags:
+      - { name: 'baas_service' }
+
+  # 文件字段扩展服务 - 自动扩展实体响应中的文件引用字段
+  baas_project.file_field_expander:
+    class: Drupal\baas_project\Service\FileFieldExpander
+    arguments:
+      - '@entity_type.manager'
+      - '@file_url_generator'
+      - '@logger.channel.baas_api'
+    tags:
+      - { name: 'baas_service' }
+
+  # ltrim()错误修复事件订阅器
+  baas_project.ltrim_fix_subscriber:
+    class: Drupal\baas_project\EventSubscriber\LtrimFixSubscriber
+    tags:
+      - { name: event_subscriber }
+
+  # 项目级限流事件订阅器
+  baas_project.rate_limit_subscriber:
+    class: Drupal\baas_project\EventSubscriber\ProjectRateLimitSubscriber
+    arguments:
+      - '@baas_project.project_rate_limit_service'
+      - '@baas_api.response'
+      - '@logger.factory'
+    tags:
+      - { name: event_subscriber }

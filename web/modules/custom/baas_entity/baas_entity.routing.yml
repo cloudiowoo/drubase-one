@@ -1,0 +1,318 @@
+baas_entity.list:
+  path: '/admin/baas/entity/templates'
+  defaults:
+    _controller: '\Drupal\baas_entity\Controller\EntityTemplateController::listTemplates'
+    _title: '实体模板列表'
+  requirements:
+    _permission: 'administer baas entity templates'
+
+baas_entity.add:
+  path: '/admin/baas/entity/templates/add'
+  defaults:
+    _form: '\Drupal\baas_entity\Form\EntityTemplateForm'
+    _title: '添加实体模板'
+  requirements:
+    _permission: 'administer baas entity templates'
+
+baas_entity.edit:
+  path: '/admin/baas/entity/templates/{template_id}/edit'
+  defaults:
+    _form: '\Drupal\baas_entity\Form\EntityTemplateForm'
+    _title: '编辑实体模板'
+  requirements:
+    _permission: 'administer baas entity templates'
+
+baas_entity.delete:
+  path: '/admin/baas/entity/templates/{template_id}/delete'
+  defaults:
+    _form: '\Drupal\baas_entity\Form\EntityTemplateDeleteForm'
+    _title: '删除实体模板'
+  requirements:
+    _permission: 'administer baas entity templates'
+
+baas_entity.fields:
+  path: '/admin/baas/entity/templates/{template_id}/fields'
+  defaults:
+    _controller: '\Drupal\baas_entity\Controller\EntityFieldController::listFields'
+    _title: '字段列表'
+  requirements:
+    _permission: 'administer baas entity templates'
+
+baas_entity.field_add:
+  path: '/admin/baas/entity/templates/{template_id}/fields/add'
+  defaults:
+    _form: '\Drupal\baas_entity\Form\EntityFieldForm'
+    _title: '添加字段'
+  requirements:
+    _permission: 'administer baas entity templates'
+
+baas_entity.field_edit:
+  path: '/admin/baas/entity/templates/{template_id}/fields/{field_id}/edit'
+  defaults:
+    _form: '\Drupal\baas_entity\Form\EntityFieldForm'
+    _title: '编辑字段'
+  requirements:
+    _permission: 'administer baas entity templates'
+
+baas_entity.field_delete:
+  path: '/admin/baas/entity/templates/{template_id}/fields/{field_id}/delete'
+  defaults:
+    _form: '\Drupal\baas_entity\Form\EntityFieldDeleteForm'
+    _title: '删除字段'
+  requirements:
+    _permission: 'administer baas entity templates'
+
+baas_entity.api_tenant_templates:
+  path: '/api/tenant/{tenant_id}/templates'
+  defaults:
+    _controller: '\Drupal\baas_entity\Controller\EntityTemplateApiController::listTemplates'
+  requirements:
+    _permission: 'access tenant entity templates'
+  methods: [GET]
+  options:
+    _auth: ['api_key']
+
+baas_entity.api_tenant_template:
+  path: '/api/tenant/{tenant_id}/templates/{template_name}'
+  defaults:
+    _controller: '\Drupal\baas_entity\Controller\EntityTemplateApiController::getTemplate'
+  requirements:
+    _permission: 'access tenant entity templates'
+  methods: [GET]
+  options:
+    _auth: ['api_key']
+
+baas_entity.api_tenant_template_fields:
+  path: '/api/tenant/{tenant_id}/templates/{template_name}/fields'
+  defaults:
+    _controller: '\Drupal\baas_entity\Controller\EntityTemplateApiController::listTemplateFields'
+  requirements:
+    _permission: 'access tenant entity templates'
+  methods: [GET]
+  options:
+    _auth: ['api_key']
+
+baas_entity.current_tenant_templates:
+  path: '/api/tenant/current/templates'
+  defaults:
+    _controller: '\Drupal\baas_entity\Controller\EntityTemplateApiController::listTemplatesByDomain'
+  requirements:
+    _permission: 'access tenant entity templates'
+  methods: [GET]
+  options:
+    _auth: ['api_key']
+
+baas_entity.current_tenant_template:
+  path: '/api/tenant/current/templates/{template_name}'
+  defaults:
+    _controller: '\Drupal\baas_entity\Controller\EntityTemplateApiController::getTemplateByDomain'
+  requirements:
+    _permission: 'access tenant entity templates'
+  methods: [GET]
+  options:
+    _auth: ['api_key']
+
+baas_entity.current_tenant_template_fields:
+  path: '/api/tenant/current/templates/{template_name}/fields'
+  defaults:
+    _controller: '\Drupal\baas_entity\Controller\EntityTemplateApiController::listTemplateFieldsByDomain'
+  requirements:
+    _permission: 'access tenant entity templates'
+  methods: [GET]
+  options:
+    _auth: ['api_key']
+
+# 实体数据路由
+
+# 基于租户ID的实体数据路由
+baas_entity.api_tenant_entities:
+  path: '/api/tenant/{tenant_id}/{entity_name}'
+  defaults:
+    _controller: '\Drupal\baas_entity\Controller\EntityDataApiController::listEntities'
+  requirements:
+    _permission: 'access tenant entity data'
+  methods: [GET]
+  options:
+    _auth: ['api_key']
+
+baas_entity.api_tenant_entity:
+  path: '/api/tenant/{tenant_id}/{entity_name}/{id}'
+  defaults:
+    _controller: '\Drupal\baas_entity\Controller\EntityDataApiController::getEntity'
+  requirements:
+    _permission: 'access tenant entity data'
+  methods: [GET]
+  options:
+    _auth: ['api_key']
+
+baas_entity.api_tenant_entity_create:
+  path: '/api/tenant/{tenant_id}/{entity_name}'
+  defaults:
+    _controller: '\Drupal\baas_entity\Controller\EntityDataApiController::createEntity'
+  requirements:
+    _permission: 'create tenant entity data'
+  methods: [POST]
+  options:
+    _auth: ['api_key']
+
+
+baas_entity.api_tenant_entity_update:
+  path: '/api/tenant/{tenant_id}/{entity_name}/{id}'
+  defaults:
+    _controller: '\Drupal\baas_entity\Controller\EntityDataApiController::updateEntity'
+  requirements:
+    _permission: 'update tenant entity data'
+  methods: [PUT]
+  options:
+    _auth: ['api_key']
+
+
+baas_entity.api_tenant_entity_delete:
+  path: '/api/tenant/{tenant_id}/{entity_name}/{id}'
+  defaults:
+    _controller: '\Drupal\baas_entity\Controller\EntityDataApiController::deleteEntity'
+  requirements:
+    _permission: 'delete tenant entity data'
+  methods: [DELETE]
+  options:
+    _auth: ['api_key']
+
+baas_entity.api_tenant_entity_reference_search:
+  path: '/api/tenant/{tenant_id}/{entity_name}/fields/{field_name}/search'
+  defaults:
+    _controller: '\Drupal\baas_entity\Controller\EntityDataApiController::searchReferencableEntities'
+  requirements:
+    _permission: 'access tenant entity data'
+  methods: [GET]
+  options:
+    _auth: ['api_key']
+
+# 基于当前租户的实体数据路由
+baas_entity.current_tenant_entities:
+  path: '/api/tenant/current/{entity_name}'
+  defaults:
+    _controller: '\Drupal\baas_entity\Controller\EntityDataApiController::listCurrentTenantEntities'
+  requirements:
+    _permission: 'access tenant entity data'
+  methods: [GET]
+  options:
+    _auth: ['api_key']
+
+baas_entity.current_tenant_entity:
+  path: '/api/tenant/current/{entity_name}/{id}'
+  defaults:
+    _controller: '\Drupal\baas_entity\Controller\EntityDataApiController::getCurrentTenantEntity'
+  requirements:
+    _permission: 'access tenant entity data'
+  methods: [GET]
+  options:
+    _auth: ['api_key']
+
+baas_entity.current_tenant_entity_create:
+  path: '/api/tenant/current/{entity_name}'
+  defaults:
+    _controller: '\Drupal\baas_entity\Controller\EntityDataApiController::createCurrentTenantEntity'
+  requirements:
+    _permission: 'create tenant entity data'
+  methods: [POST]
+  options:
+    _auth: ['api_key']
+
+baas_entity.current_tenant_entity_update:
+  path: '/api/tenant/current/{entity_name}/{id}'
+  defaults:
+    _controller: '\Drupal\baas_entity\Controller\EntityDataApiController::updateCurrentTenantEntity'
+  requirements:
+    _permission: 'update tenant entity data'
+  methods: [PUT]
+  options:
+    _auth: ['api_key']
+
+baas_entity.current_tenant_entity_delete:
+  path: '/api/tenant/current/{entity_name}/{id}'
+  defaults:
+    _controller: '\Drupal\baas_entity\Controller\EntityDataApiController::deleteCurrentTenantEntity'
+  requirements:
+    _permission: 'delete tenant entity data'
+  methods: [DELETE]
+  options:
+    _auth: ['api_key']
+
+baas_entity.current_tenant_entity_reference_search:
+  path: '/api/tenant/current/{entity_name}/fields/{field_name}/search'
+  defaults:
+    _controller: '\Drupal\baas_entity\Controller\EntityDataApiController::searchCurrentTenantReferencableEntities'
+  requirements:
+    _permission: 'access tenant entity data'
+  methods: [GET]
+  options:
+    _auth: ['api_key']
+
+# 实体生成相关路由
+baas_entity.generate:
+  path: '/admin/structure/baas_entity/generate/{template_id}'
+  defaults:
+    _controller: '\Drupal\baas_entity\Controller\EntityGeneratorController::generateEntity'
+    _title: '生成实体类型'
+  requirements:
+    _permission: 'administer baas_entity entities'
+  options:
+    parameters:
+      template_id:
+        type: integer
+
+baas_entity.regenerate:
+  path: '/admin/structure/baas_entity/regenerate/{template_id}'
+  defaults:
+    _controller: '\Drupal\baas_entity\Controller\EntityGeneratorController::regenerateEntity'
+    _title: '重新生成实体类型'
+  requirements:
+    _permission: 'administer baas_entity entities'
+  options:
+    parameters:
+      template_id:
+        type: integer
+
+# 项目级别的实体数据路由（支持文件上传）
+baas_entity.api_project_entities:
+  path: '/api/v1/{tenant_id}/projects/{project_id}/entities/{entity_name}'
+  defaults:
+    _controller: '\Drupal\baas_entity\Controller\EntityDataWithFilesApiController::createEntityWithFiles'
+  requirements:
+    _custom_access: '\Drupal\baas_project\Access\ProjectAccessChecker::accessEdit'
+  methods: [POST]
+  options:
+    _auth: ['api_key', 'jwt']
+    _project_required: true
+
+baas_entity.api_project_entity_update:
+  path: '/api/v1/{tenant_id}/projects/{project_id}/entities/{entity_name}/{id}/upload'
+  defaults:
+    _controller: '\Drupal\baas_entity\Controller\EntityDataWithFilesApiController::updateEntityWithFiles'
+  requirements:
+    _permission: 'update tenant entity data'
+  methods: [POST, PUT]
+  options:
+    _auth: ['api_key', 'jwt']
+
+# API端点：生成实体类型
+baas_entity.api.generate:
+  path: '/api/entity/generate'
+  defaults:
+    _controller: '\Drupal\baas_entity\Controller\EntityGeneratorController::apiGenerateEntity'
+  methods: [POST]
+  requirements:
+    _permission: 'administer baas_entity entities'
+  options:
+    _auth: ['basic_auth', 'cookie']
+
+# 密码验证API端点
+baas_entity.api.password_verify:
+  path: '/api/v1/baas/password/verify'
+  defaults:
+    _controller: '\Drupal\baas_entity\Controller\PasswordVerificationController::verifyPassword'
+  methods: [POST]
+  requirements:
+    _access: 'TRUE'
+  options:
+    _auth: ['api_key', 'jwt']

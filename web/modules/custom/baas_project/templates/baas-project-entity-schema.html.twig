@@ -1,0 +1,180 @@
+{#
+/**
+ * @file
+ * BaaS项目实体关系图模板
+ *
+ * Available variables:
+ * - entities: 实体列表，包含字段信息
+ * - relationships: 实体间关系数据
+ * - project: 项目信息
+ * - tenant_id: 租户ID
+ * - project_id: 项目ID
+ */
+#}
+
+<div class="entity-schema-container">
+  <!-- 头部工具栏 -->
+  <div class="schema-header">
+    <h2>{{ 'Entity Schema'|t }} - {{ project.name ?: project_id }}</h2>
+    <div class="schema-stats">
+      <span class="stat-item">{{ 'Entities'|t }}: <strong>{{ entities|length }}</strong></span>
+      <span class="stat-item">{{ 'Total Fields'|t }}: <strong>{{ entities|reduce((carry, entity) => carry + entity.fields|length, 0) }}</strong></span>
+      <span class="stat-item">{{ 'Total Records'|t }}: <strong>{{ entities|reduce((carry, entity) => carry + entity.record_count, 0) }}</strong></span>
+    </div>
+  </div>
+
+  <!-- 视图切换按钮 -->
+  <div class="view-toggle">
+    <a href="{{ path('baas_project.entities', {tenant_id: tenant_id, project_id: project_id}) }}" class="button">
+      {{ 'Grid View'|t }}
+    </a>
+    <a href="{{ path('baas_project.entity_schema', {tenant_id: tenant_id, project_id: project_id}) }}" class="button button--primary">
+      {{ 'Schema View'|t }}
+    </a>
+  </div>
+
+  {% if entities|length > 0 %}
+    <!-- 实体关系图 -->
+    <div class="entity-diagram">
+      {% for entity in entities %}
+        <div class="entity-table" data-entity="{{ entity.name }}">
+          <!-- 表头 -->
+          <div class="table-header">
+            <div class="table-name">{{ entity.label ?: entity.name }}</div>
+            <div class="table-count">{{ entity.record_count }} {{ 'records'|t }}</div>
+          </div>
+          
+          <!-- 字段列表 -->
+          <div class="table-fields">
+            {% if entity.fields|length > 0 %}
+              {% for field in entity.fields %}
+                <div class="field-row {{ field.required ? 'required' : '' }} {{ field.name == 'id' ? 'primary-key' : '' }} {{ field.type == 'reference' ? 'reference-field' : '' }}">
+                  <span class="field-name">{{ field.name }}</span>
+                  <span class="field-type">{{ field.type|replace({'_': ' '})|title }}</span>
+                  {% if field.required %}
+                    <span class="field-indicator required-indicator">*</span>
+                  {% endif %}
+                  {% if field.name == 'id' %}
+                    <span class="field-indicator key-indicator">🔑</span>
+                  {% endif %}
+                  {% if field.type == 'reference' %}
+                    <span class="field-indicator reference-indicator">🔗</span>
+                  {% endif %}
+                </div>
+              {% endfor %}
+            {% else %}
+              <div class="field-row empty-fields">
+                <span class="field-name">{{ 'No fields defined'|t }}</span>
+              </div>
+            {% endif %}
+          </div>
+
+          <!-- 表格操作 -->
+          <div class="table-actions">
+            <a href="{{ path('baas_project.entity_data', {tenant_id: tenant_id, project_id: project_id, entity_name: entity.name}) }}" class="table-action-link">
+              {{ 'View Data'|t }}
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- 强化的连线指示器区域 -->
+    {% if relationships|length > 0 %}
+      <div class="relationship-indicators">
+        <h3 style="margin: 0 0 20px 0; color: #007bff; text-align: center; font-size: 1.3rem;">
+          🔗 {{ 'Entity Relationships'|t }} ({{ relationships|length }})
+        </h3>
+        {% for relationship in relationships %}
+          <div class="relation-indicator relation-{{ loop.index }}" 
+               data-source="{{ relationship.source_entity }}"
+               data-target="{{ relationship.target_entity }}">
+            <div class="relation-line"></div>
+            <div class="relation-label">
+              <strong>{{ relationship.source_entity }}</strong> 
+              ➡️ 
+              <strong>{{ relationship.target_entity }}</strong>
+              <br>
+              <small>(via {{ relationship.field_name }})</small>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="relationship-indicators">
+        <h3 style="margin: 0; color: #6c757d; text-align: center; font-style: italic;">
+          {{ 'No relationships found between entities'|t }}
+        </h3>
+      </div>
+    {% endif %}
+
+    <!-- 关系信息面板 -->
+    {% if relationships|length > 0 %}
+      <div class="relationships-panel">
+        <h3>{{ 'Entity Relationships'|t }}</h3>
+        <div class="relationships-list">
+          {% for relationship in relationships %}
+            <div class="relationship-item">
+              <span class="relationship-source">{{ relationship.source_entity }}</span>
+              <span class="relationship-connector">
+                {% if relationship.multiple == 'one_to_many' %}
+                  →→
+                {% else %}
+                  →
+                {% endif %}
+              </span>
+              <span class="relationship-target">{{ relationship.target_entity }}</span>
+              <span class="relationship-field">({{ relationship.field_name }})</span>
+              {% if relationship.required %}
+                <span class="relationship-required">*</span>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- 图例说明 -->
+    <div class="schema-legend">
+      <div class="legend-item">
+        <span class="legend-icon key-indicator">🔑</span>
+        <span class="legend-text">{{ 'Primary Key'|t }}</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-icon required-indicator">*</span>
+        <span class="legend-text">{{ 'Required Field'|t }}</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-icon reference-indicator">🔗</span>
+        <span class="legend-text">{{ 'Reference Field'|t }}</span>
+      </div>
+      <div class="legend-item">
+        <span class="legend-icon entity-count">{{ entities|length }}</span>
+        <span class="legend-text">{{ 'Total Entities'|t }}</span>
+      </div>
+      {% if relationships|length > 0 %}
+        <div class="legend-item">
+          <span class="legend-icon relationships-count">{{ relationships|length }}</span>
+          <span class="legend-text">{{ 'Relationships'|t }}</span>
+        </div>
+      {% endif %}
+    </div>
+
+  {% else %}
+    <!-- 空状态 -->
+    <div class="empty-state">
+      <h3>{{ 'No Entities Found'|t }}</h3>
+      <p>{{ 'This project does not have any entities yet.'|t }}</p>
+      <a href="{{ path('baas_project.entity_template_create', {tenant_id: tenant_id, project_id: project_id}) }}" class="button button--primary">
+        {{ 'Create First Entity'|t }}
+      </a>
+    </div>
+  {% endif %}
+
+  <!-- 返回按钮 -->
+  <div class="schema-actions">
+    <a href="{{ path('baas_project.user_view', {tenant_id: tenant_id, project_id: project_id}) }}" class="button">
+      {{ 'Back to Project'|t }}
+    </a>
+  </div>
+</div>

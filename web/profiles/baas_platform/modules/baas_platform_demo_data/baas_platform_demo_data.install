@@ -1,0 +1,106 @@
+<?php
+
+/**
+ * @file
+ * Install functions for BaaS Platform Demo Data module.
+ *
+ * 参照demo_umami模式完全重构，使用InstallHelper统一处理所有导入
+ * 包括系统用户、租户配置、项目配置、动态实体创建和业务数据导入
+ */
+
+use Drupal\baas_platform_demo_data\InstallHelper;
+
+/**
+ * Implements hook_install().
+ */
+function baas_platform_demo_data_install($is_syncing) {
+  if (!$is_syncing) {
+    // 检查是否已有任何Groups demo数据记录
+    if (\Drupal::hasService('baas_project.table_name_generator')) {
+      $table_name_generator = \Drupal::service('baas_project.table_name_generator');
+      $demo_table = $table_name_generator->generateTableName(
+        'tenant_7375b0cd',
+        'tenant_7375b0cd_project_6888d012be80c',
+        'users'
+      );
+
+      if (\Drupal::database()->schema()->tableExists($demo_table)) {
+        $existing_demo_data = \Drupal::database()->select($demo_table, 'u')
+          ->condition('is_demo', TRUE)
+          ->countQuery()
+          ->execute()
+          ->fetchField();
+
+        if ($existing_demo_data > 0) {
+          \Drupal::logger('baas_platform_demo_data')->info('Groups demo data already exists, skipping import.');
+          return;
+        }
+      }
+    }
+
+    try {
+      // 使用完全重构的InstallHelper统一处理所有导入（系统用户 + 动态实体 + 业务数据）
+      $install_helper = \Drupal::classResolver(InstallHelper::class);
+      $import_results = $install_helper->importCompleteGroupsProject();
+
+      if (!$import_results['success']) {
+        \Drupal::logger('baas_platform_demo_data')->error('Complete Groups project import failed: @errors', [
+          '@errors' => implode(', ', $import_results['errors'])
+        ]);
+        return;
+      }
+
+      // 标记demo数据已导入
+      \Drupal::state()->set('baas_platform.demo_data_imported', TRUE);
+      \Drupal::state()->set('baas_platform.demo_project_type', 'groups_sports_original');
+      \Drupal::state()->set('baas_platform.demo_tenant_id', 'tenant_7375b0cd');
+      \Drupal::state()->set('baas_platform.demo_project_id', 'tenant_7375b0cd_project_6888d012be80c');
+
+      $total_records = array_sum($import_results['data_imported'] ?? []);
+      $system_users_count = count($import_results['system_users_imported']['drupal_users'] ?? []);
+      \Drupal::messenger()->addMessage(t('Groups Sports project imported successfully! @users system users, @records demo records, @entities entity files deployed, @tables tables created.', [
+        '@users' => $system_users_count,
+        '@records' => $total_records,
+        '@entities' => count($import_results['entity_files_deployed'] ?? []),
+        '@tables' => count($import_results['entity_tables_created'] ?? []),
+      ]));
+
+      \Drupal::logger('baas_platform_demo_data')->info('Groups Sports project imported successfully! @users system users, @records demo records, @entities entity files deployed, @tables tables created.', [
+        '@users' => $system_users_count,
+        '@records' => $total_records,
+        '@entities' => count($import_results['entity_files_deployed'] ?? []),
+        '@tables' => count($import_results['entity_tables_created'] ?? []),
+      ]);
+
+    } catch (\Exception $e) {
+      \Drupal::logger('baas_platform_demo_data')->error('Groups demo data import failed: @error', ['@error' => $e->getMessage()]);
+      \Drupal::messenger()->addError(t('Groups demo data import failed. Check logs for details.'));
+    }
+  }
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function baas_platform_demo_data_uninstall($is_syncing) {
+  if (!$is_syncing) {
+    try {
+      // 使用InstallHelper删除所有导入的内容
+      $install_helper = \Drupal::classResolver(InstallHelper::class);
+      $install_helper->deleteImportedContent();
+
+      // 清理状态变量
+      \Drupal::state()->delete('baas_platform.demo_data_imported');
+      \Drupal::state()->delete('baas_platform.demo_project_type');
+      \Drupal::state()->delete('baas_platform.demo_tenant_id');
+      \Drupal::state()->delete('baas_platform.demo_project_id');
+
+      \Drupal::logger('baas_platform_demo_data')->info('Groups demo data has been completely removed');
+
+    } catch (\Exception $e) {
+      \Drupal::logger('baas_platform_demo_data')->error('Failed to remove Groups demo data: @error', [
+        '@error' => $e->getMessage()
+      ]);
+    }
+  }
+}

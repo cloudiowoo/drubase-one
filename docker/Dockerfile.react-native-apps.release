@@ -1,0 +1,14 @@
+# 发行版Dockerfile - 使用预编译的前端应用
+# 与开发版Dockerfile的区别：直接使用已构建的dist目录，无需源码和构建过程
+
+FROM nginx:alpine AS production
+
+# 复制预编译的应用文件
+COPY ../apps/groups/dist /usr/share/nginx/html
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost/ || exit 1
+
+# 启动nginx
+CMD ["nginx", "-g", "daemon off;"]

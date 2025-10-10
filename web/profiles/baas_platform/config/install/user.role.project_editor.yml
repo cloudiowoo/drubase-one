@@ -1,0 +1,14 @@
+langcode: zh-hans
+status: true
+id: project_editor
+label: 项目编辑者
+weight: 3
+is_admin: false
+permissions:
+  - 'access baas project api'
+  - 'access baas project content'
+  - 'create baas project content'
+  - 'edit baas project'
+  - 'edit baas project content'
+  - 'view baas project'
+

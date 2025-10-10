@@ -1,0 +1,19 @@
+administer baas realtime:
+  title: 'Administer BaaS Realtime'
+  description: 'Configure BaaS realtime settings and manage connections'
+
+access realtime:
+  title: 'Access Realtime'
+  description: 'Access real-time data synchronization features'
+
+view realtime data:
+  title: 'View Realtime Data'
+  description: 'View real-time data updates from subscribed channels'
+
+broadcast realtime messages:
+  title: 'Broadcast Realtime Messages'
+  description: 'Send broadcast messages to realtime channels'
+
+manage realtime presence:
+  title: 'Manage Realtime Presence'
+  description: 'Participate in presence channels and manage online status'

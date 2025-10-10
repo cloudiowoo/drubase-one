@@ -1,0 +1,12 @@
+uuid: null
+name: 'Drubase One'
+mail: admin@drubase-one.local
+slogan: 'Enterprise Backend-as-a-Service Platform'
+page:
+  403: ''
+  404: ''
+  front: /user/login
+admin_compact_mode: false
+weight_select_max: 100
+langcode: en
+default_langcode: en

@@ -1,0 +1,72 @@
+# BaaS文件模块库定义
+
+# 统一文件管理器
+file-manager:
+  css:
+    component:
+      css/file-manager.css: {}
+  js:
+    js/file-manager.js: {}
+  dependencies:
+    - core/drupal
+    - core/drupalSettings
+    - core/jquery
+
+# 租户媒体管理界面
+tenant-media-manager:
+  css:
+    component:
+      css/tenant-media-manager.css: {}
+  js:
+    js/tenant-media-manager.js: {}
+  dependencies:
+    - core/drupal
+    - core/drupalSettings
+    - core/jquery
+
+# 项目媒体管理界面
+project-media-manager:
+  css:
+    component:
+      css/project-media-manager.css: {}
+  js:
+    js/project-media-manager.js: {}
+  dependencies:
+    - core/drupal
+    - core/drupalSettings
+    - core/jquery
+
+# 管理员媒体管理界面
+admin-media-manager:
+  css:
+    component:
+      css/admin-media-manager.css: {}
+  js:
+    js/admin-media-manager.js: {}
+  dependencies:
+    - core/drupal
+    - core/drupalSettings
+    - core/jquery
+
+# 文件字段类型插件
+field-type-file:
+  css:
+    component:
+      css/field-type-file.css: {}
+  js:
+    js/field-type-file.js: {}
+  dependencies:
+    - core/drupal
+    - core/drupalSettings
+
+# 文件上传组件
+file-upload:
+  css:
+    component:
+      css/file-upload.css: {}
+  js:
+    js/file-upload.js: {}
+  dependencies:
+    - core/drupal
+    - core/drupalSettings
+    - core/jquery

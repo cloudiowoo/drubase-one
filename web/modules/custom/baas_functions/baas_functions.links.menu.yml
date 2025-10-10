@@ -1,0 +1,31 @@
+# BaaS Functions administration menu links
+
+# 系统级管理菜单
+baas_functions.admin:
+  title: '函数管理'
+  description: 'Edge Functions 服务管理和配置'
+  route_name: baas_functions.settings
+  parent: baas.admin
+  weight: 60
+
+baas_functions.admin.settings:
+  title: '函数设置'
+  description: '配置 Edge Functions 服务设置'
+  route_name: baas_functions.settings
+  parent: baas_functions.admin
+  weight: 10
+
+baas_functions.admin.nodejs_status:
+  title: 'Node.js 服务状态'
+  description: '检查 Node.js Functions 服务状态'
+  route_name: baas_functions.nodejs_status
+  parent: baas_functions.admin
+  weight: 20
+
+# 用户账户菜单 - 租户用户前台界面
+baas_functions.user_menu:
+  title: '我的函数'
+  description: '管理项目中的 Edge Functions'
+  menu_name: account
+  route_name: baas_functions.user_dashboard
+  weight: 20

@@ -1,0 +1,7 @@
+baas_platform.demo_import:
+  path: '/admin/config/baas/demo-data'
+  defaults:
+    _form: '\Drupal\baas_platform\Form\DemoDataImportForm'
+    _title: 'Import Demo Data'
+  requirements:
+    _permission: 'administer site configuration'

@@ -1,0 +1,11 @@
+name: 'BaaS Project Management'
+description: 'Provides project-level management and isolation for BaaS platform'
+type: module
+core_version_requirement: ^11
+package: 'BaaS Platform'
+dependencies:
+  - drupal:user
+  - baas_tenant:baas_tenant
+  - baas_entity:baas_entity
+  - baas_file:baas_file
+version: '1.1.0-beta.6'

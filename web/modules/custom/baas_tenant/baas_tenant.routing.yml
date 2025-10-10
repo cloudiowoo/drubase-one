@@ -1,0 +1,256 @@
+# 系统管理路由（仅管理员）
+baas_tenant.admin_list:
+  path: '/admin/config/baas/tenants'
+  defaults:
+    _controller: 'Drupal\baas_tenant\Controller\TenantController::listTenants'
+    _title: '租户系统管理'
+  requirements:
+    _permission: 'administer baas tenants'
+
+# 注释：用户租户管理路由已移除，用户应直接管理项目而非租户
+# 根据架构设计，用户提权后管理项目，租户是后台概念
+
+baas_tenant.view:
+  path: '/admin/config/baas/tenants/{tenant_id}/view'
+  defaults:
+    _controller: 'Drupal\baas_tenant\Controller\TenantController::viewTenant'
+    _title: '租户详情'
+  requirements:
+    _custom_access: 'baas_tenant.access_check:access'
+  options:
+    parameters:
+      tenant_id:
+        type: string
+    _tenant_operation: 'view'
+
+baas_tenant.add:
+  path: '/admin/config/baas/tenants/add'
+  defaults:
+    _form: 'Drupal\baas_tenant\Form\TenantForm'
+    _title: '添加租户'
+  requirements:
+    _permission: 'administer baas tenants'
+
+# 注释：用户级租户创建路由已移除，用户不应直接创建租户
+# 租户由管理员通过用户提权自动创建
+
+baas_tenant.edit:
+  path: '/admin/config/baas/tenants/{tenant_id}/edit'
+  defaults:
+    _form: 'Drupal\baas_tenant\Form\TenantForm'
+    _title: '编辑租户'
+  requirements:
+    _custom_access: 'baas_tenant.access_check:access'
+  options:
+    parameters:
+      tenant_id:
+        type: string
+    _tenant_operation: 'edit'
+
+baas_tenant.delete:
+  path: '/admin/config/baas/tenants/{tenant_id}/delete'
+  defaults:
+    _form: 'Drupal\baas_tenant\Form\TenantDeleteForm'
+    _title: '删除租户'
+  requirements:
+    _custom_access: 'baas_tenant.access_check:access'
+  options:
+    parameters:
+      tenant_id:
+        type: string
+    _tenant_operation: 'delete'
+
+# 租户成员管理
+baas_tenant.members:
+  path: '/admin/config/baas/tenants/{tenant_id}/members'
+  defaults:
+    _controller: 'Drupal\baas_tenant\Controller\TenantController::listMembers'
+    _title: '租户成员'
+  requirements:
+    _custom_access: 'baas_tenant.access_check:access'
+  options:
+    parameters:
+      tenant_id:
+        type: string
+    _tenant_operation: 'view_members'
+
+baas_tenant.manage_members:
+  path: '/admin/config/baas/tenants/{tenant_id}/members/manage'
+  defaults:
+    _form: 'Drupal\baas_tenant\Form\TenantMemberForm'
+    _title: '管理租户成员'
+  requirements:
+    _custom_access: 'baas_tenant.access_check:access'
+  options:
+    parameters:
+      tenant_id:
+        type: string
+    _tenant_operation: 'manage_members'
+
+# 用户权限提升管理
+baas_tenant.promote_user:
+  path: '/admin/people/{user}/promote-to-tenant'
+  defaults:
+    _controller: 'Drupal\baas_tenant\Controller\TenantPromotionController::promoteUserToTenant'
+    _title: '提升为租户'
+  requirements:
+    _custom_access: 'Drupal\baas_tenant\Controller\TenantPromotionController::checkPromoteAccess'
+  options:
+    parameters:
+      user:
+        type: entity:user
+
+baas_tenant.demote_user:
+  path: '/admin/people/{user}/demote-from-tenant'
+  defaults:
+    _controller: 'Drupal\baas_tenant\Controller\TenantPromotionController::demoteUserFromTenant'
+    _title: '降级租户权限'
+  requirements:
+    _custom_access: 'Drupal\baas_tenant\Controller\TenantPromotionController::checkDemoteAccess'
+  options:
+    parameters:
+      user:
+        type: entity:user
+
+# API密钥管理（管理员）
+baas_tenant.api_key:
+  path: '/admin/config/baas/tenants/{tenant_id}/api-key'
+  defaults:
+    _form: 'Drupal\baas_tenant\Form\TenantApiKeyForm'
+    _title: 'API密钥管理'
+  requirements:
+    _custom_access: 'baas_tenant.access_check:access'
+  options:
+    parameters:
+      tenant_id:
+        type: string
+    _tenant_operation: 'manage_api_keys'
+
+# 租户资源限制配置已移除 - 统一使用系统级API限流配置
+# 系统级限流配置位于: /admin/config/baas/api/settings
+
+# 用户API密钥管理
+baas_tenant.user_api_keys:
+  path: '/user/api-keys'
+  defaults:
+    _controller: 'Drupal\baas_tenant\Controller\UserApiKeyController::userApiKeys'
+    _title: 'API密钥管理'
+  requirements:
+    _custom_access: 'Drupal\baas_tenant\Controller\UserApiKeyController::checkApiKeyAccess'
+
+baas_tenant.user_api_key_create:
+  path: '/user/api-keys/create'
+  defaults:
+    _form: 'Drupal\baas_tenant\Form\UserApiKeyCreateForm'
+    _title: '创建API密钥'
+  requirements:
+    _custom_access: 'Drupal\baas_tenant\Controller\UserApiKeyController::checkApiKeyAccess'
+
+baas_tenant.user_api_key_success:
+  path: '/user/api-keys/success'
+  defaults:
+    _controller: 'Drupal\baas_tenant\Controller\UserApiKeySuccessController::success'
+    _title: 'API密钥创建成功'
+  requirements:
+    _custom_access: 'Drupal\baas_tenant\Controller\UserApiKeyController::checkApiKeyAccess'
+
+baas_tenant.user_api_key_delete:
+  path: '/user/api-keys/{key_id}/delete'
+  defaults:
+    _form: 'Drupal\baas_tenant\Form\UserApiKeyDeleteForm'
+    _title: '删除API密钥'
+  requirements:
+    _custom_access: 'Drupal\baas_tenant\Controller\UserApiKeyController::checkApiKeyAccess'
+  options:
+    parameters:
+      key_id:
+        type: integer
+
+# BaaS主管理页面路由
+baas.admin:
+  path: '/admin/structure/baas'
+  defaults:
+    _controller: 'Drupal\baas_tenant\Controller\TenantController::adminOverview'
+    _title: 'BaaS平台管理'
+  requirements:
+    _permission: 'administer baas tenants'
+
+# 兼容性路由（保持向后兼容）
+baas_tenant.list:
+  path: '/admin/baas/tenants'
+  defaults:
+    _controller: '\Drupal\baas_tenant\Controller\TenantController::listTenants'
+    _title: '租户管理'
+  requirements:
+    _permission: 'administer baas tenants'
+
+baas_tenant.tenant_list:
+  path: '/admin/baas/tenants/list'
+  defaults:
+    _controller: '\Drupal\baas_tenant\Controller\TenantController::listTenants'
+    _title: '租户管理'
+  requirements:
+    _permission: 'administer baas tenants'
+
+baas_tenant.tenant_add:
+  path: '/admin/baas/tenants/add'
+  defaults:
+    _form: '\Drupal\baas_tenant\Form\TenantForm'
+    _title: '添加租户'
+  requirements:
+    _permission: 'administer baas tenants'
+
+baas_tenant.tenant_edit:
+  path: '/admin/baas/tenants/{tenant_id}/edit'
+  defaults:
+    _form: '\Drupal\baas_tenant\Form\TenantForm'
+    _title: '编辑租户'
+  requirements:
+    _permission: 'administer baas tenants'
+
+baas_tenant.tenant_delete:
+  path: '/admin/baas/tenants/{tenant_id}/delete'
+  defaults:
+    _form: '\Drupal\baas_tenant\Form\TenantDeleteForm'
+    _title: '删除租户'
+  requirements:
+    _permission: 'administer baas tenants'
+
+# API路由
+baas_tenant.api_tenant_current:
+  path: '/api/tenant/current'
+  defaults:
+    _controller: '\Drupal\baas_tenant\Controller\TenantApiController::getCurrentTenant'
+    _title: '当前租户信息'
+  requirements:
+    _tenant_access: 'TRUE'
+  options:
+    no_cache: TRUE
+
+baas_tenant.api_tenant_info:
+  path: '/api/tenant/{tenant_id}'
+  defaults:
+    _controller: '\Drupal\baas_tenant\Controller\TenantApiController::getTenantInfo'
+    _title: '租户信息'
+  requirements:
+    _custom_access: 'baas_tenant.access_check:access'
+  options:
+    no_cache: TRUE
+    parameters:
+      tenant_id:
+        type: string
+    _tenant_operation: 'view'
+
+baas_tenant.api_tenant_usage:
+  path: '/api/tenant/{tenant_id}/usage'
+  defaults:
+    _controller: '\Drupal\baas_tenant\Controller\TenantApiController::getTenantUsage'
+    _title: '租户使用统计'
+  requirements:
+    _custom_access: 'baas_tenant.access_check:access'
+  options:
+    no_cache: TRUE
+    parameters:
+      tenant_id:
+        type: string
+    _tenant_operation: 'view'

@@ -1,0 +1,15 @@
+# 管理员菜单
+baas_project.admin:
+  title: '项目管理'
+  description: '管理租户下的项目'
+  parent: baas.admin
+  route_name: baas_project.admin.list
+  weight: 10
+
+# 用户账户菜单 - 我的项目
+baas_project.user_menu:
+  title: '我的项目'
+  description: '管理我创建和参与的项目'
+  menu_name: account
+  route_name: baas_project.user_list
+  weight: 10

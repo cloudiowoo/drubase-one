@@ -1,0 +1,11 @@
+langcode: zh-hans
+status: true
+id: project_viewer
+label: 项目查看者
+weight: 2
+is_admin: false
+permissions:
+  - 'access baas project api'
+  - 'access baas project content'
+  - 'view baas project'
+

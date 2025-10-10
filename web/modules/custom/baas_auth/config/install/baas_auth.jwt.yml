@@ -1,0 +1,9 @@
+jwt:
+  secret_key: 'auto_generated_secret'
+  algorithm: 'HS256'
+  access_token_ttl: 3600
+  refresh_token_ttl: 604800
+  issuer: 'drubase_baas'
+  audience: 'drubase_api'
+  leeway: 60
+  api_key_default_ttl: 2592000

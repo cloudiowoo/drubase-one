@@ -1,0 +1,127 @@
+# 项目管理前端资源库配置
+
+# 管理界面库
+admin:
+  version: 1.x
+  css:
+    theme:
+      css/admin.css: {}
+  js:
+    js/baas-project-admin.js: {}
+  dependencies:
+    - core/jquery
+    - core/drupal
+    - core/drupalSettings
+    - core/jquery.once
+
+# 项目管理API客户端库
+api-client:
+  version: 1.x
+  js:
+    js/baas-project-api.js: {}
+  dependencies:
+    - core/jquery
+    - core/drupal
+    - core/drupalSettings
+
+# 项目成员管理界面库
+member-management:
+  version: 1.x
+  css:
+    theme:
+      css/baas-project-members.css: {}
+  js:
+    js/baas-project-members.js: {}
+  dependencies:
+    - core/jquery
+    - core/drupal
+    - core/drupalSettings
+    - baas_project/api-client
+
+# 项目使用统计图表库
+usage-charts:
+  version: 1.x
+  css:
+    theme:
+      css/baas-project-usage.css: {}
+  js:
+    js/baas-project-usage.js: {}
+  dependencies:
+    - core/jquery
+    - core/drupal
+    - core/drupalSettings
+    - baas_project/api-client
+
+# 项目设置界面库
+settings:
+  version: 1.x
+  css:
+    theme:
+      css/baas-project-settings.css: {}
+  js:
+    js/baas-project-settings.js: {}
+  dependencies:
+    - core/jquery
+    - core/drupal
+    - core/drupalSettings
+    - core/jquery.form
+    - baas_project/api-client
+
+# 用户项目管理界面库
+user-projects:
+  version: 1.x
+  css:
+    theme:
+      css/user-projects.css: {}
+  dependencies:
+    - core/drupal
+
+# 实体管理界面库
+entity-management:
+  version: 1.x
+  css:
+    theme:
+      css/entity-management.css: {}
+  js:
+    js/entity-management.js: {}
+  dependencies:
+    - core/jquery
+    - core/drupal
+    - core/drupalSettings
+
+# 实体数据表格库
+entity-data-table:
+  version: 1.x
+  css:
+    theme:
+      css/entity-data-table.css: {}
+  js:
+    js/entity-data-table.js: {}
+  dependencies:
+    - core/jquery
+    - core/drupal
+    - core/drupalSettings
+
+# 实体模板表单验证库
+entity-template-form:
+  version: 1.x
+  js:
+    js/entity-template-form.js: {}
+  dependencies:
+    - core/jquery
+    - core/drupal
+    - core/drupalSettings
+    - core/jquery.once
+
+# 实体关系图库
+entity-schema:
+  version: 1.x
+  css:
+    theme:
+      css/entity-schema.css: {}
+  js:
+    js/entity-schema.js: {}
+  dependencies:
+    - core/jquery
+    - core/drupal
+    - core/jquery.once

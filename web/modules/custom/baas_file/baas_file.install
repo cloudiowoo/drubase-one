@@ -1,0 +1,272 @@
+<?php
+
+declare(strict_types=1);
+
+/**
+ * @file
+ * Install, update and uninstall functions for the baas_file module.
+ */
+
+use Drupal\Core\Database\Database;
+
+/**
+ * Implements hook_schema().
+ */
+function baas_file_schema(): array
+{
+  $schema = [];
+
+  // 项目文件使用统计表
+  $schema['baas_project_file_usage'] = [
+    'description' => 'Stores file usage statistics for projects.',
+    'fields' => [
+      'project_id' => [
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'description' => 'The project ID.',
+      ],
+      'file_count' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Total number of files in this project.',
+      ],
+      'total_size' => [
+        'type' => 'int',
+        'size' => 'big',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Total file size in bytes.',
+      ],
+      'image_count' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Number of image files.',
+      ],
+      'document_count' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => 'Number of document files.',
+      ],
+      'last_updated' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Timestamp when usage was last updated.',
+      ],
+    ],
+    'primary key' => ['project_id'],
+    'foreign keys' => [
+      'fk_project_file_usage' => [
+        'table' => 'baas_project_config',
+        'columns' => ['project_id' => 'project_id'],
+      ],
+    ],
+  ];
+
+  // 项目文件访问日志表（用于权限审计）
+  $schema['baas_project_file_access'] = [
+    'description' => 'Logs file access for security and audit purposes.',
+    'fields' => [
+      'id' => [
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique access log ID.',
+      ],
+      'project_id' => [
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'description' => 'The project ID.',
+      ],
+      'file_id' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'The file entity ID.',
+      ],
+      'user_id' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'The user ID who accessed the file.',
+      ],
+      'action' => [
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'description' => 'Action performed: view, download, upload, delete.',
+      ],
+      'ip_address' => [
+        'type' => 'varchar',
+        'length' => 45,
+        'description' => 'IP address of the user.',
+      ],
+      'user_agent' => [
+        'type' => 'text',
+        'description' => 'User agent string.',
+      ],
+      'timestamp' => [
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Timestamp of the access.',
+      ],
+    ],
+    'primary key' => ['id'],
+    'indexes' => [
+      'idx_project_file_access_project' => ['project_id'],
+      'idx_project_file_access_file' => ['file_id'],
+      'idx_project_file_access_user' => ['user_id'],
+      'idx_project_file_access_timestamp' => ['timestamp'],
+    ],
+    'foreign keys' => [
+      'fk_file_access_project' => [
+        'table' => 'baas_project_config',
+        'columns' => ['project_id' => 'project_id'],
+      ],
+      'fk_file_access_user' => [
+        'table' => 'users',
+        'columns' => ['user_id' => 'uid'],
+      ],
+    ],
+  ];
+
+  return $schema;
+}
+
+/**
+ * Implements hook_install().
+ */
+function baas_file_install()
+{
+  // 确保文件目录结构存在
+  _baas_file_ensure_directory_structure();
+  
+  // 注册文件字段类型到baas_entity系统
+  _baas_file_register_field_types();
+  
+  \Drupal::logger('baas_file')->notice('BaaS文件字段模块安装完成');
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function baas_file_uninstall()
+{
+  // 清理文件目录（可选，通常保留用户数据）
+  $config = \Drupal::config('baas_file.settings');
+  if ($config->get('delete_files_on_uninstall')) {
+    _baas_file_cleanup_directories();
+  }
+  
+  \Drupal::logger('baas_file')->notice('BaaS文件字段模块已卸载');
+}
+
+/**
+ * 确保项目文件目录结构存在。
+ */
+function _baas_file_ensure_directory_structure()
+{
+  $file_system = \Drupal::service('file_system');
+  
+  // 主要目录结构: sites/default/files/baas/{tenant_id}/{project_id}/
+  $base_dir = 'public://baas';
+  
+  try {
+    // 创建基础目录
+    if (!$file_system->prepareDirectory($base_dir, \Drupal\Core\File\FileSystemInterface::CREATE_DIRECTORY)) {
+      throw new \Exception("无法创建基础目录: $base_dir");
+    }
+    
+    // 添加.htaccess文件保护
+    $htaccess_content = "# Protect project files\n";
+    $htaccess_content .= "# Access controlled by BaaS permission system\n";
+    $htaccess_content .= "Deny from all\n";
+    
+    file_put_contents($file_system->realpath($base_dir) . '/.htaccess', $htaccess_content);
+    
+    \Drupal::logger('baas_file')->info('项目文件目录结构创建成功: @dir', ['@dir' => $base_dir]);
+    
+  } catch (\Exception $e) {
+    \Drupal::logger('baas_file')->error('创建文件目录失败: @error', ['@error' => $e->getMessage()]);
+    throw $e;
+  }
+}
+
+/**
+ * 注册文件字段类型到baas_entity系统。
+ */
+function _baas_file_register_field_types()
+{
+  try {
+    // 通知baas_entity模块我们提供了新的字段类型
+    if (\Drupal::moduleHandler()->moduleExists('baas_entity')) {
+      \Drupal::service('plugin.manager.baas_entity.field_type')->clearCachedDefinitions();
+      \Drupal::logger('baas_file')->info('文件字段类型已注册到baas_entity系统');
+    }
+  } catch (\Exception $e) {
+    \Drupal::logger('baas_file')->warning('注册字段类型时发生错误: @error', ['@error' => $e->getMessage()]);
+  }
+}
+
+/**
+ * 清理文件目录（卸载时使用）。
+ */
+function _baas_file_cleanup_directories()
+{
+  $file_system = \Drupal::service('file_system');
+  $base_dir = 'public://baas';
+  
+  try {
+    if (is_dir($file_system->realpath($base_dir))) {
+      $file_system->deleteRecursive($base_dir);
+      \Drupal::logger('baas_file')->info('已清理项目文件目录: @dir', ['@dir' => $base_dir]);
+    }
+  } catch (\Exception $e) {
+    \Drupal::logger('baas_file')->error('清理文件目录失败: @error', ['@error' => $e->getMessage()]);
+  }
+}
+
+/**
+ * Update hook to initialize file usage statistics for existing projects.
+ */
+function baas_file_update_9001(): string
+{
+  $database = \Drupal::database();
+  
+  // 为所有现有项目初始化文件使用统计
+  $projects = $database->select('baas_project_config', 'p')
+    ->fields('p', ['project_id'])
+    ->execute()
+    ->fetchCol();
+  
+  foreach ($projects as $project_id) {
+    try {
+      $database->merge('baas_project_file_usage')
+        ->key(['project_id' => $project_id])
+        ->fields([
+          'file_count' => 0,
+          'total_size' => 0,
+          'image_count' => 0,
+          'document_count' => 0,
+          'last_updated' => time(),
+        ])
+        ->execute();
+    } catch (\Exception $e) {
+      \Drupal::logger('baas_file')->error('初始化项目 @project_id 文件统计失败: @error', [
+        '@project_id' => $project_id,
+        '@error' => $e->getMessage(),
+      ]);
+    }
+  }
+  
+  return (string) t('已为 @count 个项目初始化文件使用统计', ['@count' => count($projects)]);
+}

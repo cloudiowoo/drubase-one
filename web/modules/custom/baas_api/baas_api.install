@@ -1,0 +1,447 @@
+<?php
+
+/**
+ * @file
+ * Contains installation functions for baas_api module.
+ */
+
+use Drupal\Core\Database\Database;
+
+/**
+ * Implements hook_schema().
+ */
+function baas_api_schema() {
+  $schema = [];
+
+  // API请求记录表
+  $schema['baas_api_requests'] = [
+    'description' => 'API请求日志记录表',
+    'fields' => [
+      'id' => [
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => '主键',
+      ],
+      'tenant_id' => [
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'description' => '租户ID',
+      ],
+      'endpoint' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'API端点',
+      ],
+      'method' => [
+        'type' => 'varchar',
+        'length' => 10,
+        'not null' => TRUE,
+        'description' => 'HTTP方法',
+      ],
+      'status_code' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => 'HTTP状态码',
+      ],
+      'ip_address' => [
+        'type' => 'varchar',
+        'length' => 45,
+        'not null' => TRUE,
+        'description' => '客户端IP地址',
+      ],
+      'user_agent' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+        'description' => '用户代理',
+      ],
+      'request_time' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => '请求时间戳',
+      ],
+      'execution_time' => [
+        'type' => 'float',
+        'not null' => TRUE,
+        'description' => '执行时间（秒）',
+      ],
+      'request_size' => [
+        'type' => 'int',
+        'not null' => FALSE,
+        'description' => '请求大小（字节）',
+      ],
+      'response_size' => [
+        'type' => 'int',
+        'not null' => FALSE,
+        'description' => '响应大小（字节）',
+      ],
+    ],
+    'primary key' => ['id'],
+    'indexes' => [
+      'tenant_id' => ['tenant_id'],
+      'endpoint' => ['endpoint'],
+      'request_time' => ['request_time'],
+    ],
+  ];
+
+  // API费率限制表
+  $schema['baas_api_rate_limits'] = [
+    'description' => '速率限制配置表',
+    'fields' => [
+      'id' => [
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => '主键',
+      ],
+      'tenant_id' => [
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'description' => '租户ID',
+      ],
+      'endpoint' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'API端点',
+      ],
+      'method' => [
+        'type' => 'varchar',
+        'length' => 10,
+        'not null' => TRUE,
+        'description' => 'HTTP方法',
+      ],
+      'limit' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 1000,
+        'description' => '最大请求次数',
+      ],
+      'window' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 3600,
+        'description' => '时间窗口（秒）',
+      ],
+      'status' => [
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 1,
+        'description' => '状态: 1=启用, 0=禁用',
+      ],
+    ],
+    'primary key' => ['id'],
+    'indexes' => [
+      'tenant_endpoint' => ['tenant_id', 'endpoint', 'method'],
+      'status' => ['status'],
+    ],
+  ];
+
+  // API速率限制跟踪表 (改名为 baas_api_rate_tracking 避免冲突)
+  $schema['baas_api_rate_tracking'] = [
+    'description' => '速率限制跟踪表',
+    'fields' => [
+      'id' => [
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => '主键',
+      ],
+      'tenant_id' => [
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'description' => '租户ID',
+      ],
+      'endpoint' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'API端点',
+      ],
+      'ip_address' => [
+        'type' => 'varchar',
+        'length' => 45,
+        'not null' => TRUE,
+        'description' => '客户端IP地址',
+      ],
+      'counter' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => '请求计数',
+      ],
+      'window_start' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => '计数窗口开始时间戳',
+      ],
+    ],
+    'primary key' => ['id'],
+    'indexes' => [
+      'limit_idx' => ['tenant_id', 'endpoint', 'ip_address'],
+      'window_start' => ['window_start'],
+    ],
+  ];
+
+  // API统计摘要表
+  $schema['baas_api_stats'] = [
+    'description' => '存储API使用统计摘要',
+    'fields' => [
+      'id' => [
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => '记录ID',
+      ],
+      'tenant_id' => [
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'description' => '租户ID',
+      ],
+      'date' => [
+        'type' => 'varchar',
+        'length' => 10,
+        'not null' => TRUE,
+        'description' => '统计日期（YYYY-MM-DD）',
+      ],
+      'endpoint' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => 'API端点',
+      ],
+      'method' => [
+        'type' => 'varchar',
+        'length' => 10,
+        'not null' => TRUE,
+        'description' => 'HTTP方法',
+      ],
+      'request_count' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => '请求次数',
+      ],
+      'success_count' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => '成功请求次数',
+      ],
+      'error_count' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => '错误请求次数',
+      ],
+      'total_time' => [
+        'type' => 'float',
+        'size' => 'big',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => '总处理时间（毫秒）',
+      ],
+    ],
+    'primary key' => ['id'],
+    'unique keys' => [
+      'tenant_date_endpoint_method' => ['tenant_id', 'date', 'endpoint', 'method'],
+    ],
+    'indexes' => [
+      'tenant_id' => ['tenant_id'],
+      'date' => ['date'],
+    ],
+  ];
+
+  // API令牌表
+  $schema['baas_api_tokens'] = [
+    'description' => 'API访问令牌表',
+    'fields' => [
+      'id' => [
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => '主键',
+      ],
+      'tenant_id' => [
+        'type' => 'varchar',
+        'length' => 128,
+        'not null' => TRUE,
+        'description' => '租户ID',
+      ],
+      'token_hash' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => '令牌哈希',
+      ],
+      'name' => [
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'description' => '令牌名称',
+      ],
+      'scopes' => [
+        'type' => 'text',
+        'not null' => TRUE,
+        'description' => '令牌作用域',
+      ],
+      'created' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'description' => '创建时间戳',
+      ],
+      'expires' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => '过期时间戳，0表示永不过期',
+      ],
+      'last_used' => [
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'description' => '最后使用时间戳',
+      ],
+      'status' => [
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 1,
+        'description' => '状态: 1=活跃, 0=撤销',
+      ],
+    ],
+    'primary key' => ['id'],
+    'indexes' => [
+      'token_idx' => ['tenant_id', 'token_hash'],
+      'status' => ['status'],
+    ],
+  ];
+
+  return $schema;
+}
+
+/**
+ * Implements hook_install().
+ */
+function baas_api_install() {
+  // 创建默认的费率限制配置
+  $database = \Drupal::database();
+
+  // 全局默认限制
+  $database->insert('baas_api_rate_limits')
+    ->fields([
+      'tenant_id' => '*',
+      'endpoint' => '*',
+      'method' => '*',
+      'limit' => 1000,
+      'window' => 3600,
+      'status' => 1,
+    ])
+    ->execute();
+
+  // 全局健康检查端点限制
+  $database->insert('baas_api_rate_limits')
+    ->fields([
+      'tenant_id' => '*',
+      'endpoint' => '/api/health',
+      'method' => 'GET',
+      'limit' => 10000,
+      'window' => 3600,
+      'status' => 1,
+    ])
+    ->execute();
+
+  \Drupal::messenger()->addStatus(t('BaaS API模块已安装，并创建了默认的API限制配置。'));
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function baas_api_uninstall() {
+  // 清理模块配置
+  \Drupal::configFactory()->getEditable('baas_api.settings')->delete();
+}
+
+/**
+ * 添加API令牌表。
+ */
+function baas_api_update_10001() {
+  $schema = \Drupal::database()->schema();
+
+  if (!$schema->tableExists('baas_api_tokens')) {
+    $table_schema = [
+      'description' => 'API访问令牌表',
+      'fields' => [
+        'id' => [
+          'type' => 'serial',
+          'unsigned' => TRUE,
+          'not null' => TRUE,
+          'description' => '主键',
+        ],
+        'tenant_id' => [
+          'type' => 'varchar',
+          'length' => 128,
+          'not null' => TRUE,
+          'description' => '租户ID',
+        ],
+        'token_hash' => [
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+          'description' => '令牌哈希',
+        ],
+        'name' => [
+          'type' => 'varchar',
+          'length' => 255,
+          'not null' => TRUE,
+          'description' => '令牌名称',
+        ],
+        'scopes' => [
+          'type' => 'text',
+          'not null' => TRUE,
+          'description' => '令牌作用域',
+        ],
+        'created' => [
+          'type' => 'int',
+          'not null' => TRUE,
+          'description' => '创建时间戳',
+        ],
+        'expires' => [
+          'type' => 'int',
+          'not null' => TRUE,
+          'default' => 0,
+          'description' => '过期时间戳，0表示永不过期',
+        ],
+        'last_used' => [
+          'type' => 'int',
+          'not null' => TRUE,
+          'default' => 0,
+          'description' => '最后使用时间戳',
+        ],
+        'status' => [
+          'type' => 'int',
+          'size' => 'tiny',
+          'not null' => TRUE,
+          'default' => 1,
+          'description' => '状态: 1=活跃, 0=撤销',
+        ],
+      ],
+      'primary key' => ['id'],
+      'indexes' => [
+        'token_idx' => ['tenant_id', 'token_hash'],
+        'status' => ['status'],
+      ],
+    ];
+
+    $schema->createTable('baas_api_tokens', $table_schema);
+    return t('已创建API令牌表');
+  }
+
+  return NULL;
+}

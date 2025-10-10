@@ -1,0 +1,67 @@
+services:
+  baas_realtime.manager:
+    class: Drupal\baas_realtime\Service\RealtimeManager
+    arguments:
+      - '@database'
+      - '@entity_type.manager'
+      - '@config.factory'
+      - '@logger.factory'
+      - '@event_dispatcher'
+      - '@baas_auth.unified_permission_checker'
+      - '@baas_tenant.manager'
+      - '@baas_project.manager'
+
+  baas_realtime.connection_manager:
+    class: Drupal\baas_realtime\Service\ConnectionManager
+    arguments:
+      - '@database'
+      - '@logger.factory'
+      - '@baas_realtime.manager'
+
+  baas_realtime.channel_manager:
+    class: Drupal\baas_realtime\Service\ChannelManager
+    arguments:
+      - '@database'
+      - '@logger.factory'
+      - '@baas_realtime.permission_checker'
+
+  baas_realtime.permission_checker:
+    class: Drupal\baas_realtime\Service\RealtimePermissionChecker
+    arguments:
+      - '@baas_auth.unified_permission_checker'
+      - '@baas_auth.jwt_token_manager'
+      - '@baas_auth.jwt_blacklist_service'
+      - '@baas_auth.api_key_manager'
+      - '@baas_tenant.manager'
+      - '@baas_project.manager'
+      - '@logger.factory'
+
+  baas_realtime.message_filter:
+    class: Drupal\baas_realtime\Service\MessageFilter
+    arguments:
+      - '@baas_realtime.permission_checker'
+      - '@logger.factory'
+
+  baas_realtime.websocket_controller:
+    class: Drupal\baas_realtime\Controller\WebSocketController
+    arguments:
+      - '@baas_realtime.manager'
+      - '@baas_realtime.connection_manager'
+      - '@baas_realtime.permission_checker'
+      - '@logger.factory'
+
+  baas_realtime.project_manager:
+    class: Drupal\baas_realtime\Service\ProjectRealtimeManager
+    arguments:
+      - '@database'
+      - '@logger.factory'
+      - '@baas_auth.unified_permission_checker'
+      - '@baas_project.manager'
+      - '@baas_project.entity_template_manager'
+      - '@baas_realtime.manager'
+
+  baas_realtime.database_trigger_manager:
+    class: Drupal\baas_realtime\Service\DatabaseTriggerManager
+    arguments:
+      - '@database'
+      - '@logger.factory'

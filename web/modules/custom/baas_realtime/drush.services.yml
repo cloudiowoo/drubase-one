@@ -1,0 +1,5 @@
+services:
+  baas_realtime.commands:
+    class: Drupal\baas_realtime\Commands\RealtimeCommands
+    tags:
+      - { name: drush.command }

@@ -1,0 +1,55 @@
+# 使用 Bitnami PHP-FPM 8.4.2 作为基础镜像
+FROM bitnami/php-fpm:8.4.2
+
+USER root
+
+# RUN mv /etc/apt/sources.list /etc/apt/sources.list.bak
+# ADD sources.list /etc/apt
+
+# 安装依赖
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    nano \
+    git \
+    autoconf \
+    build-essential \
+    wget \
+    libssl-dev \
+    libxml2-dev \
+    libreadline-dev \
+    zlib1g-dev \
+    libsqlite3-dev \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
+
+# 安装 PHP 扩展
+RUN pecl install xdebug \
+    && pecl install mongodb \
+    && pecl install redis \
+    && pecl install apcu \
+    && echo "extension=apcu.so" > /opt/bitnami/php/etc/conf.d/apcu.ini
+
+# 安装 Drush
+RUN wget -O drush.phar https://github.com/drush-ops/drush-launcher/releases/download/0.10.2/drush.phar \
+    && chmod +x drush.phar \
+    && mv drush.phar /usr/local/bin/drush
+
+# 下载并编译 SQLite（示例以 3.50.0 为例）
+RUN wget https://www.sqlite.org/2025/sqlite-autoconf-3500000.tar.gz \
+    && tar xzf sqlite-autoconf-3500000.tar.gz \
+    && cd sqlite-autoconf-3500000 \
+    && ./configure --prefix=/usr/local \
+    && make -j"$(nproc)" \
+    && make install \
+    && ldconfig \
+    && cd .. \
+    && rm -rf sqlite-autoconf-3500000*
+
+
+# 验证 SQLite 版本（可选）
+# RUN sqlite3 --version
+# RUN php -r "echo 'SQLite version (via PHP): ' . SQLite3::version()['versionString'] . PHP_EOL;"
+
+# USER 1001
+
+# 入口（如果需要 cron，可以加上 cron）
+# CMD cron && php-fpm

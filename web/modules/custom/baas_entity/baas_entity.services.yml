@@ -1,0 +1,35 @@
+services:
+  baas_entity.entity_registry:
+    class: Drupal\baas_entity\Service\EntityRegistry
+    arguments: ['@entity_type.manager', '@database', '@baas_tenant.manager', '@module_handler']
+
+  baas_entity.entity_generator:
+    class: Drupal\baas_entity\Service\EntityGenerator
+    arguments: ['@entity_type.manager', '@database', '@file_system', '@module_handler', '@baas_tenant.manager']
+
+  baas_entity.field_mapper:
+    class: Drupal\baas_entity\Service\FieldMapper
+    arguments: []
+
+  baas_entity.template_manager:
+    class: Drupal\baas_entity\Service\TemplateManager
+    arguments: ['@database', '@entity_type.manager', '@baas_tenant.manager', '@baas_entity.field_mapper']
+
+  baas_entity.field_type_manager:
+    class: Drupal\baas_entity\Service\FieldTypeManager
+    arguments: []
+
+  baas_entity.entity_reference_resolver:
+    class: Drupal\baas_entity\Service\EntityReferenceResolver
+    arguments: ['@database', '@entity_type.manager', '@baas_entity.template_manager', '@baas_tenant.manager']
+
+  baas_entity.password_service:
+    class: Drupal\baas_entity\Service\PasswordService
+    arguments: ['@database', '@baas_entity.field_type_manager']
+
+  # 装饰 EntityDefinitionUpdateManager 以忽略 baas 动态实体
+  baas_entity.entity_definition_update_manager:
+    class: Drupal\baas_entity\Service\BaasEntityDefinitionUpdateManager
+    decorates: entity.definition_update_manager
+    decoration_priority: 1000
+    arguments: ['@entity_type.manager', '@entity.last_installed_schema.repository', '@entity_field.manager', '@entity_type.listener', '@field_storage_definition.listener']

@@ -1,0 +1,24 @@
+uuid: 1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.user.field_is_tenant
+  module:
+    - user
+id: user.user.field_is_tenant
+field_name: field_is_tenant
+entity_type: user
+bundle: user
+label: '租户状态'
+description: '标记用户是否具有租户权限（可以管理项目）'
+required: false
+translatable: false
+default_value:
+  -
+    value: 0
+default_value_callback: ''
+settings:
+  on_label: '是租户'
+  off_label: '普通用户'
+field_type: boolean

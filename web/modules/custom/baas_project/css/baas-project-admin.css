@@ -1,0 +1,330 @@
+/**
+ * BaaS Project Admin Styles
+ */
+
+/* 管理页面布局 */
+.baas-project-admin {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.baas-project-admin h1 {
+  color: #333;
+  border-bottom: 2px solid #0073aa;
+  padding-bottom: 10px;
+  margin-bottom: 30px;
+}
+
+/* 状态卡片 */
+.baas-project-status-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.baas-project-status-card {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s ease;
+}
+
+.baas-project-status-card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.baas-project-status-card h3 {
+  margin: 0 0 10px 0;
+  color: #333;
+  font-size: 1.2em;
+}
+
+.baas-project-status-card .value {
+  font-size: 2em;
+  font-weight: bold;
+  color: #0073aa;
+  margin: 10px 0;
+}
+
+.baas-project-status-card .description {
+  color: #666;
+  font-size: 0.9em;
+}
+
+/* 迁移状态 */
+.baas-project-migration-status {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 30px;
+}
+
+.baas-project-migration-status.migrated {
+  border-color: #46b450;
+  background-color: #f7fcf0;
+}
+
+.baas-project-migration-status.not-migrated {
+  border-color: #ffb900;
+  background-color: #fffbf0;
+}
+
+.baas-project-migration-status.error {
+  border-color: #dc3232;
+  background-color: #fef7f7;
+}
+
+.baas-project-migration-status h3 {
+  margin: 0 0 15px 0;
+  display: flex;
+  align-items: center;
+}
+
+.baas-project-migration-status .status-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  margin-right: 10px;
+  display: inline-block;
+}
+
+.baas-project-migration-status .status-icon.success {
+  background-color: #46b450;
+}
+
+.baas-project-migration-status .status-icon.warning {
+  background-color: #ffb900;
+}
+
+.baas-project-migration-status .status-icon.error {
+  background-color: #dc3232;
+}
+
+/* 健康检查 */
+.baas-project-health-checks {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 30px;
+}
+
+.baas-project-health-check {
+  display: flex;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.baas-project-health-check:last-child {
+  border-bottom: none;
+}
+
+.baas-project-health-check .check-icon {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+
+.baas-project-health-check .check-icon.pass {
+  background-color: #46b450;
+}
+
+.baas-project-health-check .check-icon.warning {
+  background-color: #ffb900;
+}
+
+.baas-project-health-check .check-icon.fail {
+  background-color: #dc3232;
+}
+
+.baas-project-health-check .check-name {
+  font-weight: bold;
+  margin-right: 10px;
+  min-width: 200px;
+}
+
+.baas-project-health-check .check-message {
+  color: #666;
+  flex-grow: 1;
+}
+
+/* 按钮样式 */
+.baas-project-actions {
+  margin: 30px 0;
+  text-align: center;
+}
+
+.baas-project-button {
+  display: inline-block;
+  padding: 12px 24px;
+  margin: 0 10px;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: bold;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.baas-project-button.primary {
+  background-color: #0073aa;
+  color: white;
+}
+
+.baas-project-button.primary:hover {
+  background-color: #005a87;
+}
+
+.baas-project-button.danger {
+  background-color: #dc3232;
+  color: white;
+}
+
+.baas-project-button.danger:hover {
+  background-color: #a02622;
+}
+
+.baas-project-button.secondary {
+  background-color: #f1f1f1;
+  color: #333;
+  border: 1px solid #ccc;
+}
+
+.baas-project-button.secondary:hover {
+  background-color: #e1e1e1;
+}
+
+.baas-project-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* 加载状态 */
+.baas-project-loading {
+  text-align: center;
+  padding: 40px;
+}
+
+.baas-project-spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #0073aa;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* 消息样式 */
+.baas-project-message {
+  padding: 15px;
+  border-radius: 6px;
+  margin: 20px 0;
+}
+
+.baas-project-message.success {
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+  color: #155724;
+}
+
+.baas-project-message.error {
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  color: #721c24;
+}
+
+.baas-project-message.warning {
+  background-color: #fff3cd;
+  border: 1px solid #ffeaa7;
+  color: #856404;
+}
+
+.baas-project-message.info {
+  background-color: #d1ecf1;
+  border: 1px solid #bee5eb;
+  color: #0c5460;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .baas-project-admin {
+    padding: 10px;
+  }
+  
+  .baas-project-status-cards {
+    grid-template-columns: 1fr;
+  }
+  
+  .baas-project-health-check {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .baas-project-health-check .check-name {
+    min-width: auto;
+    margin-bottom: 5px;
+  }
+  
+  .baas-project-button {
+    display: block;
+    margin: 10px 0;
+    width: 100%;
+  }
+}
+
+/* 表格样式 */
+.baas-project-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.baas-project-table th,
+.baas-project-table td {
+  padding: 12px 15px;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.baas-project-table th {
+  background-color: #f8f9fa;
+  font-weight: bold;
+  color: #333;
+}
+
+.baas-project-table tr:hover {
+  background-color: #f8f9fa;
+}
+
+.baas-project-table .actions {
+  white-space: nowrap;
+}
+
+.baas-project-table .actions a {
+  margin-right: 10px;
+  text-decoration: none;
+  color: #0073aa;
+}
+
+.baas-project-table .actions a:hover {
+  text-decoration: underline;
+}

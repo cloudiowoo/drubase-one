@@ -1,0 +1,88 @@
+<!--
+ * @Date: 2025-06-03 10:46:34
+ * @LastEditors: cloudio cloudio.woo@gmail.com
+ * @LastEditTime: 2025-06-03 13:35:05
+ * @FilePath: /drubase/web/modules/custom/baas_auth/test-swagger.html
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BaaS API 文档测试</title>
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui.css" />
+    <style>
+        html {
+            box-sizing: border-box;
+            overflow: -moz-scrollbars-vertical;
+            overflow-y: scroll;
+        }
+        *, *:before, *:after {
+            box-sizing: inherit;
+        }
+        body {
+            margin:0;
+            background: #fafafa;
+        }
+    </style>
+</head>
+<body>
+    <div id="swagger-ui"></div>
+    <script src="https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui-bundle.js"></script>
+    <script src="https://unpkg.com/swagger-ui-dist@5.9.0/swagger-ui-standalone-preset.js"></script>
+    <script>
+        window.onload = function() {
+            // 初始化Swagger UI
+            const ui = SwaggerUIBundle({
+                url: '/api-docs.json',
+                dom_id: '#swagger-ui',
+                deepLinking: true,
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIStandalonePreset
+                ],
+                plugins: [
+                    SwaggerUIBundle.plugins.DownloadUrl
+                ],
+                layout: "StandaloneLayout",
+                requestInterceptor: function(request) {
+                    // 添加认证头
+                    const token = localStorage.getItem('baas_auth_token');
+                    if (token) {
+                        request.headers['Authorization'] = 'Bearer ' + token;
+                    }
+                    return request;
+                },
+                onComplete: function() {
+                    console.log('Swagger UI 加载完成');
+
+                    // 添加认证按钮
+                    const topbar = document.querySelector('.topbar');
+                    if (topbar) {
+                        const authButton = document.createElement('button');
+                        authButton.textContent = '设置认证令牌';
+                        authButton.style.cssText = 'margin-left: 10px; padding: 5px 10px; background: #4990e2; color: white; border: none; border-radius: 3px; cursor: pointer;';
+                        authButton.onclick = function() {
+                            const token = prompt('请输入JWT令牌:');
+                            if (token) {
+                                localStorage.setItem('baas_auth_token', token);
+                                alert('令牌已设置');
+                            }
+                        };
+                        topbar.appendChild(authButton);
+
+                        const clearButton = document.createElement('button');
+                        clearButton.textContent = '清除令牌';
+                        clearButton.style.cssText = 'margin-left: 5px; padding: 5px 10px; background: #f44336; color: white; border: none; border-radius: 3px; cursor: pointer;';
+                        clearButton.onclick = function() {
+                            localStorage.removeItem('baas_auth_token');
+                            alert('令牌已清除');
+                        };
+                        topbar.appendChild(clearButton);
+                    }
+                }
+            });
+        };
+    </script>
+</body>
+</html>

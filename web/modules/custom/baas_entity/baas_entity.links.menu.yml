@@ -1,0 +1,12 @@
+baas_entity.admin:
+  title: '实体管理'
+  description: '管理动态实体模板'
+  parent: baas.admin
+  route_name: baas_entity.list
+  weight: 20
+
+baas_entity.add:
+  title: '添加实体模板'
+  parent: baas_entity.admin
+  route_name: baas_entity.add
+  weight: 1

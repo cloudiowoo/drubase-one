@@ -1,0 +1,149 @@
+<?php
+
+/**
+ * @file
+ * 包含baas_api模块的主要功能.
+ */
+
+/**
+ * 实现 hook_theme().
+ */
+function baas_api_theme() {
+  return [
+    'baas_api_docs' => [
+      'variables' => [
+        'docs' => [],
+        'title' => '',
+      ],
+      'template' => 'baas-api-docs',
+    ],
+    'baas_api_docs_debug' => [
+      'variables' => [
+        'docs' => [],
+        'title' => '',
+      ],
+      'template' => 'baas-api-docs-debug',
+    ],
+    'baas_api_docs_simple' => [
+      'variables' => [
+        'docs' => [],
+        'title' => '',
+      ],
+      'template' => 'baas-api-docs-simple',
+    ],
+    'baas_api_docs_csp' => [
+      'variables' => [
+        'docs' => [],
+        'title' => '',
+      ],
+      'template' => 'baas-api-docs-csp',
+    ],
+    'baas_api_swagger_ui' => [
+      'variables' => [
+        'title' => '',
+        'spec_url' => '',
+        'api_key' => '',
+        'jwt_token' => '',
+        'enable_auth' => TRUE,
+      ],
+      'template' => 'baas-api-swagger-ui',
+    ],
+    'baas_api_graphql_docs' => [
+      'variables' => [
+        'schema' => '',
+        'title' => '',
+        'tenant_id' => '',
+        'base_url' => '',
+      ],
+      'template' => 'baas-api-graphql-docs',
+    ],
+    'baas_api_stats' => [
+      'variables' => [
+        'filter_form' => [],
+        'stats' => [],
+        'chart_data' => [],
+      ],
+      'template' => 'baas-api-stats',
+    ],
+  ];
+}
+
+/**
+ * 实现 hook_preprocess_HOOK() for baas_api_graphql_docs.
+ */
+function baas_api_preprocess_baas_api_graphql_docs(&$variables) {
+  // 如果未设置base_url，使用当前请求的host
+  if (empty($variables['base_url'])) {
+    $request = \Drupal::request();
+    $variables['base_url'] = $request->getSchemeAndHttpHost();
+  }
+
+  // 从路由参数获取tenant_id
+  if (empty($variables['tenant_id'])) {
+    $route_match = \Drupal::routeMatch();
+    $variables['tenant_id'] = $route_match->getParameter('tenant_id');
+  }
+}
+
+/**
+ * 实现 hook_cron().
+ */
+function baas_api_cron() {
+  // 获取API管理器服务
+  $api_manager = \Drupal::service('baas_api.manager');
+
+  // 清理过期的API请求记录
+  $request_log_retention = \Drupal::config('baas_api.settings')->get('request_log_retention_days') ?: 30;
+  $api_manager->cleanupRequestLogs($request_log_retention);
+
+  // 清理过期的API统计数据
+  $stats_retention = \Drupal::config('baas_api.settings')->get('stats_retention_days') ?: 365;
+  $api_manager->cleanupStats($stats_retention);
+
+  // 清理速率限制缓存
+  \Drupal::service('baas_api.rate_limiter')->cleanupCache();
+}
+
+/**
+ * 实现 hook_help().
+ */
+function baas_api_help($route_name, $route_match) {
+  switch ($route_name) {
+    case 'help.page.baas_api':
+      $output = '';
+      $output .= '<h3>' . t('关于') . '</h3>';
+      $output .= '<p>' . t('BaaS API模块提供了REST和GraphQL API功能，包括文档生成、速率限制和使用统计。') . '</p>';
+      $output .= '<h3>' . t('使用方法') . '</h3>';
+      $output .= '<dl>';
+      $output .= '<dt>' . t('API文档') . '</dt>';
+      $output .= '<dd>' . t('访问 <a href=":url">/api/docs</a> 查看API文档。', [':url' => '/api/docs']) . '</dd>';
+      $output .= '<dt>' . t('租户API文档') . '</dt>';
+      $output .= '<dd>' . t('访问 <code>/api/tenant/{tenant_id}/docs</code> 查看特定租户的API文档。') . '</dd>';
+      $output .= '<dt>' . t('GraphQL模式') . '</dt>';
+      $output .= '<dd>' . t('访问 <code>/api/tenant/{tenant_id}/graphql/schema</code> 查看特定租户的GraphQL模式。') . '</dd>';
+      $output .= '</dl>';
+      return $output;
+  }
+}
+
+/**
+ * 实现 hook_page_attachments().
+ */
+function baas_api_page_attachments(array &$attachments) {
+  $route_name = \Drupal::routeMatch()->getRouteName();
+
+  // 为API文档页面添加库
+  if (in_array($route_name, ['baas_api.docs', 'baas_api.tenant_docs'])) {
+    $attachments['#attached']['library'][] = 'baas_api/swagger_ui';
+  }
+}
+
+/**
+ * 实现 hook_cache_flush().
+ */
+function baas_api_cache_flush() {
+  // 清理API速率限制缓存
+  if (\Drupal::hasService('baas_api.rate_limiter')) {
+    \Drupal::service('baas_api.rate_limiter')->cleanupCache();
+  }
+}

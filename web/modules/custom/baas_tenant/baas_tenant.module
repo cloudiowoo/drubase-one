@@ -71,47 +71,38 @@ function baas_tenant_cron()
 }
 
 /**
- * 生成唯一的租户ID.
+ * 生成优化后的租户ID（8字符短格式）。
+ *
+ * 格式变更说明：
+ *   旧格式: tenant_7375b0cd (16字符)
+ *   新格式: 7375b0cd (8字符, -50%)
  *
  * @param string $name
- *   租户名称，用于生成租户ID的基础部分.
+ *   租户名称（仅用于日志记录，不影响ID生成逻辑）。
  *
  * @return string
- *   生成的唯一租户ID.
+ *   8字符的短格式租户ID（仅包含十六进制字符）。
+ *
+ * @example
+ *   baas_tenant_generate_tenant_id('测试租户') => 'a1b2c3d4'
  */
 function baas_tenant_generate_tenant_id(string $name): string
 {
-  // 如果名称包含中文字符，使用拼音转换或者默认名称
-  if (preg_match('/[\x{4e00}-\x{9fa5}]/u', $name)) {
-    // 包含中文字符，使用 'tenant' 作为基础名
-    $base = 'tenant';
-  } else {
-    // 转换为小写并移除非字母数字字符
-    $base = strtolower(preg_replace('/[^a-zA-Z0-9]/', '_', $name));
+  // 使用 SHA256 哈希 + uniqid + 随机数确保唯一性
+  // 取前8个字符作为租户ID
+  $random_suffix = substr(
+    hash('sha256', uniqid((string) mt_rand(), true)),
+    0,
+    8
+  );
 
-    // 移除连续的下划线
-    $base = preg_replace('/_+/', '_', $base);
+  // 记录日志（可选）
+  \Drupal::logger('baas_tenant')->info('生成新租户ID: @id (租户名: @name)', [
+    '@id' => $random_suffix,
+    '@name' => $name,
+  ]);
 
-    // 移除开头和结尾的下划线
-    $base = trim($base, '_');
-
-    // 确保以字母开头
-    if (!preg_match('/^[a-z]/', $base)) {
-      $base = 'tenant_' . $base;
-    }
-  }
-
-  // 确保长度合适
-  if (strlen($base) > 20) {
-    $base = substr($base, 0, 20);
-  } elseif (strlen($base) < 3) {
-    $base = 'tenant';
-  }
-
-  // 添加随机字符以确保唯一性
-  $random_suffix = substr(hash('sha256', uniqid((string) mt_rand(), true)), 0, 8);
-
-  return $base . '_' . $random_suffix;
+  return $random_suffix;
 }
 
 /**

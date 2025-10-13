@@ -95,45 +95,25 @@ class ProjectEntityGenerator
   }
 
   /**
-   * 获取项目实体文件保存路径（优化版）。
-   *
-   * 路径格式变更：
-   *   旧格式: public://dynamic_entities/tenant_7375b0cd/projects/tenant_7375b0cd_project_6888d012be80c
-   *   新格式: public://dynamic_entities/7375b0cd/projects/7375b0cd_6888d012be80c
+   * 获取项目实体文件保存路径。
    *
    * @param string $tenant_id
-   *   租户ID（支持长格式和短格式）。
+   *   租户ID。
    * @param string $project_id
-   *   项目ID（支持长格式和短格式）。
+   *   项目ID。
    *
    * @return string
-   *   文件系统路径。
+   *   保存路径。
    */
   protected function getSavePath(string $tenant_id, string $project_id): string
   {
-    // 转换为短格式（如果输入是长格式）
-    $tenant_short = str_replace('tenant_', '', $tenant_id);
-    $project_short = preg_replace('/^tenant_(.+?)_project_/', '$1_', $project_id);
-
-    // 构建路径：使用短格式
-    $directory = 'public://dynamic_entities/' . $tenant_short . '/projects/' . $project_short;
-
-    // 确保目录存在
+    $directory = 'public://dynamic_entities/' . $tenant_id . '/projects/' . $project_id;
     $this->fileSystem->prepareDirectory($directory, FileSystemInterface::CREATE_DIRECTORY);
-
     return $directory;
   }
 
   /**
-   * 生成项目实体类名（优化版）。
-   *
-   * 类名格式变更：
-   *   旧格式: Tenant7375b0cdProjectUsers (基于长格式ID)
-   *   新格式: 7375b0cdProject6888d012be80cUsers (基于短格式ID)
-   *
-   * 格式规则：
-   *   {TenantIdNoSeparator}Project{ProjectUuidNoSeparator}{EntityName}
-   *   例如: 7375b0cd_6888d012be80c_users → 7375b0cdProject6888d012be80cUsers
+   * 生成项目实体类名。
    *
    * @param array $template
    *   实体模板数据。
@@ -143,41 +123,16 @@ class ProjectEntityGenerator
    */
   protected function getProjectEntityClassName(array $template): string
   {
-    // 1. 转换为短格式
-    $tenant_id = str_replace('tenant_', '', $template['tenant_id']);
-    $project_id = preg_replace('/^tenant_(.+?)_project_/', '$1_', $template['project_id']);
+    // 移除特殊字符并转换为驼峰命名
+    $tenant_parts = explode('_', $template['tenant_id']);
+    $tenant_parts = array_map('ucfirst', $tenant_parts);
+    $tenant_prefix = implode('', $tenant_parts);
 
-    // 2. 处理 tenant_id：移除下划线
-    $tenant_clean = str_replace('_', '', $tenant_id);
-    // 例如: 7375b0cd → 7375b0cd (保持不变，已经是短格式)
-
-    // 3. 处理 project_id：提取 UUID 部分，移除下划线
-    $project_parts = explode('_', $project_id);
-    if (count($project_parts) >= 2) {
-      // project_id 格式: 7375b0cd_6888d012be80c
-      // 跳过第一部分（tenant_id），只使用第二部分（UUID）
-      $project_uuid = $project_parts[1];
-      $project_clean = 'Project' . str_replace('_', '', $project_uuid);
-      // 例如: 6888d012be80c → Project6888d012be80c
-    } else {
-      // 兼容异常情况
-      $project_clean = 'Project' . str_replace('_', '', $project_id);
-    }
-
-    // 4. 处理实体名称：转换为驼峰命名
     $entity_parts = explode('_', $template['name']);
     $entity_parts = array_map('ucfirst', $entity_parts);
     $entity_name = implode('', $entity_parts);
-    // 例如: user_activities → UserActivities
 
-    // 5. 组合最终类名
-    // ⚠️ PHP类名不能以数字开头，使用 Project 作为前缀
-    // 格式: Project{tenant_id}{project_uuid}{EntityName}
-    $project_uuid = $project_parts[1] ?? str_replace('_', '', $project_id);
-    $class_name = 'Project' . $tenant_clean . $project_uuid . $entity_name;
-    // 例如: Project + 7375b0cd + 6888d012be80c + Users = Project7375b0cd6888d012be80cUsers
-
-    return $class_name;
+    return $tenant_prefix . 'Project' . $entity_name;
   }
 
   /**
@@ -194,12 +149,8 @@ class ProjectEntityGenerator
   protected function generateProjectEntityClassCode(array $template, array $fields): string
   {
     $class_name = $this->getProjectEntityClassName($template);
-
-    // ⚠️ 关键修改：转换为短格式（用于类内常量）
-    $tenant_id = str_replace('tenant_', '', $template['tenant_id']);
-    $project_id = preg_replace('/^tenant_(.+?)_project_/', '$1_', $template['project_id']);
-    // ← 添加这两行，确保常量使用短格式
-
+    $tenant_id = $template['tenant_id'];
+    $project_id = $template['project_id'];
     $entity_name = $template['name'];
     $entity_label = $template['label'];
     $timestamp = date('Y-m-d H:i:s');
@@ -766,11 +717,8 @@ EOT;
   protected function generateProjectEntityStorageCode(array $template): string
   {
     $class_name = $this->getProjectEntityClassName($template);
-
-    // 转换为短格式
-    $tenant_id = str_replace('tenant_', '', $template['tenant_id']);
-    $project_id = preg_replace('/^tenant_(.+?)_project_/', '$1_', $template['project_id']);
-
+    $tenant_id = $template['tenant_id'];
+    $project_id = $template['project_id'];
     $entity_name = $template['name'];
     $entity_label = $template['label'];
     $timestamp = date('Y-m-d H:i:s');

@@ -63,14 +63,15 @@ class InstallHelper implements ContainerInjectionInterface {
   protected array $fileIdMapping = [];
 
   /**
-   * Groups项目原始配置（保持不变）
+   * Groups项目原始配置（已更新为短格式ID）
+   * ⚠️ 重要：数据库和文件系统现在使用短格式ID
    */
   protected array $groupsProjectConfig = [
-    'tenant_id' => 'tenant_7375b0cd',
-    'project_id' => 'tenant_7375b0cd_project_6888d012be80c',
+    'tenant_id' => '7375b0cd',
+    'project_id' => '7375b0cd_6888d012be80c',
     'project_name' => 'Groups Sports Activity Management',
     'entities' => ['users', 'activities', 'teams', 'positions', 'user_activities', 'system_config', 'test'],
-    'table_prefix' => 'baas_00403b_',
+    'table_prefix' => 'baas_856064_',
   ];
 
   /**
@@ -432,7 +433,7 @@ class InstallHelper implements ContainerInjectionInterface {
             try {
               $tenant_mapping_service->addUserToTenant(
                 $user1->id(),
-                'tenant_7375b0cd',
+                $this->groupsProjectConfig['tenant_id'],
                 'tenant_admin',
                 TRUE  // is_owner
               );
@@ -447,7 +448,7 @@ class InstallHelper implements ContainerInjectionInterface {
             try {
               $tenant_mapping_service->addUserToTenant(
                 $admin_user->id(),
-                'tenant_7375b0cd',
+                $this->groupsProjectConfig['tenant_id'],
                 'tenant_admin',
                 FALSE  // not owner
               );
@@ -462,7 +463,7 @@ class InstallHelper implements ContainerInjectionInterface {
             try {
               $tenant_mapping_service->addUserToTenant(
                 $user2->id(),
-                'tenant_7375b0cd',
+                $this->groupsProjectConfig['tenant_id'],
                 'tenant_user',
                 FALSE  // not owner
               );
@@ -483,14 +484,14 @@ class InstallHelper implements ContainerInjectionInterface {
         try {
           // user1作为项目所有者
           if ($user1) {
-            $project_member_service->addMember('tenant_7375b0cd_project_6888d012be80c', $user1->id(), 'owner', [
+            $project_member_service->addMember($this->groupsProjectConfig['project_id'], $user1->id(), 'owner', [
               'permissions' => ['manage_entities', 'manage_data', 'manage_members', 'manage_project'],
             ]);
           }
 
           // user2作为项目编辑者
           if ($user2) {
-            $project_member_service->addMember('tenant_7375b0cd_project_6888d012be80c', $user2->id(), 'editor', [
+            $project_member_service->addMember($this->groupsProjectConfig['project_id'], $user2->id(), 'editor', [
               'permissions' => ['manage_entities', 'manage_data'],
             ]);
           }
@@ -1177,7 +1178,7 @@ class InstallHelper implements ContainerInjectionInterface {
 
     try {
       // 检查是否存在预导出的完整DDL文件
-      $ddl_file = DRUPAL_ROOT . '/profiles/baas_platform/data/baas_00403b_schema.sql';
+      $ddl_file = DRUPAL_ROOT . '/profiles/baas_platform/data/baas_856064_schema.sql';
 
       if (file_exists($ddl_file)) {
         $this->logger->info('检测到预导出DDL文件，使用DDL创建表结构');

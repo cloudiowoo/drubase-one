@@ -376,15 +376,41 @@ class ProjectEntityCleanupService
    */
   protected function getProjectEntityClassName(array $template): string
   {
-    $tenant_parts = explode('_', $template['tenant_id']);
-    $tenant_parts = array_map('ucfirst', $tenant_parts);
-    $tenant_prefix = implode('', $tenant_parts);
+    // 验证输入数据
+    $tenant_id = trim($template['tenant_id'] ?? '');
+    $project_id = trim($template['project_id'] ?? '');
+    $entity_name = trim($template['name'] ?? '');
 
-    $entity_parts = explode('_', $template['name']);
+    if (empty($tenant_id) || empty($project_id) || empty($entity_name)) {
+      \Drupal::logger('baas_project')->warning('生成类名时缺少必要数据: tenant_id=@tenant_id, project_id=@project_id, name=@name', [
+        '@tenant_id' => $tenant_id,
+        '@project_id' => $project_id,
+        '@name' => $entity_name,
+      ]);
+      return 'UnknownProjectEntity';
+    }
+
+    // 1. 转换为短格式（如果输入是长格式）
+    $tenant_id = str_replace('tenant_', '', $tenant_id);
+    $project_id = preg_replace('/^tenant_(.+?)_project_/', '$1_', $project_id);
+
+    // 2. 处理 tenant_id：移除下划线
+    $tenant_clean = str_replace('_', '', $tenant_id);
+
+    // 3. 处理 project_id：提取 UUID 部分，移除下划线
+    $project_parts = explode('_', $project_id);
+    $project_uuid = $project_parts[1] ?? str_replace('_', '', $project_id);
+
+    // 4. 处理实体名称：转换为驼峰命名
+    $entity_parts = explode('_', $entity_name);
     $entity_parts = array_map('ucfirst', $entity_parts);
-    $entity_name = implode('', $entity_parts);
+    $entity_name_formatted = implode('', $entity_parts);
 
-    return $tenant_prefix . 'Project' . $entity_name;
+    // 5. 组合最终类名
+    // 格式: Project{tenant_id}{project_uuid}{EntityName}
+    $class_name = 'Project' . $tenant_clean . $project_uuid . $entity_name_formatted;
+
+    return $class_name;
   }
 
   /**

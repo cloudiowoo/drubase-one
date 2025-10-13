@@ -101,7 +101,9 @@ class ApiDocGenerator
       'servers' => [
         [
           'url' => $tenant_id ? "{$api_base}{$tenant_path}" : $api_base,
-          'description' => 'API服务器',
+          'description' => $tenant_id ?
+            "租户 API 服务器 (tenant_id: {$tenant_id}, 使用短格式ID)" :
+            'API 服务器 (支持短格式和长格式ID)',
         ],
       ],
       'paths' => [
@@ -224,11 +226,11 @@ class ApiDocGenerator
         ],
         [
           'url' => '/api/v1/{tenant_id}',
-          'description' => '租户特定API服务器',
+          'description' => '租户特定API服务器（支持短格式和长格式ID）',
           'variables' => [
             'tenant_id' => [
-              'default' => 'tenant_7375b0cd',
-              'description' => '租户ID，例如：tenant_7375b0cd',
+              'default' => '7375b0cd',
+              'description' => '租户ID（支持短格式如 7375b0cd 或长格式如 tenant_7375b0cd）',
             ],
           ],
         ],
@@ -327,8 +329,14 @@ class ApiDocGenerator
     // 获取基础组件
     $base_components = $this->generateBaseComponents();
 
+    // 将长格式ID转换为短格式用于 URL
+    $short_tenant_id = $tenant_id;
+    if (str_starts_with($tenant_id, 'tenant_')) {
+      $short_tenant_id = substr($tenant_id, 7); // 移除 "tenant_" 前缀
+    }
+
     // 修改基本信息
-    $docs['info']['title'] = '租户 ' . $tenant_id . ' API';
+    $docs['info']['title'] = '租户 ' . $short_tenant_id . ' API';
     $docs['servers'] = [
       [
         'url' => '/api',
@@ -339,8 +347,8 @@ class ApiDocGenerator
       //   'description' => '全局API v1 服务器',
       // ],
       [
-        'url' => '/api/v1/' . $tenant_id,
-        'description' => '租户 ' . $tenant_id . ' API 服务器（推荐）',
+        'url' => '/api/v1/' . $short_tenant_id,
+        'description' => '租户 ' . $short_tenant_id . ' API 服务器（推荐，使用短格式ID）',
       ],
       // [
       //   'url' => '/api/v1/{tenant_id}',
@@ -3014,8 +3022,8 @@ class ApiDocGenerator
             ],
             'tenant_id' => [
               'type' => 'string',
-              'description' => '租户ID（可选）',
-              'example' => 'tenant_001',
+              'description' => '租户ID（可选，支持短格式如 7375b0cd 或长格式如 tenant_7375b0cd）',
+              'example' => '7375b0cd',
             ],
             'remember_me' => [
               'type' => 'boolean',
@@ -3625,8 +3633,8 @@ class ApiDocGenerator
             ],
             'tenant_id' => [
               'type' => 'string',
-              'description' => '租户ID',
-              'example' => 'tenant_001',
+              'description' => '租户ID（支持短格式如 7375b0cd 或长格式如 tenant_7375b0cd）',
+              'example' => '7375b0cd',
             ],
           ],
         ],
@@ -3888,8 +3896,8 @@ class ApiDocGenerator
             'name' => 'project_id',
             'in' => 'path',
             'required' => true,
-            'description' => '项目ID',
-            'schema' => ['type' => 'string'],
+            'description' => '项目ID（支持短格式如 6888d012be80c 或长格式如 tenant_7375b0cd_project_6888d012be80c）',
+            'schema' => ['type' => 'string', 'example' => '6888d012be80c'],
           ],
           [
             'name' => 'template_name',
@@ -3931,8 +3939,8 @@ class ApiDocGenerator
             'name' => 'project_id',
             'in' => 'path',
             'required' => true,
-            'description' => '项目ID',
-            'schema' => ['type' => 'string'],
+            'description' => '项目ID（支持短格式如 6888d012be80c 或长格式如 tenant_7375b0cd_project_6888d012be80c）',
+            'schema' => ['type' => 'string', 'example' => '6888d012be80c'],
           ],
           [
             'name' => 'entity_name',
@@ -4179,8 +4187,8 @@ class ApiDocGenerator
             'name' => 'project_id',
             'in' => 'path',
             'required' => true,
-            'description' => '项目ID',
-            'schema' => ['type' => 'string'],
+            'description' => '项目ID（支持短格式如 6888d012be80c 或长格式如 tenant_7375b0cd_project_6888d012be80c）',
+            'schema' => ['type' => 'string', 'example' => '6888d012be80c'],
           ],
           [
             'name' => 'entity_name',
@@ -4225,8 +4233,8 @@ class ApiDocGenerator
             'name' => 'project_id',
             'in' => 'path',
             'required' => true,
-            'description' => '项目ID',
-            'schema' => ['type' => 'string'],
+            'description' => '项目ID（支持短格式如 6888d012be80c 或长格式如 tenant_7375b0cd_project_6888d012be80c）',
+            'schema' => ['type' => 'string', 'example' => '6888d012be80c'],
           ],
           [
             'name' => 'entity_name',
@@ -4281,8 +4289,8 @@ class ApiDocGenerator
             'name' => 'project_id',
             'in' => 'path',
             'required' => true,
-            'description' => '项目ID',
-            'schema' => ['type' => 'string'],
+            'description' => '项目ID（支持短格式如 6888d012be80c 或长格式如 tenant_7375b0cd_project_6888d012be80c）',
+            'schema' => ['type' => 'string', 'example' => '6888d012be80c'],
           ],
           [
             'name' => 'entity_name',
@@ -4461,8 +4469,8 @@ class ApiDocGenerator
                   'type' => 'array',
                   'items' => ['$ref' => '#/components/schemas/ProjectTemplate'],
                 ],
-                'project_id' => ['type' => 'string', 'example' => 'project_123'],
-                'tenant_id' => ['type' => 'string', 'example' => 'tenant_456'],
+                'project_id' => ['type' => 'string', 'example' => '6888d012be80c'],
+                'tenant_id' => ['type' => 'string', 'example' => '7375b0cd'],
                 'count' => ['type' => 'integer', 'example' => 5],
               ],
             ],
@@ -4489,8 +4497,8 @@ class ApiDocGenerator
             'name' => ['type' => 'string', 'example' => 'users'],
             'label' => ['type' => 'string', 'example' => '用户'],
             'description' => ['type' => 'string', 'example' => '用户实体模板'],
-            'project_id' => ['type' => 'string', 'example' => 'project_123'],
-            'tenant_id' => ['type' => 'string', 'example' => 'tenant_456'],
+            'project_id' => ['type' => 'string', 'example' => '6888d012be80c'],
+            'tenant_id' => ['type' => 'string', 'example' => '7375b0cd'],
             'status' => ['type' => 'integer', 'example' => 1],
             'created' => ['type' => 'integer', 'example' => 1640995200],
             'updated' => ['type' => 'integer', 'example' => 1640995200],
@@ -4524,7 +4532,7 @@ class ApiDocGenerator
                   'type' => 'array',
                   'items' => ['$ref' => '#/components/schemas/ProjectEntityData'],
                 ],
-                'project_id' => ['type' => 'string', 'example' => 'project_123'],
+                'project_id' => ['type' => 'string', 'example' => '6888d012be80c'],
                 'entity_name' => ['type' => 'string', 'example' => 'users'],
                 'pagination' => ['$ref' => '#/components/schemas/PaginationInfo'],
               ],
@@ -4540,7 +4548,7 @@ class ApiDocGenerator
               'type' => 'object',
               'properties' => [
                 'entity' => ['$ref' => '#/components/schemas/ProjectEntityData'],
-                'project_id' => ['type' => 'string', 'example' => 'project_123'],
+                'project_id' => ['type' => 'string', 'example' => '6888d012be80c'],
                 'entity_name' => ['type' => 'string', 'example' => 'users'],
               ],
             ],
@@ -4566,7 +4574,7 @@ class ApiDocGenerator
               'type' => 'object',
               'properties' => [
                 'deleted_id' => ['type' => 'string', 'example' => 'entity_456'],
-                'project_id' => ['type' => 'string', 'example' => 'project_123'],
+                'project_id' => ['type' => 'string', 'example' => '6888d012be80c'],
                 'entity_name' => ['type' => 'string', 'example' => 'users'],
               ],
             ],

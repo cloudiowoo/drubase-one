@@ -691,56 +691,10 @@ class ProjectManager implements ProjectManagerInterface
 
   /**
    * {@inheritdoc}
-   *
-   * 生成优化后的项目ID（22字符短格式）。
-   *
-   * 格式变更说明：
-   *   旧格式: tenant_7375b0cd_project_6888d012be80c (37字符)
-   *   新格式: 7375b0cd_6888d012be80c (22字符, -40%)
-   *
-   * 格式规则：
-   *   {tenant_id}_{project_uuid}
-   *   8字符_13字符 = 22字符总长度
-   *
-   * @param string $tenant_id
-   *   租户ID（可以是长格式或短格式）。
-   *
-   * @return string
-   *   22字符的短格式项目ID。
-   *
-   * @example
-   *   传入: '7375b0cd' 或 'tenant_7375b0cd'
-   *   返回: '7375b0cd_6888d012be80c'
    */
   public function generateProjectId(string $tenant_id): string
   {
-    // 确保 tenant_id 是 8 字符短格式
-    // 如果传入的是长格式 (tenant_7375b0cd)，提取短格式
-    $tenant_short = str_replace('tenant_', '', $tenant_id);
-
-    // 验证 tenant_id 格式
-    if (strlen($tenant_short) !== 8 || !ctype_xdigit($tenant_short)) {
-      // 记录警告但继续执行
-      $this->logger->warning('传入的 tenant_id 格式异常: @tenant_id (短格式: @short)', [
-        '@tenant_id' => $tenant_id,
-        '@short' => $tenant_short,
-      ]);
-    }
-
-    // 生成项目 UUID (13字符的唯一标识)
-    $project_uuid = uniqid();
-
-    // 组合: tenant_short + '_' + project_uuid
-    // 例如: 7375b0cd_6888d012be80c (8 + 1 + 13 = 22字符)
-    $project_id = $tenant_short . '_' . $project_uuid;
-
-    // 记录日志（可选）
-    $this->logger->info('生成新项目ID: @project_id (租户: @tenant_id)', [
-      '@project_id' => $project_id,
-      '@tenant_id' => $tenant_short,
-    ]);
-
-    return $project_id;
+    return $tenant_id . '_project_' . uniqid();
   }
 
   /**

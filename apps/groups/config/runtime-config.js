@@ -15,7 +15,7 @@ window.__RUNTIME_CONFIG__ = {
 
   // Tenant和Project配置
   BAAS_TENANT_ID: '7375b0cd',
-  BAAS_PROJECT_ID: '6888d012be80c',
+  BAAS_PROJECT_ID: '7375b0cd_6888d012be80c',
 
   // API Key (⚠️ 需要替换为您的实际API Key)
   BAAS_API_KEY: 'your-api-key-here',

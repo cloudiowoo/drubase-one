@@ -35,16 +35,6 @@ class ProjectEntityRegistry
    */
   public function registerProjectEntityTypes(array &$entity_types): void
   {
-    // 使用静态变量防止重复注册
-    static $already_registered = FALSE;
-    
-    if ($already_registered) {
-      \Drupal::logger('baas_project')->debug('跳过重复的项目实体类型注册调用');
-      return;
-    }
-    
-    $already_registered = TRUE;
-    
     try {
       $registered_types = $this->loadRegisteredProjectEntityTypes();
       
@@ -130,14 +120,21 @@ class ProjectEntityRegistry
           ],
         ];
         
+        // 记录调试信息（在sanitize之前）
+        \Drupal::logger('baas_project')->debug('Before sanitize - entity_class: @class, storage_class: @storage', [
+          '@class' => $definition['entity_class'] ?? 'NULL',
+          '@storage' => $definition['storage_class'] ?? 'NULL',
+        ]);
+
         // 验证定义中的所有字符串值，确保不为null
         $definition = $this->sanitizeEntityTypeDefinition($definition);
-        
-        // 记录调试信息
-        \Drupal::logger('baas_project')->debug('Creating entity type definition with values: id=@id, label=@label, table=@table', [
+
+        // 记录调试信息（在sanitize之后）
+        \Drupal::logger('baas_project')->debug('After sanitize - id=@id, label=@label, table=@table, entity_class=@class', [
           '@id' => $definition['id'],
           '@label' => $definition['label'],
           '@table' => $definition['base_table'],
+          '@class' => $definition['entity_class'] ?? 'NULL',
         ]);
         
         $entity_type = new ContentEntityType($definition);
@@ -231,38 +228,39 @@ class ProjectEntityRegistry
   {
     // 验证输入数据
     $tenant_id = trim($template['tenant_id'] ?? '');
+    $project_id = trim($template['project_id'] ?? '');
     $entity_name = trim($template['name'] ?? '');
-    
-    if (empty($tenant_id) || empty($entity_name)) {
-      \Drupal::logger('baas_project')->warning('生成类名时缺少必要数据: tenant_id=@tenant_id, name=@name', [
+
+    if (empty($tenant_id) || empty($project_id) || empty($entity_name)) {
+      \Drupal::logger('baas_project')->warning('生成类名时缺少必要数据: tenant_id=@tenant_id, project_id=@project_id, name=@name', [
         '@tenant_id' => $tenant_id,
+        '@project_id' => $project_id,
         '@name' => $entity_name,
       ]);
       return 'UnknownProjectEntity';
     }
-    
-    // 移除特殊字符并转换为驼峰命名
-    $tenant_parts = explode('_', $tenant_id);
-    $tenant_parts = array_map(function($part) {
-      return ucfirst(trim($part));
-    }, $tenant_parts);
-    $tenant_prefix = implode('', array_filter($tenant_parts));
 
+    // 1. 转换为短格式（如果输入是长格式）
+    $tenant_id = str_replace('tenant_', '', $tenant_id);
+    $project_id = preg_replace('/^tenant_(.+?)_project_/', '$1_', $project_id);
+
+    // 2. 处理 tenant_id：移除下划线
+    $tenant_clean = str_replace('_', '', $tenant_id);
+
+    // 3. 处理 project_id：提取 UUID 部分，移除下划线
+    $project_parts = explode('_', $project_id);
+    $project_uuid = $project_parts[1] ?? str_replace('_', '', $project_id);
+
+    // 4. 处理实体名称：转换为驼峰命名
     $entity_parts = explode('_', $entity_name);
-    $entity_parts = array_map(function($part) {
-      return ucfirst(trim($part));
-    }, $entity_parts);
-    $entity_name_formatted = implode('', array_filter($entity_parts));
+    $entity_parts = array_map('ucfirst', $entity_parts);
+    $entity_name_formatted = implode('', $entity_parts);
 
-    if (empty($tenant_prefix) || empty($entity_name_formatted)) {
-      \Drupal::logger('baas_project')->warning('生成类名时格式化失败: tenant_prefix=@tenant_prefix, entity_name=@entity_name', [
-        '@tenant_prefix' => $tenant_prefix,
-        '@entity_name' => $entity_name_formatted,
-      ]);
-      return 'UnknownProjectEntity';
-    }
+    // 5. 组合最终类名
+    // 格式: Project{tenant_id}{project_uuid}{EntityName}
+    $class_name = 'Project' . $tenant_clean . $project_uuid . $entity_name_formatted;
 
-    return $tenant_prefix . 'Project' . $entity_name_formatted;
+    return $class_name;
   }
 
   /**

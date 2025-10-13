@@ -97,12 +97,10 @@ class PasswordVerificationController extends ControllerBase {
         ], Response::HTTP_BAD_REQUEST);
       }
 
-      // 生成表名 - 转换为完整的ID格式
-      $full_tenant_id = "tenant_" . $tenant_id;
-      $full_project_id = "tenant_" . $tenant_id . "_project_" . $project_id;
-      
+      // 生成表名 - 直接使用短格式ID（与ProjectTableNameGenerator一致）
+      // ProjectTableNameGenerator期望接收短格式ID: '7375b0cd' 和 '7375b0cd_6888d012be80c'
       $table_name_generator = \Drupal::service('baas_project.table_name_generator');
-      $table_name = $table_name_generator->generateTableName($full_tenant_id, $full_project_id, 'users');
+      $table_name = $table_name_generator->generateTableName($tenant_id, $project_id, 'users');
 
       // 检查表是否存在
       if (!$this->database->schema()->tableExists($table_name)) {

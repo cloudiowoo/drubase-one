@@ -108,17 +108,35 @@ class WebSocketController implements ContainerInjectionInterface
       }
 
       // 验证租户权限 - 确保连接的租户ID与路径参数匹配
-      if ($tenant_id && $connection_data['tenant_id'] !== $tenant_id) {
-        return new JsonResponse([
-          'success' => FALSE,
-          'error' => 'Tenant access denied',
-          'code' => 'TENANT_ACCESS_DENIED',
-        ], Response::HTTP_FORBIDDEN);
+      // 统一ID格式进行比较（移除tenant_前缀）
+      if ($tenant_id) {
+        $clean_connection_tenant_id = preg_replace('/^tenant_/', '', $connection_data['tenant_id']);
+        $clean_path_tenant_id = preg_replace('/^tenant_/', '', $tenant_id);
+
+        if ($clean_connection_tenant_id !== $clean_path_tenant_id) {
+          return new JsonResponse([
+            'success' => FALSE,
+            'error' => 'Tenant access denied',
+            'code' => 'TENANT_ACCESS_DENIED',
+          ], Response::HTTP_FORBIDDEN);
+        }
       }
 
       // 验证项目权限 - 如果路径包含项目ID，确保用户有项目访问权限
+      // 统一ID格式进行比较（移除tenant_xxx_project_前缀，但保留租户hash前缀）
       if ($project_id) {
-        if ($connection_data['project_id'] !== $project_id) {
+        $clean_connection_project_id = $connection_data['project_id'];
+        if (strpos($clean_connection_project_id, 'tenant_') === 0) {
+          // 如果是长格式 tenant_7375b0cd_project_6888d012be80c，提取短格式 7375b0cd_6888d012be80c
+          $clean_connection_project_id = preg_replace('/^tenant_([^_]+)_project_/', '$1_', $clean_connection_project_id);
+        }
+
+        $clean_path_project_id = $project_id;
+        if (strpos($clean_path_project_id, 'tenant_') === 0) {
+          $clean_path_project_id = preg_replace('/^tenant_([^_]+)_project_/', '$1_', $clean_path_project_id);
+        }
+
+        if ($clean_connection_project_id !== $clean_path_project_id) {
           return new JsonResponse([
             'success' => FALSE,
             'error' => 'Project access denied',
@@ -131,13 +149,21 @@ class WebSocketController implements ContainerInjectionInterface
 
       // 生成连接ID
       $connection_id = $this->generateConnectionId();
-      
-      // 记录连接信息
+
+      // 将长格式ID转换为短格式ID（用于Realtime服务器调用API）
+      $short_tenant_id = preg_replace('/^tenant_/', '', $connection_data['tenant_id']);
+      $short_project_id = $connection_data['project_id'];
+      if (strpos($short_project_id, 'tenant_') === 0) {
+        // 如果是长格式 tenant_7375b0cd_project_6888d012be80c，提取短格式 7375b0cd_6888d012be80c
+        $short_project_id = preg_replace('/^tenant_([^_]+)_project_/', '$1_', $short_project_id);
+      }
+
+      // 记录连接信息（使用短格式ID）
       $connection_info = [
         'connection_id' => $connection_id,
         'user_id' => $connection_data['user_id'],
-        'project_id' => $connection_data['project_id'],
-        'tenant_id' => $connection_data['tenant_id'],
+        'project_id' => $short_project_id,
+        'tenant_id' => $short_tenant_id,
         'socket_id' => $data['socket_id'] ?? '',
         'ip_address' => $request->getClientIp(),
         'user_agent' => $request->headers->get('User-Agent'),

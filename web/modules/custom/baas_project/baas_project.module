@@ -164,30 +164,34 @@ function _baas_project_get_entity_class_name(array $template): string
 {
   // 验证输入数据
   $tenant_id = trim($template['tenant_id'] ?? '');
+  $project_id = trim($template['project_id'] ?? '');
   $entity_name = trim($template['name'] ?? '');
-  
-  if (empty($tenant_id) || empty($entity_name)) {
+
+  if (empty($tenant_id) || empty($project_id) || empty($entity_name)) {
     return 'UnknownProjectEntity';
   }
-  
-  // 移除特殊字符并转换为驼峰命名
-  $tenant_parts = explode('_', $tenant_id);
-  $tenant_parts = array_map(function($part) {
-    return ucfirst(trim($part));
-  }, $tenant_parts);
-  $tenant_prefix = implode('', array_filter($tenant_parts));
 
+  // 1. 转换为短格式（如果输入是长格式）
+  $tenant_id = str_replace('tenant_', '', $tenant_id);
+  $project_id = preg_replace('/^tenant_(.+?)_project_/', '$1_', $project_id);
+
+  // 2. 处理 tenant_id：移除下划线
+  $tenant_clean = str_replace('_', '', $tenant_id);
+
+  // 3. 处理 project_id：提取 UUID 部分，移除下划线
+  $project_parts = explode('_', $project_id);
+  $project_uuid = $project_parts[1] ?? str_replace('_', '', $project_id);
+
+  // 4. 处理实体名称：转换为驼峰命名
   $entity_parts = explode('_', $entity_name);
-  $entity_parts = array_map(function($part) {
-    return ucfirst(trim($part));
-  }, $entity_parts);
-  $entity_name_formatted = implode('', array_filter($entity_parts));
+  $entity_parts = array_map('ucfirst', $entity_parts);
+  $entity_name_formatted = implode('', $entity_parts);
 
-  if (empty($tenant_prefix) || empty($entity_name_formatted)) {
-    return 'UnknownProjectEntity';
-  }
+  // 5. 组合最终类名
+  // 格式: Project{tenant_id}{project_uuid}{EntityName}
+  $class_name = 'Project' . $tenant_clean . $project_uuid . $entity_name_formatted;
 
-  return $tenant_prefix . 'Project' . $entity_name_formatted;
+  return $class_name;
 }
 
 // 注册类自动加载器

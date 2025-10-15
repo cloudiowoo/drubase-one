@@ -12,4 +12,4 @@ dependencies:
   - drupal:baas_api
 
 configure: baas_realtime.settings
-version: '1.1.0-beta.6'
+version: '1.1.1-beta.3'

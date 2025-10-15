@@ -242,7 +242,7 @@ docker-compose exec baas-functions-service env | grep DRUPAL_API_URL
 检查命令：
 ```bash
 # 检查PHP-FPM状态
-docker exec php8-4-fpm-xdebug ps aux | grep php-fpm
+docker exec php8-4-fpm-official ps aux | grep php-fpm
 
 # 检查容器DNS解析
 docker exec baas-functions-service getent hosts api.example.com

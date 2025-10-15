@@ -11,8 +11,16 @@ if ! command -v docker &> /dev/null; then
     exit 1
 fi
 
-if ! command -v docker-compose &> /dev/null; then
+# 检测 Docker Compose 版本并设置命令
+if docker compose version &> /dev/null; then
+    DOCKER_COMPOSE="docker compose"
+    echo "✅ 检测到 Docker Compose v2"
+elif command -v docker-compose &> /dev/null; then
+    DOCKER_COMPOSE="docker-compose"
+    echo "✅ 检测到 Docker Compose v1"
+else
     echo "❌ Docker Compose 未安装，请先安装 Docker Compose"
+    echo "   安装方式: https://docs.docker.com/compose/install/"
     exit 1
 fi
 
@@ -48,7 +56,7 @@ echo "📁 创建数据目录..."
 
 # 停止可能运行的容器
 echo "🛑 停止现有容器..."
-cd docker && docker-compose down 2>/dev/null || true && cd ..
+cd docker && $DOCKER_COMPOSE down 2>/dev/null || true && cd ..
 
 # 彻底清理数据目录
 echo "🧹 彻底清理数据目录..."
@@ -75,7 +83,7 @@ docker volume rm drubase_one_pg_data 2>/dev/null || true
 
 # 启动Docker服务
 echo "🐳 启动 Docker 服务..."
-cd docker && docker-compose up -d && cd ..
+cd docker && $DOCKER_COMPOSE up -d && cd ..
 
 # 等待数据库启动
 echo "⏳ 等待数据库启动..."
@@ -85,12 +93,12 @@ sleep 5
 # 检查数据库是否准备就绪
 for i in {1..12}; do
     echo "   尝试连接数据库 ($i/12)..."
-    if cd docker && docker-compose exec -T pg17 pg_isready -U postgres -d drubase >/dev/null 2>&1 && cd ..; then
+    if cd docker && $DOCKER_COMPOSE exec -T pg17 pg_isready -U postgres -d drubase >/dev/null 2>&1 && cd ..; then
         echo "✅ 数据库已准备就绪"
         break
     fi
     if [ $i -eq 12 ]; then
-        echo "❌ 数据库启动超时，请检查日志: cd docker && docker-compose logs pg17"
+        echo "❌ 数据库启动超时，请检查日志: cd docker && $DOCKER_COMPOSE logs pg17"
         exit 1
     fi
     sleep 10
@@ -105,12 +113,12 @@ fi
 # 安装依赖
 echo "📦 安装 Composer 依赖..."
 echo "   首次安装将自动生成 composer.lock..."
-cd docker && docker-compose exec -T php8-4-fpm bash -c "cd /var/www/html && composer install --no-dev --optimize-autoloader" && cd ..
+cd docker && $DOCKER_COMPOSE exec -T php8-4-fpm bash -c "cd /var/www/html && composer install --no-dev --optimize-autoloader" && cd ..
 
 # 准备 Drupal 安装
 echo "⚙️  准备 Drupal 安装..."
 echo "   设置文件权限..."
-cd docker && docker-compose exec -T php8-4-fpm bash -c "cd /var/www/html && \
+cd docker && $DOCKER_COMPOSE exec -T php8-4-fpm bash -c "cd /var/www/html && \
     mkdir -p web/sites/default/files && \
     chmod 755 web/sites/default/files && \
     cp web/sites/default/default.settings.php web/sites/default/settings.php 2>/dev/null || true && \
@@ -139,9 +147,9 @@ echo "   • 函数服务: http://localhost:3001"
 echo "   • 演示应用: http://localhost:3000 (如果启用)"
 echo ""
 echo "🛠️  管理命令:"
-echo "   cd docker && docker-compose logs -f    # 查看日志"
-echo "   cd docker && docker-compose stop       # 停止服务"
-echo "   cd docker && docker-compose restart    # 重启服务"
+echo "   cd docker && \$DOCKER_COMPOSE logs -f    # 查看日志"
+echo "   cd docker && \$DOCKER_COMPOSE stop       # 停止服务"
+echo "   cd docker && \$DOCKER_COMPOSE restart    # 重启服务"
 echo ""
 echo "💡 提示:"
 echo "   • 如果遇到权限问题，请手动设置 docker/pg/v17/log 目录权限"

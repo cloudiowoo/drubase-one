@@ -42,20 +42,23 @@ services:
       retries: 3
       start_period: 30s
 
+  # ============================================
+  # PHP-FPM 服务 - 官方镜像版本（推荐）
+  # ============================================
   php8-4-fpm:
-    image: php8.4-fpm-xdebug:latest
+    image: php8.4-fpm:latest
     build:
       context: ../
-      dockerfile: docker/Dockerfile.8.4.xdebug
+      dockerfile: docker/Dockerfile.8.4.official
     restart: always
-    container_name: php8-4-fpm-xdebug
+    container_name: php8-4-fpm
     ports:
       - "8996:9000"
-      - "9009:9009"
+      - "9003:9003" # Xdebug 3.x 默认端口
     volumes:
       - ../:/var/www/html:cached
-      - ./fpm/8.4/php.ini:/opt/bitnami/php/etc/php.ini
-      - ./fpm/8.4/www.conf:/opt/bitnami/php/etc/php-fpm.d/www.conf
+      - ./fpm/8.4/php.official.ini:/usr/local/etc/php/php.ini
+      - ./fpm/8.4/www.official.conf:/usr/local/etc/php-fpm.d/www.conf
       - ./fpm/8.4/log:/var/log
     depends_on:
       - pg17
@@ -65,6 +68,7 @@ services:
         ipv4_address: 172.20.1.30
     extra_hosts:
       - "${BAAS_DOMAIN:-local.drubase.com}:172.20.1.100"
+
 
   nginx:
     image: nginx:latest

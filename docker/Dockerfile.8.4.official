@@ -1,0 +1,121 @@
+# 使用 PHP 官方 FPM 8.4 镜像作为基础镜像
+FROM php:8.4-fpm
+
+# 设置工作目录
+WORKDIR /var/www/html
+
+# 安装系统依赖
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    # 基础工具
+    nano \
+    git \
+    wget \
+    unzip \
+    # 编译工具
+    autoconf \
+    build-essential \
+    pkg-config \
+    # PostgreSQL 客户端库
+    libpq-dev \
+    # 其他 PHP 扩展依赖
+    libssl-dev \
+    libxml2-dev \
+    libreadline-dev \
+    zlib1g-dev \
+    libzip-dev \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    libonig-dev \
+    libicu-dev \
+    libsqlite3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# 配置 GD 扩展
+RUN docker-php-ext-configure gd \
+    --with-freetype \
+    --with-jpeg
+
+# 安装 PHP 核心扩展（Drupal 11 需要的扩展）
+RUN docker-php-ext-install -j$(nproc) \
+    pdo \
+    pdo_mysql \
+    pdo_pgsql \
+    pgsql \
+    mysqli \
+    zip \
+    gd \
+    opcache \
+    intl \
+    bcmath \
+    exif \
+    mbstring \
+    xml \
+    soap
+
+# 安装 PECL 扩展
+RUN pecl install xdebug-3.4.0 \
+    && pecl install mongodb \
+    && pecl install redis \
+    && pecl install apcu \
+    && docker-php-ext-enable xdebug mongodb redis apcu
+
+# 安装 Composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer \
+    && composer --version
+
+# 安装 Drush Launcher
+RUN wget -O drush.phar https://github.com/drush-ops/drush-launcher/releases/download/0.10.2/drush.phar \
+    && chmod +x drush.phar \
+    && mv drush.phar /usr/local/bin/drush
+    # && mv drush.phar /usr/local/bin/drush \
+    # && drush --version
+
+# 下载并编译最新版 SQLite 3.50.0
+RUN wget https://www.sqlite.org/2025/sqlite-autoconf-3500000.tar.gz \
+    && tar xzf sqlite-autoconf-3500000.tar.gz \
+    && cd sqlite-autoconf-3500000 \
+    && ./configure --prefix=/usr/local \
+    && make -j"$(nproc)" \
+    && make install \
+    && ldconfig \
+    && cd .. \
+    && rm -rf sqlite-autoconf-3500000*
+
+# 验证 SQLite 版本
+RUN sqlite3 --version \
+    && php -r "echo 'SQLite version (via PHP): ' . SQLite3::version()['versionString'] . PHP_EOL;"
+
+# 创建 PHP 配置目录
+RUN mkdir -p /usr/local/etc/php/conf.d
+
+# 配置 PHP-FPM
+RUN { \
+    echo '[global]'; \
+    echo 'error_log = /proc/self/fd/2'; \
+    echo ''; \
+    echo '[www]'; \
+    echo 'listen = 9000'; \
+    echo 'access.log = /proc/self/fd/2'; \
+    echo 'clear_env = no'; \
+    echo 'catch_workers_output = yes'; \
+    echo 'decorate_workers_output = no'; \
+    echo 'pm = dynamic'; \
+    echo 'pm.max_children = 50'; \
+    echo 'pm.start_servers = 5'; \
+    echo 'pm.min_spare_servers = 5'; \
+    echo 'pm.max_spare_servers = 35'; \
+} | tee /usr/local/etc/php-fpm.d/zz-docker.conf
+
+# 设置正确的权限
+RUN chown -R www-data:www-data /var/www/html
+
+# 暴露端口
+EXPOSE 9000
+
+# 注意：不设置 USER，保持以 root 运行
+# 这样 PHP-FPM 才能根据 pool 配置切换到 www-data 用户
+# PHP-FPM 会自动以 www-data 用户运行 worker 进程
+
+# 启动 PHP-FPM（前台模式，不作为守护进程）
+CMD ["php-fpm", "-F"]

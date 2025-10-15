@@ -470,10 +470,10 @@ $result = json_decode($response->getBody(), TRUE);
 1. **创建实体模板**
    ```bash
    # 创建测试租户
-   docker exec -it php8-4-fpm-xdebug sh -c "cd /var/www/webs/cloudio/drubase && vendor/bin/drush baas-tenant:set-api-key tenant_a test_api_key_123"
+   docker exec -it php8-4-fpm-official sh -c "cd /var/www/html/cloudio/drubase && vendor/bin/drush baas-tenant:set-api-key tenant_a test_api_key_123"
 
    # 通过API创建实体模板
-   docker exec -it php8-4-fpm-xdebug curl -X POST "http://nginx/api/tenant/tenant_a/templates" \
+   docker exec -it php8-4-fpm-official curl -X POST "http://nginx/api/tenant/tenant_a/templates" \
      -H "X-API-Key: test_api_key_123" \
      -H "Content-Type: application/json" \
      -H "Accept: application/json" \
@@ -492,7 +492,7 @@ $result = json_decode($response->getBody(), TRUE);
 2. **添加字段**
    ```bash
    # 添加UUID字段
-   docker exec -it php8-4-fpm-xdebug curl -X POST "http://nginx/api/tenant/tenant_a/templates/client/fields" \
+   docker exec -it php8-4-fpm-official curl -X POST "http://nginx/api/tenant/tenant_a/templates/client/fields" \
      -H "X-API-Key: test_api_key_123" \
      -H "Content-Type: application/json" \
      -H "Accept: application/json" \
@@ -506,7 +506,7 @@ $result = json_decode($response->getBody(), TRUE);
      }'
 
    # 添加标题字段
-   docker exec -it php8-4-fpm-xdebug curl -X POST "http://nginx/api/tenant/tenant_a/templates/client/fields" \
+   docker exec -it php8-4-fpm-official curl -X POST "http://nginx/api/tenant/tenant_a/templates/client/fields" \
      -H "X-API-Key: test_api_key_123" \
      -H "Content-Type: application/json" \
      -H "Accept: application/json" \
@@ -524,7 +524,7 @@ $result = json_decode($response->getBody(), TRUE);
 
 3. **获取实体模板列表**
    ```bash
-   docker exec -it php8-4-fpm-xdebug curl -X GET "http://nginx/api/tenant/tenant_a/templates" \
+   docker exec -it php8-4-fpm-official curl -X GET "http://nginx/api/tenant/tenant_a/templates" \
      -H "X-API-Key: test_api_key_123" \
      -H "Accept: application/json"
    ```
@@ -533,7 +533,7 @@ $result = json_decode($response->getBody(), TRUE);
 
 1. **创建实体数据**
    ```bash
-   docker exec -it php8-4-fpm-xdebug curl -X POST "http://nginx/api/tenant/tenant_a/client" \
+   docker exec -it php8-4-fpm-official curl -X POST "http://nginx/api/tenant/tenant_a/client" \
      -H "X-API-Key: test_api_key_123" \
      -H "Content-Type: application/json" \
      -H "Accept: application/json" \
@@ -546,12 +546,12 @@ $result = json_decode($response->getBody(), TRUE);
 2. **查询实体数据**
    ```bash
    # 获取所有客户
-   docker exec -it php8-4-fpm-xdebug curl -X GET "http://nginx/api/tenant/tenant_a/client" \
+   docker exec -it php8-4-fpm-official curl -X GET "http://nginx/api/tenant/tenant_a/client" \
      -H "X-API-Key: test_api_key_123" \
      -H "Accept: application/json"
 
    # 获取特定客户
-   docker exec -it php8-4-fpm-xdebug curl -X GET "http://nginx/api/tenant/tenant_a/client/1" \
+   docker exec -it php8-4-fpm-official curl -X GET "http://nginx/api/tenant/tenant_a/client/1" \
      -H "X-API-Key: test_api_key_123" \
      -H "Accept: application/json"
    ```
@@ -560,13 +560,13 @@ $result = json_decode($response->getBody(), TRUE);
 
 1. **查看生成的数据表**
    ```bash
-   docker exec -it php8-4-fpm-xdebug sh -c "cd /var/www/webs/cloudio/drubase && vendor/bin/drush sql:query 'SELECT table_name FROM information_schema.tables WHERE table_name LIKE \"tenant_a_%\";'"
+   docker exec -it php8-4-fpm-official sh -c "cd /var/www/html/cloudio/drubase && vendor/bin/drush sql:query 'SELECT table_name FROM information_schema.tables WHERE table_name LIKE \"tenant_a_%\";'"
    ```
 
 2. **检查模板和字段表**
    ```bash
-   docker exec -it php8-4-fpm-xdebug sh -c "cd /var/www/webs/cloudio/drubase && vendor/bin/drush sql:query 'SELECT * FROM baas_entity_template;'"
-   docker exec -it php8-4-fpm-xdebug sh -c "cd /var/www/webs/cloudio/drubase && vendor/bin/drush sql:query 'SELECT * FROM baas_entity_field;'"
+   docker exec -it php8-4-fpm-official sh -c "cd /var/www/html/cloudio/drubase && vendor/bin/drush sql:query 'SELECT * FROM baas_entity_template;'"
+   docker exec -it php8-4-fpm-official sh -c "cd /var/www/html/cloudio/drubase && vendor/bin/drush sql:query 'SELECT * FROM baas_entity_field;'"
    ```
 
 ## 租户案例

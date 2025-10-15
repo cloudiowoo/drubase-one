@@ -338,26 +338,26 @@ $response = ApiResponse::error(
 
 1. **租户列表命令**
    ```bash
-   docker exec -it php8-4-fpm-xdebug sh -c "cd /var/www/webs/cloudio/drubase && vendor/bin/drush baas-tenant:list"
+   docker exec -it php8-4-fpm-official sh -c "cd /var/www/html/cloudio/drubase && vendor/bin/drush baas-tenant:list"
    ```
    确认命令正确显示所有租户及其信息
 
 2. **API密钥管理命令**
    ```bash
    # 查看API密钥
-   docker exec -it php8-4-fpm-xdebug sh -c "cd /var/www/webs/cloudio/drubase && vendor/bin/drush baas-tenant:api-key {tenant_id}"
+   docker exec -it php8-4-fpm-official sh -c "cd /var/www/html/cloudio/drubase && vendor/bin/drush baas-tenant:api-key {tenant_id}"
 
    # 生成新的API密钥
-   docker exec -it php8-4-fpm-xdebug sh -c "cd /var/www/webs/cloudio/drubase && vendor/bin/drush baas-tenant:api-key {tenant_id} --generate"
+   docker exec -it php8-4-fpm-official sh -c "cd /var/www/html/cloudio/drubase && vendor/bin/drush baas-tenant:api-key {tenant_id} --generate"
 
    # 移除API密钥
-   docker exec -it php8-4-fpm-xdebug sh -c "cd /var/www/webs/cloudio/drubase && vendor/bin/drush baas-tenant:api-key {tenant_id} --remove"
+   docker exec -it php8-4-fpm-official sh -c "cd /var/www/html/cloudio/drubase && vendor/bin/drush baas-tenant:api-key {tenant_id} --remove"
    ```
    验证每个命令都能按预期工作
 
 3. **设置自定义API密钥**
    ```bash
-   docker exec -it php8-4-fpm-xdebug sh -c "cd /var/www/webs/cloudio/drubase && vendor/bin/drush baas-tenant:set-api-key {tenant_id} test_api_key_123"
+   docker exec -it php8-4-fpm-official sh -c "cd /var/www/html/cloudio/drubase && vendor/bin/drush baas-tenant:set-api-key {tenant_id} test_api_key_123"
    ```
    确认API密钥已正确设置
 
@@ -366,21 +366,21 @@ $response = ApiResponse::error(
 1. **获取租户信息**
    ```bash
    # 使用API密钥获取租户信息
-   docker exec -it php8-4-fpm-xdebug curl -X GET "http://nginx/api/tenant/{tenant_id}" -H "X-API-Key: {api_key}" -H "Accept: application/json" -v
+   docker exec -it php8-4-fpm-official curl -X GET "http://nginx/api/tenant/{tenant_id}" -H "X-API-Key: {api_key}" -H "Accept: application/json" -v
    ```
    确认返回正确的租户信息JSON
 
 2. **获取当前租户**
    ```bash
    # 使用API密钥获取当前租户
-   docker exec -it php8-4-fpm-xdebug curl -X GET "http://nginx/api/tenant/current" -H "X-API-Key: {api_key}" -H "Accept: application/json" -v
+   docker exec -it php8-4-fpm-official curl -X GET "http://nginx/api/tenant/current" -H "X-API-Key: {api_key}" -H "Accept: application/json" -v
    ```
    验证系统能正确识别当前租户
 
 3. **租户使用统计**
    ```bash
    # 获取租户使用统计
-   docker exec -it php8-4-fpm-xdebug curl -X GET "http://nginx/api/tenant/{tenant_id}/usage" -H "X-API-Key: {api_key}" -H "Accept: application/json" -v
+   docker exec -it php8-4-fpm-official curl -X GET "http://nginx/api/tenant/{tenant_id}/usage" -H "X-API-Key: {api_key}" -H "Accept: application/json" -v
    ```
    确认返回租户的资源使用情况
 
@@ -389,25 +389,25 @@ $response = ApiResponse::error(
 1. **测试资源限制检查**
    ```bash
    # 检查实体数量限制（假设限制为200）
-   docker exec -it php8-4-fpm-xdebug sh -c "cd /var/www/webs/cloudio/drubase && vendor/bin/drush php:eval '\$result = \Drupal::service(\"baas_tenant.manager\")->checkResourceLimits(\"{tenant_id}\", \"entities\", 150); var_dump(\$result);'"
+   docker exec -it php8-4-fpm-official sh -c "cd /var/www/html/cloudio/drubase && vendor/bin/drush php:eval '\$result = \Drupal::service(\"baas_tenant.manager\")->checkResourceLimits(\"{tenant_id}\", \"entities\", 150); var_dump(\$result);'"
    ```
    应返回`true`，表示未超出限制
 
    ```bash
    # 检查超出实体数量限制
-   docker exec -it php8-4-fpm-xdebug sh -c "cd /var/www/webs/cloudio/drubase && vendor/bin/drush php:eval '\$result = \Drupal::service(\"baas_tenant.manager\")->checkResourceLimits(\"{tenant_id}\", \"entities\", 250); var_dump(\$result);'"
+   docker exec -it php8-4-fpm-official sh -c "cd /var/www/html/cloudio/drubase && vendor/bin/drush php:eval '\$result = \Drupal::service(\"baas_tenant.manager\")->checkResourceLimits(\"{tenant_id}\", \"entities\", 250); var_dump(\$result);'"
    ```
    应返回`false`，表示已超出限制
 
 2. **记录资源使用**
    ```bash
    # 记录API调用
-   docker exec -it php8-4-fpm-xdebug sh -c "cd /var/www/webs/cloudio/drubase && vendor/bin/drush php:eval '\Drupal::service(\"baas_tenant.manager\")->recordUsage(\"{tenant_id}\", \"api_calls\", 5);'"
+   docker exec -it php8-4-fpm-official sh -c "cd /var/www/html/cloudio/drubase && vendor/bin/drush php:eval '\Drupal::service(\"baas_tenant.manager\")->recordUsage(\"{tenant_id}\", \"api_calls\", 5);'"
    ```
 
    查询数据库验证使用记录：
    ```bash
-   docker exec -it php8-4-fpm-xdebug sh -c "cd /var/www/webs/cloudio/drubase && vendor/bin/drush sql:query 'SELECT * FROM baas_tenant_usage WHERE tenant_id = \"{tenant_id}\" ORDER BY timestamp DESC LIMIT 5;'"
+   docker exec -it php8-4-fpm-official sh -c "cd /var/www/html/cloudio/drubase && vendor/bin/drush sql:query 'SELECT * FROM baas_tenant_usage WHERE tenant_id = \"{tenant_id}\" ORDER BY timestamp DESC LIMIT 5;'"
    ```
 
 ### 租户识别测试
@@ -418,29 +418,29 @@ $response = ApiResponse::error(
 2. **域名识别**
    - 为租户设置域名：
      ```bash
-     docker exec -it php8-4-fpm-xdebug sh -c "cd /var/www/webs/cloudio/drubase && vendor/bin/drush php:eval '\$tenant = \Drupal::service(\"baas_tenant.manager\")->getTenant(\"{tenant_id}\"); \$settings = \$tenant[\"settings\"] ?? []; \$settings[\"domain\"] = \"test.example.com\"; \Drupal::service(\"baas_tenant.manager\")->updateTenant(\"{tenant_id}\", [\"settings\" => \$settings]);'"
+     docker exec -it php8-4-fpm-official sh -c "cd /var/www/html/cloudio/drubase && vendor/bin/drush php:eval '\$tenant = \Drupal::service(\"baas_tenant.manager\")->getTenant(\"{tenant_id}\"); \$settings = \$tenant[\"settings\"] ?? []; \$settings[\"domain\"] = \"test.example.com\"; \Drupal::service(\"baas_tenant.manager\")->updateTenant(\"{tenant_id}\", [\"settings\" => \$settings]);'"
      ```
 
    - 模拟发送请求到该域名：
      ```bash
-     docker exec -it php8-4-fpm-xdebug curl -X GET "http://nginx/api/tenant/current" -H "Host: test.example.com" -H "Accept: application/json" -v
+     docker exec -it php8-4-fpm-official curl -X GET "http://nginx/api/tenant/current" -H "Host: test.example.com" -H "Accept: application/json" -v
      ```
 
 ### 数据库测试
 
 1. **查看租户配置表**
    ```bash
-   docker exec -it php8-4-fpm-xdebug sh -c "cd /var/www/webs/cloudio/drubase && vendor/bin/drush sql:query 'SELECT * FROM baas_tenant_config;'"
+   docker exec -it php8-4-fpm-official sh -c "cd /var/www/html/cloudio/drubase && vendor/bin/drush sql:query 'SELECT * FROM baas_tenant_config;'"
    ```
 
 2. **查看租户专用表结构**
    ```bash
-   docker exec -it php8-4-fpm-xdebug sh -c "cd /var/www/webs/cloudio/drubase && vendor/bin/drush sql:query 'SELECT table_name FROM information_schema.tables WHERE table_name LIKE \"tenant_{tenant_id}%\";'"
+   docker exec -it php8-4-fpm-official sh -c "cd /var/www/html/cloudio/drubase && vendor/bin/drush sql:query 'SELECT table_name FROM information_schema.tables WHERE table_name LIKE \"tenant_{tenant_id}%\";'"
    ```
 
 3. **查看租户使用统计**
    ```bash
-   docker exec -it php8-4-fpm-xdebug sh -c "cd /var/www/webs/cloudio/drubase && vendor/bin/drush sql:query 'SELECT * FROM baas_tenant_usage WHERE tenant_id = \"{tenant_id}\";'"
+   docker exec -it php8-4-fpm-official sh -c "cd /var/www/html/cloudio/drubase && vendor/bin/drush sql:query 'SELECT * FROM baas_tenant_usage WHERE tenant_id = \"{tenant_id}\";'"
    ```
 
 ### 故障排除
@@ -449,12 +449,12 @@ $response = ApiResponse::error(
 
 1. **查看Drupal日志**
    ```bash
-   docker exec -it php8-4-fpm-xdebug sh -c "cd /var/www/webs/cloudio/drubase && vendor/bin/drush watchdog:show --tail"
+   docker exec -it php8-4-fpm-official sh -c "cd /var/www/html/cloudio/drubase && vendor/bin/drush watchdog:show --tail"
    ```
 
 2. **清除缓存**
    ```bash
-   docker exec -it php8-4-fpm-xdebug sh -c "cd /var/www/webs/cloudio/drubase && vendor/bin/drush cr"
+   docker exec -it php8-4-fpm-official sh -c "cd /var/www/html/cloudio/drubase && vendor/bin/drush cr"
    ```
 
 3. **检查权限**

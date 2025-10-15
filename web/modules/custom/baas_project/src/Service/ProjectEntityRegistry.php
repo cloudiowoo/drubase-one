@@ -97,7 +97,7 @@ class ProjectEntityRegistry
           'id' => $entity_type_id,
           'label' => $translated_label,
           'base_table' => $table_name,
-          'entity_class' => "Drupal\\baas_project\\Entity\\Dynamic\\{$class_name}",
+          'class' => "Drupal\\baas_project\\Entity\\Dynamic\\{$class_name}",
           'storage_class' => "Drupal\\baas_project\\Storage\\Dynamic\\{$class_name}Storage",
           'admin_permission' => 'manage baas project content',
           'translatable' => FALSE,
@@ -121,8 +121,8 @@ class ProjectEntityRegistry
         ];
         
         // 记录调试信息（在sanitize之前）
-        \Drupal::logger('baas_project')->debug('Before sanitize - entity_class: @class, storage_class: @storage', [
-          '@class' => $definition['entity_class'] ?? 'NULL',
+        \Drupal::logger('baas_project')->debug('Before sanitize - class: @class, storage_class: @storage', [
+          '@class' => $definition['class'] ?? 'NULL',
           '@storage' => $definition['storage_class'] ?? 'NULL',
         ]);
 
@@ -130,11 +130,11 @@ class ProjectEntityRegistry
         $definition = $this->sanitizeEntityTypeDefinition($definition);
 
         // 记录调试信息（在sanitize之后）
-        \Drupal::logger('baas_project')->debug('After sanitize - id=@id, label=@label, table=@table, entity_class=@class', [
+        \Drupal::logger('baas_project')->debug('After sanitize - id=@id, label=@label, table=@table, class=@class', [
           '@id' => $definition['id'],
           '@label' => $definition['label'],
           '@table' => $definition['base_table'],
-          '@class' => $definition['entity_class'] ?? 'NULL',
+          '@class' => $definition['class'] ?? 'NULL',
         ]);
         
         $entity_type = new ContentEntityType($definition);
@@ -360,7 +360,7 @@ class ProjectEntityRegistry
     }
     
     // 确保关键字段不为空
-    $critical_fields = ['id', 'label', 'base_table', 'entity_class', 'storage_class'];
+    $critical_fields = ['id', 'label', 'base_table', 'class', 'storage_class'];
     foreach ($critical_fields as $field) {
       if (isset($sanitized[$field]) && (empty($sanitized[$field]) || $sanitized[$field] === 'default_value')) {
         $sanitized[$field] = 'project_entity_' . $field;

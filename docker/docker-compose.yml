@@ -97,8 +97,8 @@ services:
 
   baas-functions:
     build:
-      context: ../nodejs-services/baas-functions
-      dockerfile: docker/nodejs-services/baas-functions/Dockerfile
+      context: ./nodejs-services/baas-functions
+      dockerfile: Dockerfile
     restart: always
     container_name: baas-functions-service
     ports:

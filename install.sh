@@ -74,7 +74,7 @@ mkdir -p docker/nodejs-services/baas-functions/logs
 # 设置PostgreSQL数据目录权限
 echo "🔐 设置目录权限..."
 chmod 700 docker/pg/v17/data
-chmod 755 docker/pg/v17/log
+chmod 777 docker/pg/v17/log
 
 # 强制移除可能存在的PostgreSQL容器和卷
 echo "🗑️  清理PostgreSQL容器和卷..."

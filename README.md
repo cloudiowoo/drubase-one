@@ -243,7 +243,7 @@ cd drubase-one
 open http://localhost
 ```
 
-**📖 详细安装步骤**: 请查看 **[安装指南](INSTALL.md)**
+**📖 详细安装步骤**: 请查看 **[安装指南](docs/INSTALL.md)**
 
 ### 🌐 在线演示
 
@@ -284,7 +284,7 @@ Drubase One 包含一个完整的演示应用，展示平台的核心能力：
 
 **访问地址**: http://localhost:3000
 
-**📖 了解更多**: **[Groups 项目详情](GROUPS.md)** - 完整的项目故事、技术架构和开发指南
+**📖 了解更多**: **[Groups 项目详情](docs/GROUPS.md)** - 完整的项目故事、技术架构和开发指南
 
 ---
 
@@ -337,19 +337,13 @@ Drubase One 包含一个完整的演示应用，展示平台的核心能力：
 
 ### 用户文档
 
-- **[安装指南](INSTALL.md)** - 完整的安装步骤和环境配置
-- **[API 文档](API.md)** - RESTful API 使用说明和示例
-- **[域名配置指南](DOMAIN_CONFIGURATION.md)** - 自定义域名和 Nginx 配置
+- **[安装指南](docs/INSTALL.md)** - 完整的安装步骤和环境配置
+- **[API 文档](docs/API.md)** - RESTful API 使用说明和示例
+- **[域名配置指南](docs/DOMAIN_CONFIGURATION.md)** - 自定义域名和 Nginx 配置
 
 ### 应用文档
 
-- **[Groups 项目详情](GROUPS.md)** - 完整的 Groups 演示应用介绍、技术架构和开发指南
-
-### 开发者文档
-
-- **[前端 ID 格式迁移指南](../FRONTEND_ID_FORMAT_MIGRATION_GUIDE.md)** - 从旧格式迁移到新 6 位哈希格式
-- **[Groups 演示用户指南](../GROUPS_DEMO_USERS_GUIDE.md)** - Groups 应用的测试用户和使用说明
-- **[演示数据使用指南](../DEMO_DATA_USAGE.md)** - 如何使用和导入演示数据
+- **[Groups 项目详情](docs/GROUPS.md)** - 完整的 Groups 演示应用介绍、技术架构和开发指南
 
 ### 技术架构
 

@@ -196,7 +196,7 @@ Groups 将成为 **Drubase One 官方示例项目**，展示如何：
 
 ## 📚 相关文档
 
-- **[Drubase One 主文档](README.md)** - 了解 BaaS 平台
+- **[Drubase One 主文档](../README.md)** - 了解 BaaS 平台
 - **[安装指南](INSTALL.md)** - 部署 Drubase One
 - **[API 文档](API.md)** - RESTful API 使用说明
 - **[Groups 源代码](../apps/groups/)** - 前端项目源码

@@ -1,19 +1,256 @@
-# BaaS Platform
+# Drubase One
 
-企业级Backend-as-a-Service平台，基于Drupal 11构建的现代化后端服务。
+<div align="center">
 
-## ✨ 核心特性
+**企业级 Backend-as-a-Service 平台**
 
-- 🏢 **多租户架构** - 完全隔离的多租户数据管理
-- 🔐 **统一认证** - JWT、API Key、Session多种认证方式
-- 📊 **动态实体** - 无需编程即可创建和管理数据模型
-- 🚀 **项目管理** - 灵活的项目组织和权限控制系统
-- ⚡ **函数服务** - 支持无服务器函数和自定义业务逻辑
-- 📱 **实时功能** - WebSocket实时通信支持
-- 🎯 **API网关** - 统一的API管理、监控和限流
-- 📁 **文件管理** - 安全的文件上传、存储和管理
+基于 Drupal 11 构建的现代化后端服务，让你专注于业务逻辑而非基础设施
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Drupal: 11](https://img.shields.io/badge/Drupal-11-0678BE.svg)](https://www.drupal.org)
+[![PHP: 8.4](https://img.shields.io/badge/PHP-8.4-777BB4.svg)](https://www.php.net)
+[![PostgreSQL: 17](https://img.shields.io/badge/PostgreSQL-17-336791.svg)](https://www.postgresql.org)
+
+[功能特性](#-核心功能) • [快速开始](#-快速开始) • [文档](#-文档) • [演示应用](#-演示应用)
+
+</div>
+
+---
+
+## 🎯 项目简介
+
+### 🌌 Drubase One：重新定义「自托管」的力量
+
+> *"我们厌倦了把自己的数据交给别人。*
+> *厌倦了在每一个项目中，从零重复造轮子。*
+> *所以我们决定——造一个属于自己的 Supabase。"*
+
+---
+
+### 🚀 一切的开始
+
+那是一个普通的深夜，团队在为一个新 SaaS 项目的后端焦头烂额。
+认证、权限、API、文件、Socket、租户隔离……每个模块都像迷宫。
+
+有人提议："不如用 Supabase？"
+但很快，现实给了答案：
+- 云服务延迟太高，国内访问不稳定；
+- 成本按量计费，增长就意味着开支失控；
+- 想做自定义逻辑？抱歉，闭源系统说"不行"。
+
+**于是我们意识到：**
+
+> 不是我们不懂云，而是我们更想掌握自己的一切。
+
+**于是，Drubase One 诞生了。**
+
+---
+
+### 🧩 Drubase One 是什么？
+
+**Drubase One** 是一款基于 **Drupal 11** 构建的
+**开源、自托管 Backend-as-a-Service (BaaS) 平台**。
+
+它像是 **Supabase 的自托管版 + Drupal 的现代化进化版**。
+你可以在自己的服务器上，用开源方式获得一个
+能跑多租户、自动生成 API、还能挂载 Node 函数服务的全功能后端。
+
+**一句话：**
+> 这是一个你可以拥有的 Supabase。
+
+---
+
+### 💡 我们解决了这些痛点
+
+在现代应用开发中，每个团队都被这些问题折磨过：
+
+| 🧱 痛点 | 💥 Drubase One 的解决方案 |
+|---------|---------------------------|
+| **重复造轮子**：认证、权限、API | 开箱即用的用户系统 + 自动生成 REST API |
+| **想做多租户 SaaS，但架构复杂** | 原生支持多租户与项目隔离 |
+| **想自定义逻辑，却被平台锁死** | 内置 Node.js 函数服务，无限扩展 |
+| **数据安全与隐私不可控** | 完全自托管，所有数据掌握在你手里 |
+| **云端延迟、访问不稳定** | 本地部署，快到离谱 |
+| **成本难以预测** | 一台服务器，全部搞定 |
+
+---
+
+### 🧠 它由什么组成？
+
+#### 🏗️ 基于 Drupal 11 的企业级核心
+- 使用 Drupal 实体系统，自动生成数据模型与 API
+- 内置权限、配置、缓存、Hook 等成熟机制
+- 生产环境验证的安全与稳定
+
+#### 🔐 完整的认证与多租户体系
+- 支持 JWT、Session、API Key 多种认证模式
+- 每个租户、每个项目都有独立命名空间与数据库前缀
+- 用户与资源完全隔离，可扩展至任意 SaaS 级规模
+
+#### ⚙️ Node.js 函数运行时
+- 支持事件触发与 API 触发两种模式
+- 实现个性化业务逻辑、Webhook、实时运算等
+- 与 PHP 核心解耦，可独立部署或集群扩展
+
+#### 🧩 动态数据模型
+- 可视化定义表结构、字段类型、关系模型
+- 自动生成 CRUD REST API
+- 支持 JSON 字段与多层引用关系
+- 支持 Postgres 原生索引与性能优化
+
+#### 🌐 实时通信与文件服务
+- 内置 WebSocket 通道，支持订阅与推送
+- 文件上传安全控制，本地或 S3 兼容存储
+- 图片自动处理与权限隔离
+
+---
+
+### 🎯 这不只是后端 —— 它是一整套「可拥有的云」
+
+在 Drubase One 中，
+每一个"项目"都能被看作一个独立的后端系统。
+- 你可以用它**搭建 SaaS 平台**
+- 也可以为**移动 App 提供后端服务**
+- 甚至可以为 **IoT / 游戏 / AI 产品**提供实时接口与数据支撑
+
+**所有这些，都运行在你自己的云上。**
+Docker 一键部署，几分钟后你就拥有了属于你的云后端。
+
+---
+
+### 💬 一个故事：从开发者到平台拥有者
+
+**小林**是一位独立开发者，
+过去一年他开发了三个项目——每次都要从头写用户系统和接口。
+
+后来他发现了 Drubase One。
+他在 **20 分钟内完成了多租户配置**，
+用管理界面定义了数据模型，API 自动生成。
+
+现在，小林的客户都能独立登录自己的项目后台，
+他只需维护一套服务，却能同时运行十几个 SaaS 实例。
+
+**他说：**
+
+> "Drubase One 不只是节省时间，它让我重新拥有了技术的主权。"
+
+---
+
+### 🧭 我们的理念
+
+> **"科技的真正力量，不在于云，而在于掌控。"**
+
+Drubase One 相信：
+每一个开发者，都应该能拥有一套自己的 BaaS。
+能部署、能修改、能成长，不被厂商所限。
+
+我们用 **Drupal 的稳定内核**、**Node 的现代扩展**、
+**PostgreSQL 的强大能力**，
+打造出一个**可自托管、可扩展、可拥有**的 Supabase 级平台。
+
+---
+
+### ⚡ 你可以这样使用它
+
+| 场景 | 解决方案 |
+|------|----------|
+| 🧑‍💻 **独立开发者** | 快速搭建多项目后端，省去重复劳动 |
+| 🏢 **企业私有云** | 全封闭部署，内网运行，符合合规要求 |
+| 🚀 **创业团队** | 搭建 SaaS 平台原型，数周内上线 |
+| 🎮 **游戏 / IoT / AI 应用** | 实时通信 + 数据同步能力开箱即用 |
+| 🧰 **教学与研究** | 可复现的现代后端架构案例 |
+
+---
+
+### 🌍 开源，不妥协
+
+Drubase One 以 **MIT 协议**开源。
+你可以自由使用、修改、商用，
+完全掌控自己的未来。
+
+> 🌱 **我们不卖"云"，我们交付"自由"。**
+
+---
+
+### ✨ Drubase One — 拥有你的后端，掌控你的未来
+
+---
+
+## ✨ 核心功能
+
+### 🏗️ 多租户架构
+- **完全数据隔离** - 每个租户独立的数据空间和配置
+- **灵活项目管理** - 租户下的多项目组织和权限控制
+- **细粒度权限** - 7种内置角色 + 自定义权限系统
+
+### 🔐 统一认证系统
+- **多种认证方式** - JWT Token、API Key、Session
+- **用户管理** - 完整的用户注册、登录、权限管理
+- **OAuth 2.0 支持** - 第三方登录集成（规划中）
+
+### 📊 动态实体引擎
+- **零代码创建模型** - 通过管理界面定义数据结构
+- **丰富字段类型** - 文本、数字、日期、文件、引用、JSON
+- **自动 API 生成** - RESTful CRUD 接口即时可用
+- **关系管理** - 支持一对一、一对多、多对多关系
+
+### ⚡ 边缘函数服务
+- **无服务器架构** - Node.js 函数运行时
+- **事件驱动** - HTTP 触发器、数据变更监听
+- **实时执行** - 低延迟的业务逻辑处理
+- **独立部署** - 函数服务独立扩展
+
+### 📱 实时通信
+- **WebSocket 支持** - 双向实时数据推送
+- **事件订阅** - 实体创建、更新、删除事件
+- **在线状态** - 用户在线/离线状态管理
+
+### 📁 文件管理系统
+- **安全上传** - 文件类型和大小限制
+- **多存储后端** - 本地存储 / 云存储（S3 兼容）
+- **访问控制** - 基于权限的文件访问
+- **图片处理** - 自动缩略图生成
+
+### 🎯 API 网关
+- **统一入口** - 所有 API 请求的中央处理
+- **限流保护** - 基于 Token Bucket 的智能限流
+- **请求日志** - 完整的 API 调用记录
+- **文档生成** - Swagger/OpenAPI 文档自动生成
+
+---
 
 ## 🚀 快速开始
+
+### 系统要求
+
+- **Docker** >= 20.10
+- **Docker Compose** >= 2.0
+- **内存** >= 4GB
+- **磁盘** >= 10GB
+
+### 快速安装
+
+```bash
+# 1. 下载发行版
+wget https://github.com/cloudiowoo/drubase-one/releases/latest/download/drubase-one.tar.gz
+tar -xzf drubase-one.tar.gz
+cd drubase-one
+
+# 2. 运行安装脚本
+./install.sh
+
+# 3. 访问平台
+open http://localhost
+```
+
+**📖 详细安装步骤**: 请查看 **[安装指南](docs/INSTALL.md)**
+
+### 🌐 在线演示
+
+**立即体验 Drubase One，无需安装：**
+
+- **🎯 Drubase One 管理后台**: http://drubase-one.logisticservice.site:8000/
+- **📱 Groups 演示应用**: http://groups.logisticservice.site:8000/
 
 ## 🌐 在线演示
 
@@ -49,204 +286,194 @@
 
 ---
 
-## 💻 本地安装
+### 访问服务
 
-### 系统要求
+安装完成后，您可以访问以下服务：
 
-- Docker >= 20.0
-- Docker Compose >= 2.0
-- 4GB+ 内存
-- 10GB+ 磁盘空间
+- **管理后台**: http://localhost/admin
+- **Groups 应用**: http://localhost:3000
+- **API 端点**: http://localhost/api/v1
+- **函数服务**: http://localhost:3001
+- **实时服务**: ws://localhost:4000
 
-### 一键安装
+---
 
-```bash
-# 1. 克隆项目
-git clone https://github.com/your-username/baas-platform.git
-cd baas-platform
+## 📱 演示应用
 
-# 2. 运行安装脚本
-./install.sh
+### Groups - 团队运动活动管理
 
-# 3. 访问平台
-open http://localhost
+Drubase One 包含一个完整的演示应用，展示平台的核心能力：
+
+**功能特性**:
+- 用户注册登录（含头像上传）
+- 活动创建和管理
+- 智能团队分组算法
+- 实时数据同步
+
+**技术栈**:
+- React Native Web
+- TypeScript
+- Tailwind CSS
+- BaaS SDK 集成
+
+**访问地址**: http://localhost:3000
+
+**📖 了解更多**: **[Groups 项目详情](docs/GROUPS.md)** - 完整的项目故事、技术架构和开发指南
+
+---
+
+## 🏗️ 架构设计
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│                       客户端层                                 │
+│   Web 应用  │  移动应用  │  第三方服务  │  管理后台          │
+└──────────────────────────────────────────────────────────────┘
+                              │
+┌──────────────────────────────────────────────────────────────┐
+│                       API 网关层                               │
+│   认证/授权  │  限流控制  │  请求日志  │  负载均衡          │
+└──────────────────────────────────────────────────────────────┘
+                              │
+┌──────────────────────────────────────────────────────────────┐
+│                       应用服务层                               │
+│  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐   │
+│  │  Drupal Core  │  │  BaaS Modules │  │  Functions    │   │
+│  │  (PHP 8.4)    │  │  (8 Modules)  │  │  (Node.js)    │   │
+│  └───────────────┘  └───────────────┘  └───────────────┘   │
+└──────────────────────────────────────────────────────────────┘
+                              │
+┌──────────────────────────────────────────────────────────────┐
+│                       数据存储层                               │
+│  ┌───────────────┐  ┌───────────────┐  ┌───────────────┐   │
+│  │  PostgreSQL   │  │     Redis     │  │  File Storage │   │
+│  │  (主数据库)    │  │    (缓存)     │  │  (本地/云)     │   │
+│  └───────────────┘  └───────────────┘  └───────────────┘   │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-### 默认登录信息
+### 核心模块
 
-- **管理员账号**: admin
-- **默认密码**: admin123
-- **管理界面**: http://localhost/admin
-- **API文档**: http://localhost/api/docs
+| 模块 | 功能 | 状态 |
+|------|------|------|
+| **baas_tenant** | 租户管理和隔离 | ✅ |
+| **baas_auth** | 认证和权限系统 | ✅ |
+| **baas_entity** | 动态实体引擎 | ✅ |
+| **baas_project** | 项目组织管理 | ✅ |
+| **baas_api** | RESTful API | ✅ |
+| **baas_file** | 文件管理服务 | ⚠️ |
+| **baas_realtime** | 实时通信 | ✅ |
+| **baas_functions** | 边缘函数服务 | ⚠️ |
 
-## 🏗️ 架构概述
+---
 
-BaaS Platform采用现代化微服务架构：
+## 📚 文档
 
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Web应用       │    │   API网关        │    │   函数服务       │
-│   (Drupal 11)   │    │   (统一入口)     │    │   (Node.js)     │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                       │                       │
-         └───────────────────────┼───────────────────────┘
-                                 │
-         ┌───────────────────────┼───────────────────────┐
-         │                       │                       │
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   PostgreSQL    │    │     Redis       │    │   文件存储       │
-│   (主数据库)     │    │   (缓存)        │    │   (本地/云)     │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-```
+### 用户文档
 
-## 📚 核心概念
+- **[安装指南](docs/INSTALL.md)** - 完整的安装步骤和环境配置
+- **[API 文档](docs/API.md)** - RESTful API 使用说明和示例
+- **[域名配置指南](docs/DOMAIN_CONFIGURATION.md)** - 自定义域名和 Nginx 配置
 
-### 租户 (Tenants)
-- 数据完全隔离的组织单位
-- 每个租户有独立的数据空间和配置
-- 支持子租户和层级管理
+### 应用文档
 
-### 项目 (Projects)  
-- 租户内的业务项目组织单位
-- 灵活的成员权限和角色管理
-- 资源使用监控和限制
+- **[Groups 项目详情](docs/GROUPS.md)** - 完整的 Groups 演示应用介绍、技术架构和开发指南
 
-### 实体 (Entities)
-- 动态创建的数据模型
-- 支持字段类型：文本、数字、日期、文件、引用等
-- RESTful API自动生成
+### 技术架构
 
-### 函数 (Functions)
-- 无服务器函数支持
-- 事件驱动的业务逻辑处理
-- 支持多种触发器：HTTP、数据变更、定时任务
+如需了解更多技术细节和架构设计，请访问项目的开发仓库：
+- **开发仓库**: [drubase](https://github.com/cloudiowoo/drubase)
+- **技术文档**: 位于开发仓库的 `docs/private/` 目录
 
-## 🔧 配置管理
+---
 
-### 环境变量
+## 🚢 生产环境部署
 
-```env
-# 数据库配置
-DB_HOST=localhost
-DB_NAME=baas_platform
-DB_USER=baas_user
-DB_PASSWORD=your_secure_password
+### 部署检查清单
 
-# Redis缓存
-REDIS_HOST=localhost
-REDIS_PORT=6379
+- [ ] 修改 `docker/.env` 中的所有密码和密钥
+- [ ] 配置域名和 SSL 证书
+- [ ] 调整 `docker-compose.yml` 中的资源限制
+- [ ] 配置日志轮转和备份策略
+- [ ] 设置防火墙规则
+- [ ] 配置监控和告警
+- [ ] 测试备份恢复流程
 
-# 应用配置
-APP_ENV=production
-APP_SECRET=your-app-secret
-SITE_NAME=BaaS Platform
+### 推荐配置
 
-# API配置
-API_RATE_LIMIT_USER=60
-API_RATE_LIMIT_IP=30
+```yaml
+# docker-compose.yml 生产环境配置示例
+services:
+  php8-4-fpm:
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+    restart: always
+
+  pg17:
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+    restart: always
 ```
 
-### 管理配置
+---
 
-访问 `/admin/config/baas` 进行系统配置：
-- 租户管理和配置
-- API限流和监控设置
-- 实体模板管理
-- 函数服务配置
+## 🤝 参与贡献
 
-## 🌐 API 使用
+我们欢迎各种形式的贡献！
 
-### 认证
+### 贡献方式
 
-```bash
-# 获取访问令牌
-curl -X POST http://localhost/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username": "admin", "password": "admin123"}'
-```
+- 🐛 **报告 Bug** - [提交 Issue](https://github.com/cloudiowoo/drubase-one/issues)
+- 💡 **功能建议** - [讨论区](https://github.com/cloudiowoo/drubase-one/discussions)
+- 📖 **改进文档** - 提交 Pull Request
+- 🔧 **代码贡献** - Fork 项目并提交 PR
 
-### 数据操作
-
-```bash
-# 获取实体列表
-curl -X GET "http://localhost/api/v1/tenant_id/projects/project_id/entities/users" \
-  -H "Authorization: Bearer YOUR_TOKEN"
-
-# 创建数据
-curl -X POST "http://localhost/api/v1/tenant_id/projects/project_id/entities/users" \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -H "Content-Type: application/json" \
-  -d '{"name": "John Doe", "email": "john@example.com"}'
-```
-
-## 🛠️ 开发指南
-
-### 自定义模块开发
-
-```php
-<?php
-// web/modules/custom/my_baas_module/my_baas_module.module
-
-/**
- * 实现hook_baas_entity_presave()
- */
-function my_baas_module_baas_entity_presave($entity_data, $context) {
-  // 自定义业务逻辑
-  $entity_data['created_time'] = time();
-  return $entity_data;
-}
-```
-
-### 函数服务开发
-
-```javascript
-// services/functions/my-function/index.js
-exports.handler = async (event, context) => {
-  // 处理业务逻辑
-  return {
-    statusCode: 200,
-    body: JSON.stringify({
-      message: 'Function executed successfully',
-      data: event.data
-    })
-  };
-};
-```
-
-## 🔍 监控和维护
-
-### 系统监控
-
-```bash
-# 查看服务状态
-docker-compose ps
-
-# 查看日志
-docker-compose logs -f [service-name]
-
-# 数据库状态检查
-docker-compose exec db pg_isready
-```
-
-### 性能优化
-
-- 启用Redis缓存
-- 配置适当的API限流
-- 定期清理日志和临时文件
-- 监控数据库性能
-
-## 🤝 社区支持
-
-- **文档**: 详细使用文档请参考安装后的系统帮助
-- **问题报告**: [GitHub Issues](https://github.com/your-username/baas-platform/issues)
-- **功能请求**: [GitHub Discussions](https://github.com/your-username/baas-platform/discussions)
+---
 
 ## 📄 许可证
 
-本项目采用 MIT 许可证。详情请参考 [LICENSE](LICENSE) 文件。
+本项目采用 **MIT 许可证** - 详见 [LICENSE](LICENSE) 文件
 
-## 🙏 贡献
-
-欢迎贡献代码、报告问题或提出改进建议！
+这意味着你可以：
+- ✅ 商业使用
+- ✅ 修改源码
+- ✅ 分发
+- ✅ 私有使用
 
 ---
+
+## 🌟 致谢
+
+Drubase One 基于以下优秀的开源项目构建：
+
+- [Drupal](https://www.drupal.org/) - 强大的内容管理框架
+- [PostgreSQL](https://www.postgresql.org/) - 世界上最先进的开源数据库
+- [Redis](https://redis.io/) - 内存数据结构存储
+- [Docker](https://www.docker.com/) - 容器化平台
+
+---
+
+## 📞 联系方式
+
+- **项目主页**: https://github.com/cloudiowoo/drubase-one
+- **问题反馈**: https://github.com/cloudiowoo/drubase-one/issues
+- **讨论社区**: https://github.com/cloudiowoo/drubase-one/discussions
+- **邮件**: cloudio.woo@gmail.com
+
+---
+
+<div align="center">
+
+**如果这个项目对你有帮助，请给我们一个 ⭐ Star！**
+
+Made with ❤️ by Drubase Team
+
+**版本**: v1.1.0-beta.6 | **更新时间**: 2025年10月17日
+
+</div>

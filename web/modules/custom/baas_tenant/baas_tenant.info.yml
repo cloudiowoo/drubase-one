@@ -7,4 +7,4 @@ dependencies:
   - drupal:system
   - drupal:user
   - baas_auth
-version: '1.1.1-beta.4'
+version: '1.1.1-beta.6'

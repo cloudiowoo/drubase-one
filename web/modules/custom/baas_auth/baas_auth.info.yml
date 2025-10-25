@@ -3,7 +3,7 @@ description: 'Provides JWT authentication, user management, and permission contr
 type: module
 core_version_requirement: ^11
 package: 'BaaS Platform'
-version: '1.1.1-beta.4'
+version: '1.1.1-beta.6'
 
 dependencies:
   - drupal:user

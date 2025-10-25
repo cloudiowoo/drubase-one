@@ -14,6 +14,6 @@ dependencies:
 
 configure: baas_file.settings
 
-version: '1.1.1-beta.3'
+version: '1.1.1-beta.4'
 project: 'baas_file'
 datestamp: 1737619200

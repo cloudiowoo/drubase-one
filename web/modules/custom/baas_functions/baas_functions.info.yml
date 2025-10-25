@@ -3,7 +3,7 @@ type: module
 description: 'BaaS Functions module - Project-level function management with Node.js execution runtime'
 core_version_requirement: ^11
 package: 'BaaS Platform'
-version: '1.1.1-beta.3'
+version: '1.1.1-beta.4'
 
 dependencies:
   - baas_tenant

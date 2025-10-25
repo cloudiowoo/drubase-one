@@ -191,7 +191,8 @@ function baas_tenant_toolbar()
 /**
  * Implements hook_user_insert().
  */
-function baas_tenant_user_insert(\Drupal\user\UserInterface $user) {
+function baas_tenant_user_insert(\Drupal\user\UserInterface $user)
+{
   \Drupal::logger('baas_tenant')->info('hook_user_insert被调用: user_id=@uid, username=@name', [
     '@uid' => $user->id(),
     '@name' => $user->getAccountName(),
@@ -199,7 +200,7 @@ function baas_tenant_user_insert(\Drupal\user\UserInterface $user) {
 
   // 新的权限模型：普通用户注册后不自动创建租户
   // 需要管理员手动将用户提升为租户管理员后，用户才能创建租户
-  
+
   // 跳过用户ID=1（超级管理员）
   if ($user->id() == 1) {
     \Drupal::logger('baas_tenant')->info('跳过超级管理员用户: @uid', ['@uid' => $user->id()]);
@@ -222,16 +223,17 @@ function baas_tenant_user_insert(\Drupal\user\UserInterface $user) {
 /**
  * Implements hook_form_alter().
  */
-function baas_tenant_form_alter(array &$form, FormStateInterface $form_state, string $form_id) {
+function baas_tenant_form_alter(array &$form, FormStateInterface $form_state, string $form_id)
+{
   // 在用户编辑表单中添加租户权限管理
   if ($form_id === 'user_form') {
     $current_user = \Drupal::currentUser();
     $form_object = $form_state->getFormObject();
-    
+
     if ($form_object instanceof ProfileForm) {
       /** @var UserInterface $user */
       $user = $form_object->getEntity();
-      
+
       // 只有系统管理员可以看到租户权限管理
       if ($current_user->hasPermission('administer baas tenants') && $user->id() != $current_user->id()) {
         $form['tenant_management'] = [
@@ -240,10 +242,10 @@ function baas_tenant_form_alter(array &$form, FormStateInterface $form_state, st
           '#group' => 'advanced',
           '#weight' => 10,
         ];
-        
+
         $is_tenant = baas_tenant_is_user_tenant($user);
         $is_admin_user = $user->id() == 1 || $user->hasRole('administrator');
-        
+
         if ($is_admin_user) {
           $form['tenant_management']['status'] = [
             '#type' => 'item',
@@ -253,12 +255,12 @@ function baas_tenant_form_alter(array &$form, FormStateInterface $form_state, st
         } else {
           $form['tenant_management']['status'] = [
             '#type' => 'item',
-            '#title' => t('项目管理权限状态'),
-            '#markup' => $is_tenant 
-              ? '<span style="color: #0074bd; font-weight: bold;">' . t('✓ 项目管理员') . '</span>'
+            '#title' => t('权限状态'),
+            '#markup' => $is_tenant
+              ? '<span style="color: #0074bd; font-weight: bold;">' . t('✓ 租户身份（租户项目管理员）') . '</span>'
               : '<span style="color: #666;">' . t('普通用户') . '</span>',
           ];
-          
+
           if ($is_tenant) {
             // 显示项目信息
             $project_count = baas_tenant_get_user_project_count((int) $user->id());
@@ -267,7 +269,7 @@ function baas_tenant_form_alter(array &$form, FormStateInterface $form_state, st
               '#title' => t('项目统计'),
               '#markup' => t('拥有 @count 个项目', ['@count' => $project_count]),
             ];
-            
+
             // 降级按钮
             if ($project_count == 0) {
               $form['tenant_management']['demote'] = [
@@ -289,11 +291,11 @@ function baas_tenant_form_alter(array &$form, FormStateInterface $form_state, st
             // 提升按钮
             $form['tenant_management']['promote'] = [
               '#type' => 'link',
-              '#title' => t('提升为项目管理员'),
+              '#title' => t('提升为租户'),
               '#url' => Url::fromRoute('baas_tenant.promote_user', ['user' => $user->id()]),
               '#attributes' => [
                 'class' => ['button', 'button--primary'],
-                'onclick' => 'return confirm("' . t('确定要将此用户提升为项目管理员吗？用户将获得创建和管理项目的权限。') . '");',
+                'onclick' => 'return confirm("' . t('确定要将此用户提升为租户身份吗？用户将获得创建和管理项目的权限。') . '");',
               ],
             ];
           }
@@ -312,27 +314,28 @@ function baas_tenant_form_alter(array &$form, FormStateInterface $form_state, st
  * @return bool
  *   如果用户是租户返回TRUE，否则返回FALSE.
  */
-function baas_tenant_is_user_tenant(\Drupal\user\UserInterface $user): bool {
+function baas_tenant_is_user_tenant(\Drupal\user\UserInterface $user): bool
+{
   // 1. 检查用户是否有管理员权限
   if ($user->hasPermission('administer baas tenants') || $user->hasPermission('administer baas project')) {
     return TRUE;
   }
-  
+
   // 2. 检查用户是否有项目管理员角色
   if ($user->hasRole('project_manager')) {
     return TRUE;
   }
-  
+
   // 3. 使用字段API获取租户状态
   if ($user->hasField('field_is_tenant')) {
     return (bool) $user->get('field_is_tenant')->value;
   }
-  
+
   // 4. 检查用户是否有创建项目的权限
   if ($user->hasPermission('create baas project')) {
     return TRUE;
   }
-  
+
   return FALSE;
 }
 
@@ -345,14 +348,15 @@ function baas_tenant_is_user_tenant(\Drupal\user\UserInterface $user): bool {
  * @return int
  *   项目数量.
  */
-function baas_tenant_get_user_project_count(int $user_id): int {
+function baas_tenant_get_user_project_count(int $user_id): int
+{
   $database = \Drupal::database();
-  
+
   // 检查baas_project_config表是否存在
   if (!$database->schema()->tableExists('baas_project_config')) {
     return 0;
   }
-  
+
   return (int) $database->select('baas_project_config', 'p')
     ->condition('owner_uid', $user_id)
     ->condition('status', 1)
@@ -364,14 +368,15 @@ function baas_tenant_get_user_project_count(int $user_id): int {
 /**
  * Implements hook_menu_links_discovered_alter().
  */
-function baas_tenant_menu_links_discovered_alter(&$links) {
+function baas_tenant_menu_links_discovered_alter(&$links)
+{
   // 确保用户账户菜单中的租户链接只对租户用户显示
   if (isset($links['baas_tenant.user_menu'])) {
     $links['baas_tenant.user_menu']['requirements'] = [
       '_custom_access' => 'baas_tenant.menu_access:access',
     ];
   }
-  
+
   // 确保API密钥管理菜单只对租户用户显示
   if (isset($links['baas_tenant.user_api_keys_menu'])) {
     $links['baas_tenant.user_api_keys_menu']['requirements'] = [
@@ -383,7 +388,8 @@ function baas_tenant_menu_links_discovered_alter(&$links) {
 /**
  * Implements hook_local_tasks_alter().
  */
-function baas_tenant_local_tasks_alter(&$local_tasks) {
+function baas_tenant_local_tasks_alter(&$local_tasks)
+{
   // 为API密钥选项卡添加访问控制
   if (isset($local_tasks['baas_tenant.user_api_keys_tab'])) {
     $local_tasks['baas_tenant.user_api_keys_tab']['access_callback'] = '_baas_tenant_check_user_is_tenant';
@@ -396,23 +402,26 @@ function baas_tenant_local_tasks_alter(&$local_tasks) {
  * @return bool
  *   如果用户是租户返回TRUE，否则返回FALSE。
  */
-function _baas_tenant_check_user_is_tenant(): bool {
+function _baas_tenant_check_user_is_tenant(): bool
+{
   $current_user = \Drupal::currentUser();
-  
+
   // 检查用户是否有租户权限
-  if ($current_user->hasPermission('create baas project') || 
-      $current_user->hasPermission('view baas project') ||
-      in_array('project_manager', $current_user->getRoles())) {
+  if (
+    $current_user->hasPermission('create baas project') ||
+    $current_user->hasPermission('view baas project') ||
+    in_array('project_manager', $current_user->getRoles())
+  ) {
     return TRUE;
   }
-  
+
   // 使用用户实体检查
   $user_storage = \Drupal::entityTypeManager()->getStorage('user');
   $user_entity = $user_storage->load($current_user->id());
-  
+
   if ($user_entity && function_exists('baas_tenant_is_user_tenant')) {
     return baas_tenant_is_user_tenant($user_entity);
   }
-  
+
   return FALSE;
 }

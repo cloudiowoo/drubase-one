@@ -8,4 +8,4 @@ dependencies:
   - baas_entity:baas_entity
   - drupal:rest
   - drupal:serialization
-version: '1.1.1-beta.3'
+version: '1.1.1-beta.4'

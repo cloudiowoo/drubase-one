@@ -11,7 +11,7 @@
 [![PHP: 8.4](https://img.shields.io/badge/PHP-8.4-777BB4.svg)](https://www.php.net)
 [![PostgreSQL: 17](https://img.shields.io/badge/PostgreSQL-17-336791.svg)](https://www.postgresql.org)
 
-[🌐 在线演示](#-在线演示) • [✨ 核心功能](#-核心功能) • [🚀 快速开始](#-快速开始) • [📱 演示应用](#-演示应用) • [📚 文档](#-文档)
+[✨ 核心功能](#-核心功能) • [🎯 在线演示后台](http://drubase-one.logisticservice.site:8000) • [📱 前端演示应用](http://groups.logisticservice.site:8000) • [📚 在线文档](https://drubase-one-docs.pages.dev)
 
 </div>
 
@@ -253,44 +253,6 @@ Drubase One 以 **MIT 协议**开源。
 
 ---
 
-## 🚀 快速开始
-
-### 系统要求
-
-- **Docker** >= 20.10
-- **Docker Compose** >= 2.0
-- **内存** >= 4GB
-- **磁盘** >= 10GB
-
-### 快速安装
-
-```bash
-# 1. 下载发行版
-wget https://github.com/cloudiowoo/drubase-one/releases/latest/download/drubase-one.tar.gz
-tar -xzf drubase-one.tar.gz
-cd drubase-one
-
-# 2. 运行安装脚本
-./install.sh
-
-# 3. 访问平台
-open http://localhost
-```
-
-**📖 详细安装步骤**: 请查看 **[安装指南](docs/INSTALL.md)**
-
-### 访问服务
-
-安装完成后，您可以访问以下服务：
-
-- **管理后台**: http://localhost/admin
-- **Groups 应用**: http://localhost:3000
-- **API 端点**: http://localhost/api/v1
-- **函数服务**: http://localhost:3001
-- **实时服务**: ws://localhost:4000
-
----
-
 ## 📱 演示应用
 
 ### Groups - 团队运动活动管理
@@ -357,75 +319,6 @@ Drubase One 包含一个完整的演示应用，展示平台的核心能力：
 | **baas_file** | 文件管理服务 | ⚠️ |
 | **baas_realtime** | 实时通信 | ✅ |
 | **baas_functions** | 边缘函数服务 | ⚠️ |
-
----
-
-## 📚 文档
-
-### 用户文档
-
-- **[安装指南](docs/INSTALL.md)** - 完整的安装步骤和环境配置
-- **[API 文档](docs/API.md)** - RESTful API 使用说明和示例
-- **[域名配置指南](docs/DOMAIN_CONFIGURATION.md)** - 自定义域名和 Nginx 配置
-
-### 应用文档
-
-- **[Groups 项目详情](docs/GROUPS.md)** - 完整的 Groups 演示应用介绍、技术架构和开发指南
-
-### 技术架构
-
-如需了解更多技术细节和架构设计，请访问项目的开发仓库：
-- **开发仓库**: [drubase](https://github.com/cloudiowoo/drubase)
-- **技术文档**: 位于开发仓库的 `docs/private/` 目录
-
----
-
-## 🚢 生产环境部署
-
-### 部署检查清单
-
-- [ ] 修改 `docker/.env` 中的所有密码和密钥
-- [ ] 配置域名和 SSL 证书
-- [ ] 调整 `docker-compose.yml` 中的资源限制
-- [ ] 配置日志轮转和备份策略
-- [ ] 设置防火墙规则
-- [ ] 配置监控和告警
-- [ ] 测试备份恢复流程
-
-### 推荐配置
-
-```yaml
-# docker-compose.yml 生产环境配置示例
-services:
-  php8-4-fpm:
-    deploy:
-      resources:
-        limits:
-          cpus: '2'
-          memory: 2G
-    restart: always
-
-  pg17:
-    deploy:
-      resources:
-        limits:
-          cpus: '2'
-          memory: 4G
-    restart: always
-```
-
----
-
-## 🤝 参与贡献
-
-我们欢迎各种形式的贡献！
-
-### 贡献方式
-
-- 🐛 **报告 Bug** - [提交 Issue](https://github.com/cloudiowoo/drubase-one/issues)
-- 💡 **功能建议** - [讨论区](https://github.com/cloudiowoo/drubase-one/discussions)
-- 📖 **改进文档** - 提交 Pull Request
-- 🔧 **代码贡献** - Fork 项目并提交 PR
 
 ---
 

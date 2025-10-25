@@ -250,7 +250,3 @@ docker-compose exec db pg_isready
 欢迎贡献代码、报告问题或提出改进建议！
 
 ---
-
-**版本**: dev  
-**更新时间**: 2025-10-17 19:25:36 UTC  
-**官方网站**: https://baas-platform.com

@@ -198,9 +198,9 @@ Drubase One 以 **MIT 协议**开源。
 
 | 邮箱 | 密码 |
 |------|------|
-| `user1@drubase.com` | `888888` |
-| `user2@drubase.com` | `888888` |
-| `user3@drubase.com` | `888888` |
+| `test@test.com` | `888888` |
+| `test1@test.com` | `888888` |
+| `test2@test.com` | `888888` |
 
 ### 项目文档
 
